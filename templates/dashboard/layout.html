@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Merchant Command // Marketplace{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap');
+        :root { 
+            --clay: #8d5b3e; 
+            --cream: #f9f5f0; 
+            --dark-oak: #2d1e14; 
+            --gray: #888888;
+        }
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--cream); 
+            color: var(--dark-oak); 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: row; 
+            min-height: 100vh;
+        }
+
+        .sidebar { 
+            width: 280px; 
+            position: fixed; 
+            height: 100vh; 
+            background: white; 
+            border-right: 1px solid #eee; 
+            padding: 50px 30px; 
+            z-index: 100; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sidebar h3 { 
+            font-family: 'Montserrat', sans-serif; 
+            color: var(--clay); 
+            text-transform: lowercase; 
+            font-size: 1.5rem; 
+            margin: 0; 
+            letter-spacing: -1px;
+        }
+        .sidebar nav { 
+            margin-top: 40px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.75rem; 
+            font-weight: 600;
+            line-height: 3; 
+            letter-spacing: 0.5px;
+        }
+        .sidebar nav a { 
+            text-decoration: none; 
+            color: var(--dark-oak); 
+            display: block; 
+            transition: 0.3s; 
+        }
+        .sidebar nav a:hover { color: var(--clay); }
+        .sidebar nav a.active { color: var(--clay); }
+
+        .main-content { 
+            margin-left: 280px; 
+            padding: 60px 5%; 
+            width: calc(100% - 280px); 
+        }
+
+        .section-box { 
+            background: white; 
+            padding: 40px; 
+            margin-bottom: 40px; 
+            border-left: 5px solid var(--clay); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02); 
+            overflow-x: auto; 
+        }
+        
+        .btn-oak { 
+            background: var(--dark-oak); 
+            color: white; 
+            padding: 12px 20px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            letter-spacing: 1px; 
+            text-decoration: none; 
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .btn-oak:hover { opacity: 0.9; }
+
+        .btn-clay { 
+            background: var(--clay); 
+            color: white; 
+            padding: 12px 20px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            letter-spacing: 1px; 
+            text-decoration: none; 
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .btn-clay:hover { opacity: 0.9; }
+
+        .link-button { 
+            background: none; 
+            border: none; 
+            padding: 0; 
+            margin: 0; 
+            color: inherit; 
+            cursor: pointer; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            text-decoration: none; 
+        }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid #eee; padding: 25px 5%; }
+            .main-content { margin-left: 0; width: 100%; padding: 30px 5%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div>
+            <div style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Marketplace.</div>
+            <h3>{{ store.name }}</h3>
+            <nav>
+                <a href="{{ url_for('dashboard.overview') }}">• Overview</a>
+                <a href="{{ url_for('dashboard.products') }}">• Inventory & Products</a>
+                <a href="{{ url_for('dashboard.manage_ads') }}">• Monetization (Ad Slots)</a>
+                <a href="{{ url_for('dashboard.settings') }}">• Store Settings</a>
+                <a href="/{{ store.slug }}" target="_blank" style="margin-top: 25px; color: var(--clay); font-weight: 700;">
+                    View Live Storefront &nearr;
+                </a>
+            </nav>
+        </div>
+
+        <div style="padding-top: 20px; border-top: 1px solid #eee;">
+            <a href="{{ url_for('auth.logout') }}" style="font-family: 'Montserrat'; font-size: 0.7rem; color: #b33a3a; text-decoration: none; font-weight: 600;">
+                &larr; Log Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Flash Banners -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div style="margin-bottom: 30px;">
+                    {% for category, message in messages %}
+                        <div style="background: white; border-left: 4px solid var(--clay); padding: 15px 20px; font-family: 'Montserrat'; font-size: 0.75rem; box-shadow: 0 5px 20px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.remove()" style="border: none; background: none; font-weight: bold; cursor: pointer;">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block dashboard_content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
