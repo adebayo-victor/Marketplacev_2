@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Marketplace{% endblock %}</title>
+
+    <!-- Signature Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --clay: #8d5b3e;
+            --cream: #f9f5f0;
+            --dark-oak: #2d1e14;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--dark-oak);
+            font-family: 'Georgia', serif;
+            margin: 0;
+        }
+
+        .font-ui {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .nav-bar {
+            background: white;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .brand-logo {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-decoration: none;
+            color: var(--dark-oak);
+            font-size: 0.95rem;
+        }
+
+        .btn-oak {
+            background: var(--dark-oak);
+            color: white;
+            padding: 14px 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-oak:hover {
+            opacity: 0.9;
+        }
+
+        .btn-clay {
+            background: var(--clay);
+            color: white;
+            padding: 14px 24px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-clay:hover {
+            opacity: 0.9;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        clay: '#8d5b3e',
+                        cream: '#f9f5f0',
+                        'dark-oak': '#2d1e14'
+                    },
+                    fontFamily: {
+                        ui: ['Montserrat', 'sans-serif'],
+                        serif: ['Georgia', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="nav-bar">
+        <a href="/" class="brand-logo">MARKETPLACE.</a>
+        <div>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.logout') }}" class="font-ui text-xs text-rose-500 hover:text-rose-700 transition tracking-wider uppercase font-semibold">Log Out</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="font-ui text-xs text-stone-600 hover:text-clay transition tracking-wider uppercase font-semibold mr-4">Log In</a>
+                <a href="{{ url_for('auth.register') }}" class="font-ui text-xs text-clay hover:opacity-80 transition tracking-wider uppercase font-bold">Open Kiosk</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Flash Messages Notification Container -->
+    <div class="fixed top-20 right-5 z-50 max-w-sm w-full space-y-2">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% set bg = 'bg-[#2d1e14]' %}
+                    {% if category == 'success' %}{% set bg = 'bg-[#15803d]' %}{% endif %}
+                    {% if category == 'danger' %}{% set bg = 'bg-[#b33a3a]' %}{% endif %}
+                    {% if category == 'warning' %}{% set bg = 'bg-[#8d5b3e]' %}{% endif %}
+                    
+                    <div class="{{ bg }} text-white font-ui text-xs px-5 py-4 shadow-xl border-l-4 border-clay flex items-center justify-between">
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="ml-3 font-bold text-white/80 hover:text-white">&times;</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
