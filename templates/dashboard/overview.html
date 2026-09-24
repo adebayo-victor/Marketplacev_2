@@ -1,0 +1,86 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Overview // {{ store.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="welcome-header" style="margin-bottom: 40px;">
+    <h1 style="font-family: 'Montserrat'; font-size: 2.2rem; text-transform: lowercase; margin: 0; letter-spacing: -1px;">
+        welcome back.
+    </h1>
+    <p style="font-style: italic; opacity: 0.6; margin-top: 5px;">Real-time storefront vitals and incoming customer orders.</p>
+</div>
+
+<!-- KPI Stats Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
+    <div class="section-box" style="margin-bottom: 0; padding: 25px;">
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin: 0;">Total Visits</p>
+        <h1 style="font-family: 'Montserrat'; font-size: 2.4rem; margin: 8px 0; font-weight: 600;">{{ store.views_count }}</h1>
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--clay); margin: 0;">Live page view tracking</p>
+    </div>
+
+    <div class="section-box" style="margin-bottom: 0; padding: 25px;">
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin: 0;">Customer Leads</p>
+        <h1 style="font-family: 'Montserrat'; font-size: 2.4rem; margin: 8px 0; font-weight: 600;">{{ leads_count }}</h1>
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); margin: 0;">Carts routed to WhatsApp</p>
+    </div>
+
+    <div class="section-box" style="margin-bottom: 0; padding: 25px;">
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin: 0;">Conversion Rate</p>
+        <h1 style="font-family: 'Montserrat'; font-size: 2.4rem; margin: 8px 0; font-weight: 600;">{{ conversion_rate }}%</h1>
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); margin: 0;">Visits to WhatsApp orders</p>
+    </div>
+
+    <div class="section-box" style="margin-bottom: 0; padding: 25px;">
+        <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin: 0;">Active Products</p>
+        <h1 style="font-family: 'Montserrat'; font-size: 2.4rem; margin: 8px 0; font-weight: 600;">{{ products_count }}</h1>
+        <a href="{{ url_for('dashboard.new_product') }}" style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--clay); font-weight: 600; text-decoration: none;">+ Add new product &rarr;</a>
+    </div>
+</div>
+
+<!-- Recent Orders Table -->
+<div class="section-box">
+    <h2 style="font-family: 'Montserrat'; font-size: 1.5rem; text-transform: lowercase; letter-spacing: -1px; margin-top: 0;">recent customer orders</h2>
+    
+    {% if recent_orders %}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.85rem;">
+        <thead>
+            <tr style="border-bottom: 1px solid #eee;">
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Ref</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Customer</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Total</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Status</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Receipt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in recent_orders %}
+            <tr style="border-bottom: 1px solid #f9f9f9;">
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-weight: 600;">#{{ order.order_ref }}</td>
+                <td style="padding: 15px 12px;">
+                    <strong>{{ order.customer_name }}</strong><br>
+                    <a href="https://wa.me/{{ order.customer_phone }}" target="_blank" style="color: var(--clay); font-size: 0.75rem; font-family: 'Montserrat';">
+                        {{ order.customer_phone }} &nearr;
+                    </a>
+                </td>
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-weight: 600;">
+                    {{ store.currency }}{{ "{:,.2f}".format(order.total_amount) }}
+                </td>
+                <td style="padding: 15px 12px;">
+                    <span style="font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; padding: 4px 8px; border-radius: 3px; background: {% if order.status == 'paid' %}#ebfeef; color: #16a34a;{% elif order.status == 'voided' %}#ffebeb; color: #b33a3a;{% else %}#fff9f5; color: var(--clay);{% endif %}">
+                        {{ order.status }}
+                    </span>
+                </td>
+                <td style="padding: 15px 12px;">
+                    <a href="/receipt/{{ order.order_ref }}" target="_blank" style="font-family: 'Montserrat'; font-size: 0.7rem; color: var(--dark-oak); font-weight: 600; text-decoration: underline;">
+                        View Invoice
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="font-style: italic; color: var(--gray); font-size: 0.9rem; padding: 20px 0;">No orders received yet. Share your storefront link to start taking orders!</p>
+    {% endif %}
+</div>
+{% endblock %}
