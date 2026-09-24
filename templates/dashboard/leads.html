@@ -1,0 +1,59 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Lost Leads Recovery // {{ store.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="section-box">
+    <div style="margin-bottom: 25px;">
+        <h2 style="font-family: 'Montserrat'; font-size: 1.8rem; text-transform: lowercase; letter-spacing: -1px; margin: 0;">
+            lost leads & abandoned carts.
+        </h2>
+        <p style="font-style: italic; color: var(--gray); margin: 5px 0 0 0; font-size: 0.85rem;">
+            Customers who filled out the checkout form but did not finalize on WhatsApp.
+        </p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 20px;">
+        <thead>
+            <tr style="border-bottom: 1px solid #eee;">
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Time</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Customer</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Cart Value</th>
+                <th style="text-align: right; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in leads %}
+            {% set c = item.cart %}
+            <tr style="border-bottom: 1px solid #f9f9f9;">
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-size: 0.75rem; color: var(--gray);">
+                    {{ c.created_at.strftime('%d %b, %I:%M %p') }}
+                </td>
+                <td style="padding: 15px 12px;">
+                    <strong>{{ c.customer_name }}</strong><br>
+                    <span style="font-family: 'Montserrat'; font-size: 0.75rem; color: var(--clay);">{{ c.customer_phone }}</span>
+                </td>
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-weight: 600;">
+                    {{ store.currency }}{{ "{:,.2f}".format(c.total_amount) }}
+                </td>
+                <td style="padding: 15px 12px; text-align: right;">
+                    <a href="{{ item.nudge_link }}" target="_blank" 
+                       style="background: #16a34a; color: white; padding: 8px 14px; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 700; text-decoration: none; display: inline-block; margin-right: 10px; border-radius: 3px;">
+                        NUDGE ON WHATSAPP &nearr;
+                    </a>
+                    <form action="{{ url_for('audit.mark_lead_recovered', lead_id=c.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="link-button" style="color: var(--clay); font-size: 0.65rem;">MARK RESOLVED</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px; font-style: italic; color: var(--gray);">
+                    No abandoned carts detected. All leads are healthy!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
