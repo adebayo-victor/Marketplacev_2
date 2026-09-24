@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt #{{ order.order_ref }} // {{ store.name }}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Client-side HTML to PDF generator CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
+        body { background-color: var(--cream); color: var(--dark-oak); font-family: 'Georgia', serif; margin: 0; }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="p-4 md:p-12 min-h-screen flex flex-col items-center justify-center">
+
+    <!-- Action Bar -->
+    <div class="max-w-xl w-full flex justify-between items-center mb-6">
+        <a href="/{{ store.slug }}" class="font-ui text-xs font-semibold text-clay">&larr; Return to Storefront</a>
+        <button onclick="downloadPDF()" class="font-ui text-xs font-bold uppercase tracking-wider bg-dark-oak text-white px-5 py-3 shadow hover:opacity-90 transition">
+            Download PDF Receipt 🖨️
+        </button>
+    </div>
+
+    <!-- The Printable Invoice Paper -->
+    <div id="invoiceCard" class="max-w-xl w-full bg-white p-8 md:p-12 shadow-2xl border-t-[8px] border-clay relative">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start pb-8 border-b border-[#eee]">
+            <div>
+                <h1 class="font-ui text-2xl font-bold tracking-tight text-dark-oak m-0">{{ store.name }}</h1>
+                <p class="font-serif italic text-xs text-stone-500 mt-1">Official Sales Receipt</p>
+                <p class="font-ui text-[0.65rem] text-stone-400 mt-2">WhatsApp: {{ store.whatsapp_number }}</p>
+            </div>
+            <div class="text-right">
+                <span class="font-ui text-xs font-bold uppercase tracking-wider text-clay block">Order Ref:</span>
+                <span class="font-ui text-lg font-black text-dark-oak">#{{ order.order_ref }}</span>
+                <p class="font-ui text-[0.65rem] text-stone-400 mt-1">{{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="py-6 border-b border-[#eee] grid grid-cols-2 gap-4">
+            <div>
+                <span class="font-ui text-[0.65rem] uppercase tracking-wider text-stone-400 block mb-1">Billed To:</span>
+                <strong class="font-ui text-xs text-dark-oak">{{ order.customer_name }}</strong>
+                <p class="font-ui text-xs text-stone-500 m-0">{{ order.customer_phone }}</p>
+            </div>
+            <div>
+                <span class="font-ui text-[0.65rem] uppercase tracking-wider text-stone-400 block mb-1">Delivery Address:</span>
+                <p class="font-serif text-xs text-stone-600 m-0">{{ order.delivery_address }}</p>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="py-6 border-b border-[#eee]">
+            <table class="w-full font-ui text-xs">
+                <thead>
+                    <tr class="text-stone-400 uppercase text-[0.6rem] border-b border-stone-100">
+                        <th class="text-left pb-2">Item Description</th>
+                        <th class="text-center pb-2">Qty</th>
+                        <th class="text-right pb-2">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items %}
+                    <tr class="border-b border-stone-50">
+                        <td class="py-3">
+                            <strong class="text-dark-oak">{{ item.product_name }}</strong>
+                            {% if item.selected_variants %}
+                                <p class="text-[0.65rem] text-stone-400 m-0">{{ item.selected_variants }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="text-center py-3">{{ item.quantity }}</td>
+                        <td class="text-right py-3 font-semibold">{{ store.currency }}{{ "{:,.2f}".format(item.subtotal) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Total Breakdown & Status Stamp -->
+        <div class="pt-6 flex justify-between items-center">
+            <div>
+                <span class="font-ui text-xs uppercase tracking-wider px-3 py-1 font-bold border {% if order.status == 'paid' %}border-emerald-600 text-emerald-600{% else %}border-clay text-clay{% endif %}">
+                    STATUS: {{ order.status|upper }}
+                </span>
+            </div>
+            <div class="text-right">
+                <span class="font-ui text-[0.65rem] uppercase tracking-wider text-stone-400 block">Total Amount Paid</span>
+                <span class="font-ui text-2xl font-black text-dark-oak">{{ store.currency }}{{ "{:,.2f}".format(order.total_amount) }}</span>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center border-t border-stone-100 pt-6">
+            <p class="font-serif italic text-xs text-stone-400">Thank you for your business with {{ store.name }}.</p>
+        </div>
+    </div>
+
+    <script>
+        function downloadPDF() {
+            const element = document.getElementById('invoiceCard');
+            const opt = {
+                margin:       10,
+                filename:     `Receipt_${'{{ order.order_ref }}'}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>
