@@ -1,0 +1,52 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Settings // {{ store.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="section-box" style="max-width: 700px;">
+    <h2 style="font-family: 'Montserrat'; font-size: 1.8rem; text-transform: lowercase; letter-spacing: -1px; margin-top: 0;">
+        store settings.
+    </h2>
+    <p style="font-style: italic; color: var(--gray); margin-top: 5px; font-size: 0.85rem;">Update your business profile and social proof visibility.</p>
+
+    <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px; margin-top: 30px;">
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Store Name</label>
+            <input type="text" name="name" value="{{ store.name }}" required style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Store Bio / Slogan</label>
+            <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ store.bio }}</textarea>
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">WhatsApp Number for Orders</label>
+            <input type="text" name="whatsapp_number" value="{{ store.whatsapp_number }}" required style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
+        </div>
+
+        <!-- Social Proof Stats Toggle Feature -->
+        <div style="background: #fff9f5; border-left: 3px solid var(--clay); padding: 20px;">
+            <label style="font-family: 'Montserrat'; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center;">
+                <input type="checkbox" name="show_public_stats" {% if store.show_public_stats %}checked{% endif %} style="margin-right: 12px; transform: scale(1.2);">
+                <span>Display Store Visit Stats Publicly (Social Proof)</span>
+            </label>
+            <p style="font-size: 0.75rem; color: var(--gray); margin: 8px 0 0 28px;">
+                When enabled, your total page views (currently <strong>{{ store.views_count }}</strong>) will be highlighted in your WhatsApp link previews and public directories. Turn this off if your store is brand new.
+            </p>
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Currency Symbol</label>
+            <input type="text" name="currency" value="{{ store.currency }}" style="width: 80px; padding: 10px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Storefront Logo</label>
+            <input type="file" name="logo" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.75rem;">
+        </div>
+
+        <button type="submit" class="btn-clay" style="padding: 15px; margin-top: 10px;">SAVE SETTINGS &rarr;</button>
+    </form>
+</div>
+{% endblock %}
