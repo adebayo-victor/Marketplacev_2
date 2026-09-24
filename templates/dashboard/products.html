@@ -1,0 +1,81 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}Inventory // {{ store.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="section-box">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h2 style="font-family: 'Montserrat'; font-size: 1.8rem; text-transform: lowercase; letter-spacing: -1px; margin: 0;">inventory</h2>
+            <p style="font-style: italic; color: var(--gray); margin: 5px 0 0 0; font-size: 0.85rem;">Manage catalog items, pricing, and stock.</p>
+        </div>
+        <a href="{{ url_for('dashboard.new_product') }}" class="btn-clay">+ ADD PRODUCT</a>
+    </div>
+
+    <input type="text" id="inventorySearch" onkeyup="filterProducts()" 
+           placeholder="Search product inventory by name..." 
+           style="width: 100%; padding: 12px 15px; border: 1px solid #eee; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; outline: none; background: #fafafa; margin-bottom: 20px;">
+
+    <table id="productsTable" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+        <thead>
+            <tr style="border-bottom: 1px solid #eee;">
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Product</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Price</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Stock</th>
+                <th style="text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Attributes</th>
+                <th style="text-align: right; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px; color: var(--gray);">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in products %}
+            <tr style="border-bottom: 1px solid #f9f9f9;">
+                <td style="padding: 15px 12px;">
+                    <strong>{{ p.name }}</strong>
+                    {% if p.is_flash_sale %}
+                        <span style="font-family: 'Montserrat'; font-size: 0.6rem; font-weight: bold; background: #ffebeb; color: #b33a3a; padding: 2px 6px; border-radius: 3px; margin-left: 5px;">🔥 FLASH SALE</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 15px 12px; font-family: 'Montserrat';">
+                    {% if p.has_discount %}
+                        <span style="text-decoration: line-through; color: var(--gray); font-size: 0.75rem;">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span><br>
+                        <strong style="color: var(--clay);">{{ store.currency }}{{ "{:,.2f}".format(p.discount_price) }}</strong>
+                    {% else %}
+                        <strong>{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</strong>
+                    {% endif %}
+                </td>
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-size: 0.8rem;">
+                    {{ p.stock }} units
+                </td>
+                <td style="padding: 15px 12px; font-family: 'Montserrat'; font-size: 0.75rem; color: var(--gray);">
+                    {% for key, vals in p.get_attributes().items() %}
+                        <div><strong>{{ key }}:</strong> {{ vals|join(', ') }}</div>
+                    {% else %}
+                        <em>None</em>
+                    {% endfor %}
+                </td>
+                <td style="padding: 15px 12px; text-align: right;">
+                    <a href="{{ url_for('dashboard.edit_product', id=p.id) }}" style="font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; color: var(--clay); text-decoration: none; margin-right: 15px;">EDIT</a>
+                    <form action="{{ url_for('dashboard.delete_product', id=p.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Delete this product permanently?');">
+                        <button type="submit" class="link-button" style="color: #b33a3a;">DELETE</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; font-style: italic; color: var(--gray);">No products listed in catalog yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function filterProducts() {
+        const query = document.getElementById('inventorySearch').value.toLowerCase();
+        const rows = document.querySelectorAll('#productsTable tbody tr');
+        rows.forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
