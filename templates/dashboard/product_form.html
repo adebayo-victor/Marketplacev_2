@@ -1,0 +1,95 @@
+{% extends 'dashboard/layout.html' %}
+
+{% block title %}{% if product %}Edit Product{% else %}Add Product{% endif %} // {{ store.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="section-box" style="max-width: 800px;">
+    <div style="margin-bottom: 30px;">
+        <a href="{{ url_for('dashboard.products') }}" style="font-family: 'Montserrat'; font-size: 0.7rem; color: var(--gray); text-decoration: none;">&larr; Back to inventory</a>
+        <h2 style="font-family: 'Montserrat'; font-size: 1.8rem; text-transform: lowercase; letter-spacing: -1px; margin: 10px 0 0 0;">
+            {% if product %}edit product: {{ product.name }}{% else %}add new product{% endif %}
+        </h2>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px;">
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Product Name</label>
+            <input type="text" name="name" required value="{{ product.name if product else '' }}" placeholder="e.g. Smart 4K Television" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem; outline: none;">
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Description</label>
+            <textarea name="description" rows="3" placeholder="Key specifications, warranty, or details..." style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem; outline: none;">{{ product.description if product else '' }}</textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Original Price ({{ store.currency }})</label>
+                <input type="number" step="0.01" name="original_price" required value="{{ product.original_price if product else '' }}" placeholder="50000" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem; outline: none;">
+            </div>
+            <div>
+                <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Discount Price ({{ store.currency }}) — Optional</label>
+                <input type="number" step="0.01" name="discount_price" value="{{ product.discount_price if product and product.discount_price else '' }}" placeholder="Leave blank if no discount" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem; outline: none;">
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Stock Units</label>
+                <input type="number" name="stock" value="{{ product.stock if product else 1 }}" min="0" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem; outline: none;">
+            </div>
+            <div style="display: flex; align-items: center; padding-top: 25px;">
+                <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    <input type="checkbox" name="is_flash_sale" {% if product and product.is_flash_sale %}checked{% endif %} style="margin-right: 8px;">
+                    🔥 Pin to Top as Flash Sale
+                </label>
+            </div>
+        </div>
+
+        <!-- Dynamic Custom Attributes Section -->
+        <div style="padding: 20px; background: #fff9f5; border-left: 3px solid var(--clay); margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="font-family: 'Montserrat'; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Custom Product Variants & Features</h4>
+                <button type="button" onclick="addAttributeRow()" class="btn-clay" style="padding: 6px 12px; font-size: 0.6rem;">+ Add Feature</button>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--gray); margin-top: 0;">Add custom features like Screen Size, Color, or Storage. Separate options with commas.</p>
+
+            <div id="attributesContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                {% if product and product.get_attributes() %}
+                    {% for a_name, a_vals in product.get_attributes().items() %}
+                    <div class="attr-row" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Screen Size)" style="flex: 1; padding: 10px; border: 1px solid #eee; background: white; font-family: 'Montserrat'; font-size: 0.75rem;">
+                        <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Options separated by comma (e.g. 45, 60, 75)" style="flex: 2; padding: 10px; border: 1px solid #eee; background: white; font-family: 'Montserrat'; font-size: 0.75rem;">
+                        <button type="button" onclick="this.parentElement.remove()" style="border: none; background: none; color: #b33a3a; font-weight: bold; cursor: pointer;">&times;</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--clay); margin-bottom: 5px;">Product Image</label>
+            <input type="file" name="image" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.75rem;">
+        </div>
+
+        <button type="submit" class="btn-oak" style="padding: 15px; margin-top: 15px;">
+            {% if product %}SAVE CHANGES &rarr;{% else %}PUBLISH PRODUCT TO KIOSK &rarr;{% endif %}
+        </button>
+    </form>
+</div>
+
+<script>
+function addAttributeRow() {
+    const container = document.getElementById('attributesContainer');
+    const div = document.createElement('div');
+    div.className = 'attr-row';
+    div.style = 'display: flex; gap: 10px; align-items: center;';
+    div.innerHTML = `
+        <input type="text" name="attr_name[]" placeholder="Feature (e.g. Storage)" style="flex: 1; padding: 10px; border: 1px solid #eee; background: white; font-family: 'Montserrat'; font-size: 0.75rem;">
+        <input type="text" name="attr_values[]" placeholder="Options separated by comma (e.g. 64GB, 128GB, 256GB)" style="flex: 2; padding: 10px; border: 1px solid #eee; background: white; font-family: 'Montserrat'; font-size: 0.75rem;">
+        <button type="button" onclick="this.parentElement.remove()" style="border: none; background: none; color: #b33a3a; font-weight: bold; cursor: pointer;">&times;</button>
+    `;
+    container.appendChild(div);
+}
+</script>
+{% endblock %}
