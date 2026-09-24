@@ -143,6 +143,8 @@
             <nav>
                 <a href="{{ url_for('dashboard.overview') }}">• Overview</a>
                 <a href="{{ url_for('dashboard.products') }}">• Inventory & Products</a>
+                <a href="{{ url_for('audit.lost_leads') }}">• Lost Leads (Recovery)</a>
+                <a href="{{ url_for('audit.audit_ledger') }}">• Audit & Voids Ledger</a>
                 <a href="{{ url_for('dashboard.manage_ads') }}">• Monetization (Ad Slots)</a>
                 <a href="{{ url_for('dashboard.settings') }}">• Store Settings</a>
                 <a href="/{{ store.slug }}" target="_blank" style="margin-top: 25px; color: var(--clay); font-weight: 700;">
