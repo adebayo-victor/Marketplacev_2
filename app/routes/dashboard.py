@@ -6,6 +6,7 @@ from app import db
 from app.models import Store, Product, StoreAd, Order
 from app.utils.media import upload_image
 from app.utils.whatsapp import clean_phone_number
+from app.utils.ai_builder import generate_kiosk_template
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -30,6 +31,7 @@ def overview():
 # -------------------------------------------------------------
 # OPEN AN ADDITIONAL KIOSK
 # -------------------------------------------------------------
+
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -38,6 +40,7 @@ def new_kiosk():
         custom_slug = request.form.get('slug', '').strip()
         whatsapp = request.form.get('whatsapp_number', '').strip()
         bio = request.form.get('bio', 'Welcome to our official store!').strip()
+        ai_prompt = request.form.get('ai_prompt', '').strip()
 
         if not name or not whatsapp:
             flash('Store name and WhatsApp number are required.', 'danger')
@@ -48,25 +51,49 @@ def new_kiosk():
             flash(f'The link "/{slug}" is already taken. Please choose another.', 'warning')
             return render_template('dashboard/kiosk_new.html')
 
-        # Create Store under this Merchant
+        # 1. Upload Visual Media to Cloudinary (returns CDN URLs)
+        logo_file = request.files.get('logo')
+        hero_file = request.files.get('hero_image')
+        bg_file = request.files.get('background_image')
+
+        logo_url = upload_image(logo_file, 'logos') or ''
+        hero_url = upload_image(hero_file, 'heroes') or ''
+        bg_url = upload_image(bg_file, 'backgrounds') or ''
+
+        # 2. Query Gemini AI to write custom HTML template using prompt & Cloudinary URLs
+        generated_html = generate_kiosk_template(
+            kiosk_name=name,
+            bio=bio,
+            prompt=ai_prompt or f"A clean, modern storefront for {name}",
+            logo_url=logo_url,
+            hero_url=hero_url,
+            bg_url=bg_url,
+            currency='₦'
+        )
+
+        # 3. Create Store Record with AI-generated custom HTML
         clean_phone = clean_phone_number(whatsapp)
         store = Store(
             user_id=current_user.id,
             name=name,
             slug=slug,
             whatsapp_number=clean_phone,
-            bio=bio
+            bio=bio,
+            logo=logo_url or 'default_logo.png',
+            hero_image=hero_url,
+            background_image=bg_url,
+            custom_html=generated_html  # The bespoke AI template!
         )
         db.session.add(store)
         db.session.flush()
 
-        # Initialize the 3 default Ad Slots for this kiosk
+        # Initialize the 3 default Ad Slots
         for slot_num in [1, 2, 3]:
             ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
             db.session.add(ad)
 
         db.session.commit()
-        flash(f'Kiosk "{name}" launched successfully!', 'success')
+        flash(f'AI successfully designed and launched your kiosk: "{name}"!', 'success')
         return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=store.slug))
 
     return render_template('dashboard/kiosk_new.html')
