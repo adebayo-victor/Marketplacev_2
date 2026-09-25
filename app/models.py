@@ -8,13 +8,12 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)  # <-- The username property
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # One merchant owns many kiosks
     stores = db.relationship('Store', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
 
     def set_password(self, password):
@@ -33,15 +32,17 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
-    # Visual Branding Media
     logo = db.Column(db.String(500), default='default_logo.png')
     hero_image = db.Column(db.String(500), default='')
     background_image = db.Column(db.String(500), default='')
+    receipt_theme = db.Column(db.String(50), default='classic')
+    
+    # 🎛️ Sectional Activation Storage (Hero, Flash Sales, Ads, etc.)
+    sections_config = db.Column(db.Text, default='{"hero": true, "flash_sales": true, "ads": true}')
     
     whatsapp_number = db.Column(db.String(20), nullable=False)
     currency = db.Column(db.String(10), default='₦')
     
-    # Social Proof & Link Previews
     views_count = db.Column(db.Integer, default=0)
     show_public_stats = db.Column(db.Boolean, default=False)
     custom_html = db.Column(db.Text, default='')
@@ -54,14 +55,22 @@ class Store(db.Model):
     abandoned_carts = db.relationship('AbandonedCart', backref='store', lazy='dynamic', cascade="all, delete-orphan")
     audit_logs = db.relationship('AuditLog', backref='store', lazy='dynamic', cascade="all, delete-orphan")
 
+    def get_sections(self):
+        try:
+            return json.loads(self.sections_config or '{}')
+        except Exception:
+            return {"hero": True, "flash_sales": True, "ads": True}
+
+    def is_section_active(self, section_name: str) -> bool:
+        return bool(self.get_sections().get(section_name, True))
+
 
 class StoreAd(db.Model):
-    """3 Monetization Ad Slots per Store"""
     __tablename__ = 'store_ads'
 
     id = db.Column(db.Integer, primary_key=True)
     store_id = db.Column(db.Integer, db.ForeignKey('stores.id'), nullable=False)
-    slot_number = db.Column(db.Integer, nullable=False)  # 1: Header, 2: Mid-catalog, 3: Footer
+    slot_number = db.Column(db.Integer, nullable=False)
     banner_image = db.Column(db.String(500), nullable=True)
     target_link = db.Column(db.String(500), nullable=True)
     is_active = db.Column(db.Boolean, default=False)
