@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Master Command // Marketplace{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root { 
+            --clay: #8d5b3e; 
+            --cream: #f9f5f0; 
+            --dark-oak: #2d1e14; 
+            --gray: #888888;
+        }
+        body { 
+            background: var(--cream); 
+            color: var(--dark-oak); 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: row; 
+            min-height: 100vh;
+        }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
+        .sidebar { 
+            width: 280px; 
+            position: fixed; 
+            height: 100vh; 
+            background: #251810; 
+            color: white;
+            padding: 50px 30px; 
+            z-index: 100; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sidebar nav { 
+            margin-top: 40px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.75rem; 
+            font-weight: 600;
+            line-height: 3; 
+            letter-spacing: 0.5px;
+        }
+        .sidebar nav a { 
+            text-decoration: none; 
+            color: #d1c5be; 
+            display: block; 
+            transition: 0.3s; 
+        }
+        .sidebar nav a:hover { color: #f59e0b; }
+        .main-content { 
+            margin-left: 280px; 
+            padding: 60px 5%; 
+            width: calc(100% - 280px); 
+        }
+        .section-box { 
+            background: white; 
+            padding: 40px; 
+            margin-bottom: 40px; 
+            border-left: 5px solid var(--clay); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02); 
+            overflow-x: auto; 
+        }
+        .btn-oak { 
+            background: var(--dark-oak); 
+            color: white; 
+            padding: 12px 20px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            letter-spacing: 1px; 
+            text-transform: uppercase; 
+            text-decoration: none; 
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .btn-clay { 
+            background: var(--clay); 
+            color: white; 
+            padding: 12px 20px; 
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            letter-spacing: 1px; 
+            text-transform: uppercase; 
+            text-decoration: none; 
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; padding: 25px 5%; }
+            .main-content { margin-left: 0; width: 100%; padding: 30px 5%; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="font-ui text-[0.65rem] text-[#f59e0b] uppercase tracking-widest font-bold mb-1">Platform Overseer</div>
+            <h3 class="font-ui text-xl font-normal lowercase tracking-tight m-0 text-white">master command.</h3>
+            
+            <nav>
+                <a href="{{ url_for('admin.overview') }}">• Platform Analytics</a>
+                <a href="{{ url_for('admin.env_manager') }}">• Secrets & .env Keys</a>
+                <a href="{{ url_for('dashboard.overview') }}" style="margin-top: 30px; color: #f59e0b;">
+                    &larr; Switch to Merchant View
+                </a>
+            </nav>
+        </div>
+
+        <div class="pt-6 border-t border-stone-800">
+            <span class="font-ui text-[0.65rem] text-stone-500 block">Operator: {{ current_user.email }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="font-ui text-[0.7rem] text-rose-400 font-semibold no-underline mt-1 block">Log Out</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <!-- Flash Banners -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-8">
+                    {% for category, message in messages %}
+                        <div class="bg-white border-l-4 border-[#f59e0b] p-4 font-ui text-xs shadow-sm flex justify-between items-center">
+                            <span>{{ message }}</span>
+                            <button onclick="this.parentElement.remove()" class="font-bold text-stone-400 hover:text-black">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block admin_content %}{% endblock %}
+    </main>
+
+</body>
+</html>
