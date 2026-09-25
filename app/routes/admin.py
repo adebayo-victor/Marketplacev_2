@@ -73,12 +73,14 @@ def env_manager():
     env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
     
     # Tracked secret keys
+    # In app/routes/admin.py, update target_keys to:
     target_keys = [
         'SECRET_KEY',
         'CLOUDINARY_CLOUD_NAME',
         'CLOUDINARY_API_KEY',
         'CLOUDINARY_API_SECRET',
-        'AI_API_KEY'
+        'AI_API_KEY',
+        'OPENROUTER_API_KEY'  # <--- Added
     ]
 
     if request.method == 'POST':
