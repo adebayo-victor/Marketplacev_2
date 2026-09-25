@@ -15,6 +15,27 @@
 <div class="section-box max-w-2xl">
     <form method="POST" class="space-y-6">
 
+        <!-- 🔵 Google OAuth Credentials -->
+        <div class="border-b border-stone-100 pb-6">
+            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">Google OAuth Credentials</h3>
+            <p class="font-serif italic text-xs text-stone-400 mb-4">Required for 1-Click "Continue with Google" merchant sign-in.</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Google Client ID</label>
+                    <input type="text" name="GOOGLE_CLIENT_ID" value="{{ env_values.get('GOOGLE_CLIENT_ID', '') }}" 
+                           placeholder="xxxxxxxxxxxx-xxxxxxxxxxxxxxxx.apps.googleusercontent.com"
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Google Client Secret</label>
+                    <input type="password" name="GOOGLE_CLIENT_SECRET" value="{{ env_values.get('GOOGLE_CLIENT_SECRET', '') }}" 
+                           placeholder="GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx"
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
+            </div>
+        </div>
+
         <!-- 💳 Paystack Payment Gateway Keys -->
         <div class="border-b border-stone-100 pb-6">
             <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">Paystack Gateway Credentials</h3>
@@ -22,13 +43,13 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Public Key (pk_test_... or pk_live_...)</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Public Key</label>
                     <input type="text" name="PAYSTACK_PUBLIC_KEY" value="{{ env_values.get('PAYSTACK_PUBLIC_KEY', '') }}" 
                            placeholder="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
                 </div>
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Secret Key (sk_test_... or sk_live_...)</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Secret Key</label>
                     <input type="password" name="PAYSTACK_SECRET_KEY" value="{{ env_values.get('PAYSTACK_SECRET_KEY', '') }}" 
                            placeholder="sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
@@ -65,9 +86,7 @@
 
         <!-- AI Engine Keys -->
         <div class="border-b border-stone-100 pb-6">
-            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">AI Engine Keys (Dual-Failover Architecture)</h3>
-            <p class="font-serif italic text-xs text-stone-400 mb-4">If Gemini fails or hits a quota limit, OpenRouter automatically generates the website.</p>
-
+            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">AI Engine Keys</h3>
             <div class="space-y-4">
                 <div>
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Primary: Google Gemini API Key</label>
@@ -76,7 +95,7 @@
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
                 </div>
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Backup: OpenRouter API Key (sk-or-v1-...)</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Backup: OpenRouter API Key</label>
                     <input type="password" name="OPENROUTER_API_KEY" value="{{ env_values.get('OPENROUTER_API_KEY', '') }}" 
                            placeholder="sk-or-v1-..."
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
