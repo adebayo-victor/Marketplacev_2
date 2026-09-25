@@ -25,6 +25,15 @@
             color: var(--dark-oak);
             font-family: 'Georgia', serif;
             margin: 0;
+
+            /* 🎨 MARKETPLACE SIGNATURE WALLPAPER WITH SUBTLE CREAM OVERLAY */
+            background-image: 
+                linear-gradient(rgba(249, 245, 240, 0.92), rgba(249, 245, 240, 0.92)),
+                url('/static/images/marketplace_bg.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .font-ui {
@@ -32,7 +41,8 @@
         }
 
         .nav-bar {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
             padding: 20px 5%;
             display: flex;
             justify-content: space-between;
@@ -108,10 +118,11 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Top Navigation Bar -->
-    <header class="nav-bar">
+    <header class="nav-bar sticky top-0 z-40">
         <a href="/" class="brand-logo">MARKETPLACE.</a>
         <div>
             {% if current_user.is_authenticated %}
+                <a href="/dashboard" class="font-ui text-xs text-clay hover:opacity-80 transition tracking-wider uppercase font-bold mr-4">Hub</a>
                 <a href="{{ url_for('auth.logout') }}" class="font-ui text-xs text-rose-500 hover:text-rose-700 transition tracking-wider uppercase font-semibold">Log Out</a>
             {% else %}
                 <a href="{{ url_for('auth.login') }}" class="font-ui text-xs text-stone-600 hover:text-clay transition tracking-wider uppercase font-semibold mr-4">Log In</a>
