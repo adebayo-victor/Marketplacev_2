@@ -1,6 +1,7 @@
 import uuid
 import json
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort
+from flask_login import current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order, OrderItem
 from app.utils.whatsapp import clean_phone_number, build_whatsapp_order_link
@@ -10,7 +11,7 @@ storefront_bp = Blueprint('storefront', __name__)
 @storefront_bp.route('/')
 def landing():
     """Main marketplace discovery page showing active merchant storefronts."""
-    stores = Store.query.order_by(Store.views_count.desc()).all()
+    stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
 
@@ -19,21 +20,26 @@ def store_catalog(store_slug):
     """Dynamic public storefront for a merchant."""
     store = Store.query.filter_by(slug=store_slug).first_or_404()
 
+    # 🔒 PREVIEW / LOCKED KIOSK CHECK
+    if not store.is_active:
+        is_owner = current_user.is_authenticated and (current_user.id == store.user_id or current_user.is_admin)
+        if not is_owner:
+            # If has_ever_activated is True: Landlord locked it! If False: Brand new shop
+            return render_template('store/locked.html', store=store, is_owing=store.has_ever_activated)
+
     # Track view count (Live analytics)
     store.views_count += 1
     db.session.commit()
 
-    # Fetch active products
     all_products = store.products.filter_by(is_active=True).all()
     flash_sales = [p for p in all_products if p.is_flash_sale and p.stock > 0]
     regular_products = [p for p in all_products if not p.is_flash_sale]
 
-    # Fetch active Ad Slots
     ad_slots = {
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
-    # 🛠️ IF MASTER ADMIN OVERRODE WITH CUSTOM HTML TEMPLATE:
+    # If Master Admin or AI created custom HTML:
     if store.custom_html and store.custom_html.strip():
         from flask import render_template_string
         return render_template_string(
@@ -44,7 +50,6 @@ def store_catalog(store_slug):
             ad_slots=ad_slots
         )
 
-    # Otherwise, render default theme
     return render_template(
         'store/catalog.html',
         store=store,
@@ -56,7 +61,6 @@ def store_catalog(store_slug):
 
 @storefront_bp.route('/ad/click/<int:ad_id>')
 def click_ad(ad_id):
-    """Tracks sponsor ad clicks and redirects to destination URL."""
     ad = StoreAd.query.get_or_404(ad_id)
     ad.clicks_count += 1
     db.session.commit()
@@ -65,7 +69,6 @@ def click_ad(ad_id):
 
 @storefront_bp.route('/<store_slug>/checkout', methods=['POST'])
 def checkout(store_slug):
-    """Processes customer checkout, creates order in DB, and returns WhatsApp URL."""
     store = Store.query.filter_by(slug=store_slug).first_or_404()
     data = request.get_json() or {}
 
@@ -81,7 +84,6 @@ def checkout(store_slug):
     total_amount = 0.0
     summary_lines = []
 
-    # 1. Create Order Container
     order = Order(
         store_id=store.id,
         order_ref=order_ref,
@@ -95,11 +97,10 @@ def checkout(store_slug):
     db.session.add(order)
     db.session.flush()
 
-    # 2. Process Order Items & Deduct Stock
     for item in cart_items:
         product_id = item.get('product_id')
         qty = int(item.get('quantity', 1))
-        chosen_variants = item.get('variants', '')  # e.g., "Screen Size: 60 inch"
+        chosen_variants = item.get('variants', '')
 
         product = Product.query.filter_by(id=product_id, store_id=store.id).first()
         if not product or product.stock < qty:
@@ -110,10 +111,8 @@ def checkout(store_slug):
         subtotal = unit_price * qty
         total_amount += subtotal
 
-        # Deduct stock
         product.stock -= qty
 
-        # Add OrderItem
         order_item = OrderItem(
             order_id=order.id,
             product_id=product.id,
@@ -132,7 +131,6 @@ def checkout(store_slug):
     order.items_summary = "\n".join(summary_lines)
     db.session.commit()
 
-    # 3. Build WhatsApp Redirect Link
     whatsapp_url = build_whatsapp_order_link(
         store_phone=store.whatsapp_number,
         store_name=store.name,
@@ -148,7 +146,6 @@ def checkout(store_slug):
 
 @storefront_bp.route('/receipt/<order_ref>')
 def public_receipt(order_ref):
-    """Public customer invoice & digital receipt with client-side PDF download."""
     order = Order.query.filter_by(order_ref=order_ref).first_or_404()
     store = order.store
     return render_template('store/receipt.html', order=order, store=store)
