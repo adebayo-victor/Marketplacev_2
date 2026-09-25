@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Template Editor // {{ store.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.overview') }}" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to Platform Vitals</a>
+    <h1 class="font-ui text-2xl font-normal lowercase tracking-tight m-0 mt-2 text-dark-oak">
+        inspect & edit template: <span class="text-clay font-bold">{{ store.name }}</span>
+    </h1>
+    <p class="font-serif italic text-stone-500 text-xs mt-1">
+        Inspect what AI generated, or inject custom HTML markup directly into this kiosk. Leave blank to use the standard default theme.
+    </p>
+</div>
+
+<div class="section-box max-w-5xl">
+    <form method="POST">
+        <div class="flex justify-between items-center mb-3">
+            <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-clay">Raw Jinja2 / HTML Source Code</span>
+            <span class="font-ui text-[0.65rem] text-stone-400">Live Kiosk: <a href="/{{ store.slug }}" target="_blank" class="text-clay hover:underline">/{{ store.slug }} &nearr;</a></span>
+        </div>
+
+        <textarea name="custom_html" rows="22" 
+                  placeholder="<!-- Paste or edit custom HTML markup for this kiosk here. If left empty, the standard catalog.html template will be used. -->"
+                  class="w-full p-4 font-mono text-xs bg-[#1a1410] text-[#f4efe9] border border-stone-800 outline-none focus:border-clay leading-relaxed rounded-none shadow-inner"
+                  spellcheck="false">{{ store.custom_html }}</textarea>
+
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-stone-100">
+            <p class="font-serif italic text-xs text-stone-400 m-0">Variables available: <code>store</code>, <code>flash_sales</code>, <code>regular_products</code>, <code>ad_slots</code>.</p>
+            <button type="submit" class="btn-oak py-3 px-6">
+                SAVE & PUBLISH CODE &rarr;
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
