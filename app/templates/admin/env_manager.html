@@ -15,6 +15,27 @@
 <div class="section-box max-w-2xl">
     <form method="POST" class="space-y-6">
 
+        <!-- 💳 Paystack Payment Gateway Keys -->
+        <div class="border-b border-stone-100 pb-6">
+            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">Paystack Gateway Credentials</h3>
+            <p class="font-serif italic text-xs text-stone-400 mb-4">Required for automated merchant Go-Live kiosk activation fees (₦10,000).</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Public Key (pk_test_... or pk_live_...)</label>
+                    <input type="text" name="PAYSTACK_PUBLIC_KEY" value="{{ env_values.get('PAYSTACK_PUBLIC_KEY', '') }}" 
+                           placeholder="pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Paystack Secret Key (sk_test_... or sk_live_...)</label>
+                    <input type="password" name="PAYSTACK_SECRET_KEY" value="{{ env_values.get('PAYSTACK_SECRET_KEY', '') }}" 
+                           placeholder="sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
+            </div>
+        </div>
+
         <!-- Cloudinary Keys -->
         <div class="border-b border-stone-100 pb-6">
             <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">Cloudinary CDN Credentials</h3>
@@ -22,9 +43,9 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Cloud Name (Find this in your Cloudinary Dashboard)</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Cloud Name</label>
                     <input type="text" name="CLOUDINARY_CLOUD_NAME" value="{{ env_values.get('CLOUDINARY_CLOUD_NAME', '') }}" 
-                           placeholder="e.g. dxyz123abc (Do NOT use 'Root')"
+                           placeholder="e.g. dxyz123abc"
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
                 </div>
                 <div>
@@ -42,7 +63,7 @@
             </div>
         </div>
 
-        <!-- AI Engine Keys: Primary & Backup -->
+        <!-- AI Engine Keys -->
         <div class="border-b border-stone-100 pb-6">
             <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">AI Engine Keys (Dual-Failover Architecture)</h3>
             <p class="font-serif italic text-xs text-stone-400 mb-4">If Gemini fails or hits a quota limit, OpenRouter automatically generates the website.</p>
