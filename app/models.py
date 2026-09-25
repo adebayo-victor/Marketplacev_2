@@ -32,12 +32,14 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
+    # 🔒 Digital Landlord State Tracking
+    is_active = db.Column(db.Boolean, default=False)           # Current live status
+    has_ever_activated = db.Column(db.Boolean, default=False)  # Distinguishes brand new vs closed/owing
+    
     logo = db.Column(db.String(500), default='default_logo.png')
     hero_image = db.Column(db.String(500), default='')
     background_image = db.Column(db.String(500), default='')
     receipt_theme = db.Column(db.String(50), default='classic')
-    
-    # 🎛️ Sectional Activation Storage (Hero, Flash Sales, Ads, etc.)
     sections_config = db.Column(db.Text, default='{"hero": true, "flash_sales": true, "ads": true}')
     
     whatsapp_number = db.Column(db.String(20), nullable=False)
