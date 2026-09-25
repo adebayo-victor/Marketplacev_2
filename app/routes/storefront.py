@@ -28,11 +28,23 @@ def store_catalog(store_slug):
     flash_sales = [p for p in all_products if p.is_flash_sale and p.stock > 0]
     regular_products = [p for p in all_products if not p.is_flash_sale]
 
-    # Fetch active Ad Slots (1: Header, 2: Mid-catalog, 3: Footer)
+    # Fetch active Ad Slots
     ad_slots = {
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
+    # 🛠️ IF MASTER ADMIN OVERRODE WITH CUSTOM HTML TEMPLATE:
+    if store.custom_html and store.custom_html.strip():
+        from flask import render_template_string
+        return render_template_string(
+            store.custom_html,
+            store=store,
+            flash_sales=flash_sales,
+            regular_products=regular_products,
+            ad_slots=ad_slots
+        )
+
+    # Otherwise, render default theme
     return render_template(
         'store/catalog.html',
         store=store,
