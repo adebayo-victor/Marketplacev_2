@@ -6,7 +6,6 @@ from app import db
 from app.models import Store, Product, StoreAd, Order
 from app.utils.media import upload_image
 from app.utils.whatsapp import clean_phone_number
-from app.utils.ai_builder import generate_kiosk_template
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -17,21 +16,19 @@ def slugify(text: str) -> str:
 
 
 # -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (All Kiosks Belonging to Merchant)
+# LEVEL 1: THE MERCHANT HUB (Starts Plain: 0 Kiosks)
 # -------------------------------------------------------------
 @dashboard_bp.route('/')
 @login_required
 def overview():
-    """Merchant Hub: Shows all storefronts/kiosks owned by this merchant."""
-    # Notice: using current_user.stores (plural)
+    """Merchant Hub: Shows all storefronts owned by this merchant."""
     kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
 # -------------------------------------------------------------
-# OPEN AN ADDITIONAL KIOSK
+# OPEN A NEW KIOSK (PLAIN CREATION)
 # -------------------------------------------------------------
-
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -40,7 +37,6 @@ def new_kiosk():
         custom_slug = request.form.get('slug', '').strip()
         whatsapp = request.form.get('whatsapp_number', '').strip()
         bio = request.form.get('bio', 'Welcome to our official store!').strip()
-        ai_prompt = request.form.get('ai_prompt', '').strip()
 
         if not name or not whatsapp:
             flash('Store name and WhatsApp number are required.', 'danger')
@@ -51,27 +47,16 @@ def new_kiosk():
             flash(f'The link "/{slug}" is already taken. Please choose another.', 'warning')
             return render_template('dashboard/kiosk_new.html')
 
-        # 1. Upload Visual Media to Cloudinary (returns CDN URLs)
+        # Visual Media (Cloudinary / Local)
         logo_file = request.files.get('logo')
         hero_file = request.files.get('hero_image')
         bg_file = request.files.get('background_image')
 
-        logo_url = upload_image(logo_file, 'logos') or ''
+        logo_url = upload_image(logo_file, 'logos') or 'default_logo.png'
         hero_url = upload_image(hero_file, 'heroes') or ''
         bg_url = upload_image(bg_file, 'backgrounds') or ''
 
-        # 2. Query Gemini AI to write custom HTML template using prompt & Cloudinary URLs
-        generated_html = generate_kiosk_template(
-            kiosk_name=name,
-            bio=bio,
-            prompt=ai_prompt or f"A clean, modern storefront for {name}",
-            logo_url=logo_url,
-            hero_url=hero_url,
-            bg_url=bg_url,
-            currency='₦'
-        )
-
-        # 3. Create Store Record with AI-generated custom HTML
+        # Create Store under this Merchant
         clean_phone = clean_phone_number(whatsapp)
         store = Store(
             user_id=current_user.id,
@@ -79,21 +64,20 @@ def new_kiosk():
             slug=slug,
             whatsapp_number=clean_phone,
             bio=bio,
-            logo=logo_url or 'default_logo.png',
+            logo=logo_url,
             hero_image=hero_url,
-            background_image=bg_url,
-            custom_html=generated_html  # The bespoke AI template!
+            background_image=bg_url
         )
         db.session.add(store)
         db.session.flush()
 
-        # Initialize the 3 default Ad Slots
+        # Initialize the 3 default Ad Slots for this kiosk
         for slot_num in [1, 2, 3]:
             ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
             db.session.add(ad)
 
         db.session.commit()
-        flash(f'AI successfully designed and launched your kiosk: "{name}"!', 'success')
+        flash(f'Kiosk "{name}" launched successfully!', 'success')
         return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=store.slug))
 
     return render_template('dashboard/kiosk_new.html')
@@ -139,7 +123,7 @@ def new_product(kiosk_slug):
         stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # Parse Custom Dynamic Attributes (e.g. Screen Size: 45", 60")
+        # Custom Dynamic Attributes (e.g. Screen Size: 45", 60")
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
@@ -149,7 +133,7 @@ def new_product(kiosk_slug):
                 if opts:
                     attributes_dict[a_name.strip()] = opts
 
-        # Upload image via Cloudinary or local fallback
+        # Image Upload
         image_file = request.files.get('image')
         image_name = upload_image(image_file, 'products') or 'default_product.png'
 
@@ -230,7 +214,7 @@ def delete_product(kiosk_slug, id):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Settings & Visuals (Logo, Hero, Background) for specific kiosk
+# Settings & Branding
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
@@ -265,7 +249,7 @@ def update_kiosk_settings(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Manage 3 Ad Slots for specific kiosk
+# Manage 3 Ad Slots
 @dashboard_bp.route('/<kiosk_slug>/ads', methods=['POST'])
 @login_required
 def update_kiosk_ads(kiosk_slug):
@@ -290,7 +274,7 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Delete entire kiosk
+# Delete kiosk
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
