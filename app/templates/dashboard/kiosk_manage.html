@@ -49,7 +49,7 @@
             <a href="#inventory">• Inventory</a>
             <a href="#leads">• Customer Leads</a>
             <a href="#ads">• Monetization Ads</a>
-            <a href="#branding">• Visuals & Settings</a>
+            <a href="#branding">• Branding & Receipts</a>
             <a href="/{{ kiosk.slug }}" target="_blank" style="margin-top: 20px; color: var(--brand); font-weight: 600;">View Public Kiosk &nearr;</a>
         </nav>
         <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -122,7 +122,8 @@
                         </td>
                         <td>{{ p.stock }} units</td>
                         <td>
-                            <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 15px; font-family: 'Montserrat';">EDIT</a>
+                            <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" style="color: #06b6d4; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 12px; font-family: 'Montserrat';">FLYER 📸</a>
+                            <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 12px; font-family: 'Montserrat';">EDIT</a>
                             <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Delete this product permanently?');">
                                 <button type="submit" class="link-button" style="color: #e74c3c;">DELETE</button>
                             </form>
@@ -140,7 +141,7 @@
             <h2>Customer Leads & Orders</h2>
             <table id="leadsTable">
                 <thead>
-                    <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th></tr>
+                    <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th><th>Receipt</th></tr>
                 </thead>
                 <tbody>
                     {% for l in leads %}
@@ -150,18 +151,19 @@
                         <td><a href="https://wa.me/{{ l.customer_phone }}" target="_blank" style="color: var(--brand); font-family: 'Montserrat'; font-size: 0.8rem;">{{ l.customer_phone }} &nearr;</a></td>
                         <td style="font-family: 'Montserrat'; font-weight: 600;">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
                         <td><span style="font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; font-weight: 600;">{{ l.status }}</span></td>
+                        <td><a href="/receipt/{{ l.order_ref }}" target="_blank" style="color: var(--dark); font-weight: bold; font-size: 0.75rem;">View &darr;</a></td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="5" style="text-align: center; color: var(--gray); font-style: italic;">No orders captured yet.</td></tr>
+                    <tr><td colspan="6" style="text-align: center; color: var(--gray); font-style: italic;">No orders captured yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Section 3: Visual Branding (Hero, Logo, Background) -->
+        <!-- Section 3: Visual Branding, Settings & Receipt Style -->
         <div class="section-box" id="branding">
-            <h2>Visual Branding & Settings</h2>
-            <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px; max-width: 600px;">
+            <h2>Branding & Invoice Settings</h2>
+            <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px; max-width: 650px;">
                 <div>
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">Kiosk Name</label>
                     <input type="text" name="name" value="{{ kiosk.name }}" required style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
@@ -177,8 +179,52 @@
                     <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ kiosk.bio }}</textarea>
                 </div>
 
+                <!-- 🧾 RECEIPT & INVOICE SIGNATURE THEME PICKER -->
+                <div style="background: #fff9f5; border-left: 4px solid var(--brand); padding: 20px;">
+                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
+                        Select Your Signature Receipt Style
+                    </label>
+                    <p style="font-size: 0.7rem; color: var(--gray); margin-top: 0; margin-bottom: 15px;">
+                        All customer invoice links and downloadable PDFs will permanently use this chosen design.
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="receipt_theme" value="classic" {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}checked{% endif %}>
+                            <div>
+                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Classic Clay</strong>
+                                <span style="font-size: 0.65rem; color: var(--gray);">Artisanal cream & clay</span>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'cyber' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="receipt_theme" value="cyber" {% if kiosk.receipt_theme == 'cyber' %}checked{% endif %}>
+                            <div>
+                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Cyber Obsidian</strong>
+                                <span style="font-size: 0.65rem; color: var(--gray);">Dark terminal & neon</span>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'thermal' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="receipt_theme" value="thermal" {% if kiosk.receipt_theme == 'thermal' %}checked{% endif %}>
+                            <div>
+                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Retail Thermal</strong>
+                                <span style="font-size: 0.65rem; color: var(--gray);">Monochrome register slip</span>
+                            </div>
+                        </label>
+
+                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'luxury' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="receipt_theme" value="luxury" {% if kiosk.receipt_theme == 'luxury' %}checked{% endif %}>
+                            <div>
+                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Luxury Slate</strong>
+                                <span style="font-size: 0.65rem; color: var(--gray);">Deep navy & gold</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Social Proof Toggle -->
-                <div style="background: #fff9f5; border-left: 3px solid var(--brand); padding: 15px;">
+                <div style="background: white; border: 1px solid #eee; padding: 15px;">
                     <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
                         <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} style="margin-right: 8px;">
                         Display Total Visits in WhatsApp Previews (Social Proof)
