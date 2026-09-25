@@ -39,7 +39,7 @@ def create_app(config_class=Config):
     from app.routes.admin import admin_bp  # <--- Register Admin Blueprint
 
     app.register_blueprint(auth_bp)
-    app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(storefront_bp)
     app.register_blueprint(audit_bp, url_prefix='/dashboard/audit')
     app.register_blueprint(api_bp, url_prefix='/api')
