@@ -9,7 +9,7 @@
         <div class="mb-8">
             <a href="/dashboard" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to Merchant Hub</a>
             <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">open a new kiosk.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Configure your storefront link, WhatsApp intake, and design instructions.</p>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Configure your storefront link, sections, and design instructions.</p>
         </div>
 
         <form method="POST" enctype="multipart/form-data" id="kioskForm" onsubmit="showLoadingModal()" class="space-y-6">
@@ -45,13 +45,36 @@
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-serif text-xs text-dark-oak outline-none focus:border-clay">
             </div>
 
+            <!-- 🎛️ SECTIONAL ACTIVATION ON CREATION -->
+            <div class="p-5 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
+                <span class="font-ui text-xs font-bold uppercase tracking-wider text-dark-oak block">
+                    Website Section Activation
+                </span>
+                <p class="font-serif italic text-xs text-stone-500 m-0">Choose which sections you want active on your website:</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 font-ui text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer bg-white p-3 border border-stone-200 rounded-lg">
+                        <input type="checkbox" name="section_hero" checked class="accent-clay">
+                        <span>Hero Banner</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer bg-white p-3 border border-stone-200 rounded-lg">
+                        <input type="checkbox" name="section_flash" checked class="accent-clay">
+                        <span>Flash Deals</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer bg-white p-3 border border-stone-200 rounded-lg">
+                        <input type="checkbox" name="section_ads" checked class="accent-clay">
+                        <span>Sponsor Ads</span>
+                    </label>
+                </div>
+            </div>
+
             <!-- AI Design Prompt -->
             <div class="p-5 bg-[#fff9f5] border-l-4 border-clay">
                 <label class="block font-ui text-xs font-bold uppercase tracking-wider text-dark-oak mb-1">
                     🤖 AI Design Instructions (Prompt)
                 </label>
                 <p class="font-serif italic text-xs text-stone-500 mb-3">
-                    Describe how you want your storefront to look and feel (e.g. colors, aesthetic, vibe, target audience).
+                    Describe how you want your storefront to look and feel (e.g. colors, aesthetic, vibe).
                 </p>
                 <textarea name="ai_prompt" rows="3" 
                           placeholder="e.g. A warm, minimalist luxury boutique with earthy tones, large hero banner, and an editorial catalog showcase."
@@ -84,12 +107,10 @@
     </div>
 </div>
 
-<!-- ⏳ AI GENERATION LOADING MODAL -->
+<!-- AI Generation Loading Modal -->
 <div id="aiLoadingModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-6 hidden">
     <div class="bg-white p-10 max-w-sm w-full text-center border-t-[6px] border-clay shadow-2xl">
-        <!-- Spinner -->
         <div class="inline-block animate-spin w-12 h-12 border-4 border-clay border-t-transparent rounded-full mb-6"></div>
-        
         <h3 class="font-ui text-lg font-bold text-dark-oak mb-2">Assembling Kiosk...</h3>
         <p id="loadingStatusText" class="font-serif italic text-xs text-stone-500 transition-all duration-300">
             Consulting AI design engine...
