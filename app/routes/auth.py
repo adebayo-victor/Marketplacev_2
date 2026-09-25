@@ -1,9 +1,7 @@
-import re
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from app.models import User, Store, StoreAd
-from app.utils.whatsapp import clean_phone_number
+from app.models import User
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -19,13 +17,11 @@ def register():
         return redirect(url_for('dashboard.overview'))
 
     if request.method == 'POST':
+        merchant_name = request.form.get('merchant_name', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
-        store_name = request.form.get('store_name', '').strip()
-        custom_slug = request.form.get('slug', '').strip()
-        whatsapp = request.form.get('whatsapp_number', '').strip()
 
-        if not email or not password or not store_name or not whatsapp:
+        if not merchant_name or not email or not password:
             flash('Please fill in all required fields.', 'danger')
             return render_template('auth/register.html')
 
@@ -33,37 +29,13 @@ def register():
             flash('That email address is already registered. Please log in.', 'warning')
             return render_template('auth/register.html')
 
-        slug = slugify(custom_slug) if custom_slug else slugify(store_name)
-        if Store.query.filter_by(slug=slug).first():
-            flash(f'The store link "/{slug}" is already taken. Please choose another.', 'warning')
-            return render_template('auth/register.html')
-
-        # 1. Create User
-        user = User(email=email)
+        user = User(name=merchant_name, email=email)
         user.set_password(password)
         db.session.add(user)
-        db.session.flush()
-
-        # 2. Create Store
-        clean_phone = clean_phone_number(whatsapp)
-        store = Store(
-            user_id=user.id,
-            name=store_name,
-            slug=slug,
-            whatsapp_number=clean_phone
-        )
-        db.session.add(store)
-        db.session.flush()
-
-        # 3. Initialize the 3 default Ad Slots
-        for slot_num in [1, 2, 3]:
-            ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
-            db.session.add(ad)
-
         db.session.commit()
 
         login_user(user)
-        flash('Storefront launched successfully! Welcome to your dashboard.', 'success')
+        flash(f'Welcome, {merchant_name}! You can now open your first kiosk.', 'success')
         return redirect(url_for('dashboard.overview'))
 
     return render_template('auth/register.html')
@@ -98,3 +70,4 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
+
