@@ -1,15 +1,11 @@
 import os
+import re
 import time
 from werkzeug.utils import secure_filename
 from flask import current_app
 
 def upload_image(file, subfolder='products') -> str:
-    """
-    Intelligent uploader:
-    1. Checks if Cloudinary is configured via environment variables.
-    2. If configured, uploads directly to Cloudinary CDN and returns secure HTTPS URL.
-    3. If not, safely falls back to saving in app/static/uploads/<subfolder>/.
-    """
+    """Uploads image to Cloudinary CDN if credentials exist, otherwise saves locally."""
     if not file or file.filename == '':
         return None
 
@@ -17,7 +13,6 @@ def upload_image(file, subfolder='products') -> str:
     api_key = os.environ.get('CLOUDINARY_API_KEY')
     api_secret = os.environ.get('CLOUDINARY_API_SECRET')
 
-    # 1. Cloudinary Upload (Production CDN)
     if cloud_name and api_key and api_secret:
         try:
             import cloudinary
@@ -39,7 +34,7 @@ def upload_image(file, subfolder='products') -> str:
         except Exception as e:
             print(f"Cloudinary upload failed, falling back to local: {e}")
 
-    # 2. Local Fallback (Development)
+    # Local Fallback
     filename = secure_filename(file.filename)
     dest_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
     os.makedirs(dest_folder, exist_ok=True)
@@ -49,14 +44,35 @@ def upload_image(file, subfolder='products') -> str:
     return unique_filename
 
 
-def resolve_media_url(image_value: str, subfolder='products') -> str:
+def delete_image(image_url: str, subfolder='products'):
     """
-    Returns the appropriate URL for an image:
-    - If it's already a full Cloudinary URL (starts with http), returns it as-is.
-    - If it's a local filename, resolves via static uploads folder.
+    Cleans up storage: Deletes file from Cloudinary CDN or local disk 
+    when a product or kiosk is removed.
     """
-    if not image_value:
-        return ''
-    if image_value.startswith('http://') or image_value.startswith('https://'):
-        return image_value
-    return f"/static/uploads/{subfolder}/{image_value}"
+    if not image_url or image_url.startswith('default_'):
+        return
+
+    # 1. Cloudinary File Cleanup
+    if 'res.cloudinary.com' in image_url:
+        try:
+            import cloudinary
+            import cloudinary.uploader
+            
+            # Extract public_id from Cloudinary URL (e.g. marketplace/products/12345)
+            match = re.search(r'/upload/(?:v\d+/)?(.+?)\.[a-zA-Z0-9]+$', image_url)
+            if match:
+                public_id = match.group(1)
+                cloudinary.uploader.destroy(public_id)
+                print(f"Cleaned up Cloudinary file: {public_id}")
+        except Exception as e:
+            print(f"Cloudinary delete error: {e}")
+        return
+
+    # 2. Local Disk Cleanup
+    try:
+        local_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder, image_url)
+        if os.path.exists(local_path):
+            os.remove(local_path)
+            print(f"Cleaned up local file: {local_path}")
+    except Exception as e:
+        print(f"Local delete error: {e}")
