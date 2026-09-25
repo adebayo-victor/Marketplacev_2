@@ -1,41 +1,22 @@
 {% extends 'base.html' %}
 
-{% block title %}Open a Kiosk // Marketplace{% endblock %}
+{% block title %}Merchant Registration // Marketplace{% endblock %}
 
 {% block content %}
 <div class="min-h-[85vh] flex items-center justify-center p-4 py-12">
-    <div class="max-w-lg w-full bg-white p-10 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
+    <div class="max-w-md w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
         
         <div class="mb-8">
-            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">open a kiosk.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Set up your catalog and capture customer orders on WhatsApp.</p>
+            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">join as merchant.</h1>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Create your merchant account to launch and manage storefronts.</p>
         </div>
 
         <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-5">
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Store Name</label>
-                <input type="text" name="store_name" id="store_name" required 
-                       placeholder="e.g. Plan All About Essentials"
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Merchant / Business Name</label>
+                <input type="text" name="merchant_name" required 
+                       placeholder="e.g. Victor Adebayo"
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
-            </div>
-
-            <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Store Link Slug</label>
-                <div class="flex items-center border border-[#eee] bg-[#fafafa] focus-within:border-clay focus-within:bg-white px-3 transition">
-                    <span class="font-ui text-xs text-stone-400 select-none">marketplace.com/</span>
-                    <input type="text" name="slug" id="slug" 
-                           placeholder="essentials"
-                           class="w-full py-3.5 px-1 bg-transparent outline-none font-ui text-xs font-semibold text-dark-oak">
-                </div>
-                <p class="font-ui text-[0.65rem] text-stone-400 mt-1">This will be your direct public storefront URL.</p>
-            </div>
-
-            <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">WhatsApp Number (For Order Intake)</label>
-                <input type="text" name="whatsapp_number" required 
-                       placeholder="e.g. 08012345678"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
-                <p class="font-ui text-[0.65rem] text-stone-400 mt-1">All customer carts and order receipts route directly to this WhatsApp number.</p>
             </div>
 
             <div>
@@ -53,22 +34,14 @@
             </div>
 
             <button type="submit" class="btn-clay w-full text-center block mt-2">
-                CREATE STOREFRONT &rarr;
+                CREATE MERCHANT ACCOUNT &rarr;
             </button>
         </form>
 
         <div class="text-center mt-8 pt-6 border-t border-stone-100 font-ui text-[0.7rem] text-stone-500">
-            Already have a merchant account? 
+            Already registered? 
             <a href="{{ url_for('auth.login') }}" class="text-dark-oak font-bold hover:underline ml-1">Log in here</a>
         </div>
     </div>
 </div>
-
-<script>
-    const nameInput = document.getElementById('store_name');
-    const slugInput = document.getElementById('slug');
-    nameInput.addEventListener('input', () => {
-        slugInput.value = nameInput.value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-    });
-</script>
 {% endblock %}
