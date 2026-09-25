@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Merchant Registration // Marketplace{% endblock %}
+{% block title %}Join Marketplace{% endblock %}
 
 {% block content %}
 <div class="min-h-[85vh] flex items-center justify-center p-4 py-12">
@@ -8,38 +8,38 @@
         
         <div class="mb-8">
             <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">join as merchant.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Create your merchant account to launch custom AI-built kiosks.</p>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Create your merchant account to launch and manage storefronts.</p>
         </div>
 
         <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-5">
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Your Name / Business Name</label>
-                <input type="text" name="merchant_name" required 
-                       placeholder="e.g. Victor Adebayo"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Username / Merchant Handle</label>
+                <input type="text" name="username" required 
+                       placeholder="e.g. victor"
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
             </div>
 
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Email Address</label>
                 <input type="email" name="email" required 
                        placeholder="merchant@domain.com"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
             </div>
 
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Password</label>
                 <input type="password" name="password" required 
                        placeholder="••••••••"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
             </div>
 
             <button type="submit" class="btn-clay w-full text-center block mt-2">
-                CREATE MERCHANT ACCOUNT &rarr;
+                CREATE ACCOUNT &rarr;
             </button>
         </form>
 
         <div class="text-center mt-8 pt-6 border-t border-stone-100 font-ui text-[0.7rem] text-stone-500">
-            Already registered? 
+            Already have an account? 
             <a href="{{ url_for('auth.login') }}" class="text-dark-oak font-bold hover:underline ml-1">Log in here</a>
         </div>
     </div>
