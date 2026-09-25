@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Claim Master Access // Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white p-10 shadow-2xl border-t-[5px] border-clay">
+        
+        <div class="mb-6 text-center">
+            <span class="font-ui text-[0.65rem] uppercase tracking-widest text-[#f59e0b] font-bold">First-Time Setup</span>
+            <h1 class="font-ui text-2xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-1">claim master access.</h1>
+            <p class="font-serif italic text-xs text-stone-500 mt-2">Promote your account to Master Platform Overseer.</p>
+        </div>
+
+        <form method="POST" class="space-y-5">
+            <div>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-wider text-clay mb-2">Claim Passphrase</label>
+                <input type="password" name="passphrase" required 
+                       placeholder="Enter claim passphrase (default: marketplace2026)"
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
+            </div>
+
+            <button type="submit" class="btn-oak w-full text-center block">
+                GRANT MASTER CLEARANCE &rarr;
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
