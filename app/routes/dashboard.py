@@ -4,10 +4,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order
-from app.utils.media import upload_image
+from app.utils.media import upload_image, delete_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
-from app.utils.media import upload_image, delete_image
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -23,7 +22,6 @@ def slugify(text: str) -> str:
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
-    """Merchant Hub: Shows all storefronts owned by this merchant."""
     kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
@@ -50,7 +48,6 @@ def new_kiosk():
             flash(f'The link "/{slug}" is already taken. Please choose another.', 'warning')
             return render_template('dashboard/kiosk_new.html')
 
-        # 1. Visual Media (Cloudinary / Local)
         logo_file = request.files.get('logo')
         hero_file = request.files.get('hero_image')
         bg_file = request.files.get('background_image')
@@ -59,7 +56,6 @@ def new_kiosk():
         hero_url = upload_image(hero_file, 'heroes') or ''
         bg_url = upload_image(bg_file, 'backgrounds') or ''
 
-        # 2. Generate Custom HTML Template via AI using user prompt & Cloudinary URLs
         generated_html = generate_kiosk_template(
             kiosk_name=name,
             bio=bio,
@@ -70,7 +66,6 @@ def new_kiosk():
             currency='₦'
         )
 
-        # 3. Create Store Record with custom HTML
         clean_phone = clean_phone_number(whatsapp)
         store = Store(
             user_id=current_user.id,
@@ -81,12 +76,12 @@ def new_kiosk():
             logo=logo_url or 'default_logo.png',
             hero_image=hero_url,
             background_image=bg_url,
+            receipt_theme='classic',
             custom_html=generated_html
         )
         db.session.add(store)
         db.session.flush()
 
-        # Initialize the 3 default Ad Slots for this kiosk
         for slot_num in [1, 2, 3]:
             ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
             db.session.add(ad)
@@ -104,7 +99,6 @@ def new_kiosk():
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
 def manage_kiosk(kiosk_slug):
-    """Control room for ONE specific kiosk."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
@@ -204,6 +198,7 @@ def edit_product(kiosk_slug, id):
         image_file = request.files.get('image')
         new_img = upload_image(image_file, 'products')
         if new_img:
+            delete_image(product.image, 'products')
             product.image = new_img
 
         db.session.commit()
@@ -213,7 +208,35 @@ def edit_product(kiosk_slug, id):
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
 
 
-# Settings & Branding
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_product(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
+    delete_image(product.image, 'products')
+
+    db.session.delete(product)
+    db.session.commit()
+    flash('Product removed and storage cleaned up.', 'info')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
+
+
+# The Social Flyer Studio
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/flyer')
+@login_required
+def product_flyer(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
+    return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
+
+
+# Settings, Branding & Receipt Style Selection
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
@@ -225,6 +248,9 @@ def update_kiosk_settings(kiosk_slug):
     kiosk.bio = request.form.get('bio', kiosk.bio).strip()
     kiosk.currency = request.form.get('currency', '₦').strip()
     kiosk.show_public_stats = True if request.form.get('show_public_stats') else False
+    
+    # 🧾 SAVING THE CHOSEN RECEIPT THEME
+    kiosk.receipt_theme = request.form.get('receipt_theme', 'classic').strip()
     
     phone = request.form.get('whatsapp_number', '').strip()
     if phone:
@@ -238,12 +264,18 @@ def update_kiosk_settings(kiosk_slug):
     new_hero = upload_image(hero_file, 'heroes')
     new_bg = upload_image(bg_file, 'backgrounds')
 
-    if new_logo: kiosk.logo = new_logo
-    if new_hero: kiosk.hero_image = new_hero
-    if new_bg: kiosk.background_image = new_bg
+    if new_logo:
+        delete_image(kiosk.logo, 'logos')
+        kiosk.logo = new_logo
+    if new_hero:
+        delete_image(kiosk.hero_image, 'heroes')
+        kiosk.hero_image = new_hero
+    if new_bg:
+        delete_image(kiosk.background_image, 'backgrounds')
+        kiosk.background_image = new_bg
 
     db.session.commit()
-    flash(f'Settings for "{kiosk.name}" updated successfully!', 'success')
+    flash(f'Settings & Receipt Style for "{kiosk.name}" updated successfully!', 'success')
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
@@ -264,6 +296,7 @@ def update_kiosk_ads(kiosk_slug):
         banner_file = request.files.get('banner_image')
         new_banner = upload_image(banner_file, 'ads')
         if new_banner:
+            delete_image(ad.banner_image, 'ads')
             ad.banner_image = new_banner
 
         db.session.commit()
@@ -272,29 +305,7 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-
-
-
-# 2. Update delete_product to clean up image:
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
-@login_required
-def delete_product(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-    
-    # 🧹 Auto-delete image from Cloudinary/Local storage
-    delete_image(product.image, 'products')
-
-    db.session.delete(product)
-    db.session.commit()
-    flash('Product removed and storage cleaned up.', 'info')
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
-# 3. Update delete_kiosk to clean up all kiosk assets:
+# Delete entire kiosk
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
@@ -303,8 +314,6 @@ def delete_kiosk(kiosk_slug):
         abort(403)
 
     name = kiosk.name
-
-    # 🧹 Auto-delete kiosk media (Logo, Hero, Background, and all product pictures)
     delete_image(kiosk.logo, 'logos')
     delete_image(kiosk.hero_image, 'heroes')
     delete_image(kiosk.background_image, 'backgrounds')
@@ -313,5 +322,5 @@ def delete_kiosk(kiosk_slug):
 
     db.session.delete(kiosk)
     db.session.commit()
-    flash(f'Kiosk "{name}" and all associated media deleted permanently.', 'info')
+    flash(f'Kiosk "{name}" deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
