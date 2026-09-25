@@ -8,7 +8,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), default='Merchant')  # Merchant Name
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)  # <-- The username property
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
@@ -33,10 +33,10 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
-    # Visual Branding Media (Cloudinary URLs or local filenames)
+    # Visual Branding Media
     logo = db.Column(db.String(500), default='default_logo.png')
-    hero_image = db.Column(db.String(500), default='')         # Top banner showcase
-    background_image = db.Column(db.String(500), default='')   # Store wallpaper/backdrop
+    hero_image = db.Column(db.String(500), default='')
+    background_image = db.Column(db.String(500), default='')
     
     whatsapp_number = db.Column(db.String(20), nullable=False)
     currency = db.Column(db.String(10), default='₦')
@@ -44,13 +44,10 @@ class Store(db.Model):
     # Social Proof & Link Previews
     views_count = db.Column(db.Integer, default=0)
     show_public_stats = db.Column(db.Boolean, default=False)
-    
-    # Template Inspection & Code Override
-    custom_html = db.Column(db.Text, default='')  # Custom HTML template for this kiosk
+    custom_html = db.Column(db.Text, default='')
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     products = db.relationship('Product', backref='store', lazy='dynamic', cascade="all, delete-orphan")
     orders = db.relationship('Order', backref='store', lazy='dynamic', cascade="all, delete-orphan")
     ads = db.relationship('StoreAd', backref='store', lazy='dynamic', cascade="all, delete-orphan")
@@ -81,15 +78,12 @@ class Product(db.Model):
     description = db.Column(db.Text, default='')
     image = db.Column(db.String(500), default='default_product.png')
     
-    # Pricing & Promotions
     original_price = db.Column(db.Float, nullable=False)
     discount_price = db.Column(db.Float, nullable=True)
     is_flash_sale = db.Column(db.Boolean, default=False)
     
     stock = db.Column(db.Integer, default=1)
     is_active = db.Column(db.Boolean, default=True)
-    
-    # Dynamic Custom Variants stored as JSON string
     attributes_json = db.Column(db.Text, default='{}')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
