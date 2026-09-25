@@ -9,7 +9,7 @@
         <div class="mb-8">
             <a href="/dashboard" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to Merchant Hub</a>
             <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">open a new kiosk.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Configure your storefront link, WhatsApp intake, and branding.</p>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Configure your storefront link, WhatsApp intake, and design instructions.</p>
         </div>
 
         <form method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -43,6 +43,19 @@
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Tagline / Bio</label>
                 <input type="text" name="bio" placeholder="Top quality home and lifestyle essentials delivered fast."
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-serif text-xs text-dark-oak outline-none focus:border-clay">
+            </div>
+
+            <!-- 🤖 AI DESIGN INSTRUCTIONS (PROMPT) -->
+            <div class="p-5 bg-[#fff9f5] border-l-4 border-clay">
+                <label class="block font-ui text-xs font-bold uppercase tracking-wider text-dark-oak mb-1">
+                    🤖 AI Design Instructions (Prompt)
+                </label>
+                <p class="font-serif italic text-xs text-stone-500 mb-3">
+                    Describe how you want your storefront to look and feel (e.g. colors, aesthetic, vibe, target audience).
+                </p>
+                <textarea name="ai_prompt" rows="3" 
+                          placeholder="e.g. A warm, minimalist luxury boutique with earthy tones, large hero banner, and an editorial catalog showcase."
+                          class="w-full p-3 border border-[#eee] bg-white font-serif text-xs text-dark-oak outline-none focus:border-clay leading-relaxed"></textarea>
             </div>
 
             <!-- Visual Media (Cloudinary Uploads) -->
