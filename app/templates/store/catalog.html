@@ -1,49 +1,375 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ store.name }} // Marketplace</title>
 
-{% block title %}Directory // Marketplace{% endblock %}
+    <!-- Dynamic WhatsApp Preview Meta Tags -->
+    <meta property="og:title" content="{{ store.name }}">
+    <meta property="og:description" content="{% if store.show_public_stats %}Over {{ '{:,}'.format(store.views_count) }} visits • Verified Merchant • Shop our official catalog.{% else %}{{ store.bio }}{% endif %}">
+    <meta property="og:image" content="{{ url_for('static', filename='uploads/logos/' + store.logo, _external=True) if not store.logo.startswith('http') else store.logo }}">
+    <meta property="og:type" content="website">
 
-{% block content %}
-<div class="container mx-auto px-6 py-16 max-w-6xl">
-    
-    <div class="welcome-header mb-12">
-        <h1 class="font-ui text-4xl font-normal lowercase tracking-tight m-0 text-dark-oak">
-            active storefronts.
-        </h1>
-        <p class="font-serif italic text-stone-500 mt-2">Discover verified artisan, gadget, and boutique kiosks on Marketplace.</p>
-    </div>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {% for s in stores %}
-        <div class="bg-white p-8 border-t-[5px] border-clay shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-ui text-xl font-normal text-dark-oak m-0">{{ s.name }}</h3>
-                    {% if s.show_public_stats %}
-                        <span class="font-ui text-[0.6rem] font-semibold uppercase tracking-wider bg-[#fff9f5] text-clay px-2.5 py-1 border border-clay/20">
-                            🔥 {{ "{:,}".format(s.views_count) }} visits
-                        </span>
-                    {% else %}
-                        <span class="font-ui text-[0.6rem] font-semibold uppercase tracking-wider bg-stone-100 text-stone-600 px-2.5 py-1">
-                            ✓ Verified
-                        </span>
-                    {% endif %}
+    <style>
+        :root {
+            --clay: #8d5b3e;
+            --cream: #f9f5f0;
+            --dark-oak: #2d1e14;
+        }
+        body {
+            background-color: var(--cream);
+            color: var(--dark-oak);
+            font-family: 'Georgia', serif;
+            margin: 0;
+            {% if store.background_image %}
+            background-image: url('{{ store.background_image if store.background_image.startswith("http") else url_for("static", filename="uploads/backgrounds/" + store.background_image) }}');
+            background-size: cover;
+            background-attachment: fixed;
+            {% endif %}
+        }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
+        .btn-oak {
+            background: var(--dark-oak); color: white; padding: 12px 20px;
+            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
+            border: none; cursor: pointer; transition: 0.3s;
+        }
+        .btn-oak:hover { opacity: 0.9; }
+        .btn-clay {
+            background: var(--clay); color: white; padding: 12px 20px;
+            font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
+            border: none; cursor: pointer; transition: 0.3s;
+        }
+        .btn-clay:hover { opacity: 0.9; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Store Navigation -->
+    <header class="bg-white/95 backdrop-blur border-b border-[#eee] py-5 px-6 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                {% if store.logo and store.logo != 'default_logo.png' %}
+                    <img src="{{ store.logo if store.logo.startswith('http') else url_for('static', filename='uploads/logos/' + store.logo) }}" class="h-10 w-10 object-contain rounded-full">
+                {% endif %}
+                <div>
+                    <a href="/{{ store.slug }}" class="font-ui font-semibold text-lg text-dark-oak tracking-wider">{{ store.name }}</a>
+                    <p class="font-serif italic text-xs text-stone-500 m-0">{{ store.bio }}</p>
                 </div>
-                <p class="font-serif text-sm text-stone-500 mb-6">{{ s.bio }}</p>
+            </div>
+            
+            <button onclick="toggleCart()" class="btn-clay flex items-center gap-2">
+                <span>BAG</span>
+                <span id="cartCountBadge" class="bg-white text-clay px-2 py-0.5 rounded-full font-bold text-[0.65rem]">0</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-10 w-full flex-grow">
+
+        <!-- 📢 AD SLOT #1 (HEADER BANNER) -->
+        {% if store.is_section_active('ads') and 1 in ad_slots %}
+        <div class="mb-10">
+            <a href="/ad/click/{{ ad_slots[1].id }}" target="_blank">
+                <img src="{{ ad_slots[1].banner_image if ad_slots[1].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[1].banner_image) }}" 
+                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- 🖼️ HERO SHOWCASE BANNER -->
+        {% if store.is_section_active('hero') and store.hero_image %}
+        <div class="mb-12">
+            <img src="{{ store.hero_image if store.hero_image.startswith('http') else url_for('static', filename='uploads/heroes/' + store.hero_image) }}" 
+                 alt="Hero Showcase" class="w-full h-48 md:h-64 object-cover rounded-2xl shadow-sm border border-[#eee]">
+        </div>
+        {% endif %}
+
+        <!-- 🔥 FLASH SALES SECTION -->
+        {% if store.is_section_active('flash_sales') and flash_sales %}
+        <section class="mb-14">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="font-ui text-xs font-bold uppercase tracking-wider bg-[#ffebeb] text-[#b33a3a] px-3 py-1 border border-[#b33a3a]/20">
+                    🔥 Flash Deals
+                </span>
+                <span class="font-serif italic text-sm text-stone-500">Limited quantity promotions</span>
             </div>
 
-            <div class="pt-6 border-t border-stone-100 flex items-center justify-between">
-                <span class="font-ui text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                    {{ s.products.count() }} items listed
-                </span>
-                <a href="/{{ s.slug }}" class="btn-oak text-center">
-                    VISIT STORE &rarr;
-                </a>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for p in flash_sales %}
+                <div class="bg-white p-6 border-t-[4px] border-[#b33a3a] shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="h-44 bg-stone-50 mb-4 overflow-hidden flex items-center justify-center">
+                            <img src="{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}" alt="{{ p.name }}" class="object-cover h-full w-full">
+                        </div>
+                        <h4 class="font-ui font-semibold text-base mb-1">{{ p.name }}</h4>
+                        <p class="font-serif text-xs text-stone-500 mb-4">{{ p.description }}</p>
+                    </div>
+                    <div>
+                        <div class="mb-4">
+                            <span class="line-through text-stone-400 font-ui text-xs">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
+                            <span class="font-ui font-bold text-lg text-[#b33a3a] ml-2">{{ store.currency }}{{ "{:,.2f}".format(p.current_price) }}</span>
+                        </div>
+                        <button onclick='openProductModal({{ p.id }}, {{ p.name|tojson }}, {{ p.current_price }}, {{ p.get_attributes()|tojson }}, {{ p.description|tojson }})' class="btn-clay w-full text-center">
+                            SELECT & ORDER
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
+        </section>
+        {% endif %}
+
+        <!-- 📢 AD SLOT #2 (MID-CATALOG BANNER) -->
+        {% if store.is_section_active('ads') and 2 in ad_slots %}
+        <div class="my-10">
+            <a href="/ad/click/{{ ad_slots[2].id }}" target="_blank">
+                <img src="{{ ad_slots[2].banner_image if ad_slots[2].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[2].banner_image) }}" 
+                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
+            </a>
         </div>
-        {% else %}
-        <p class="font-serif italic text-stone-400 col-span-3">No storefronts available yet.</p>
-        {% endfor %}
+        {% endif %}
+
+        <!-- 🛍️ REGULAR PRODUCTS GRID -->
+        <section class="mb-14">
+            <h3 class="font-ui text-xl font-normal lowercase tracking-tight mb-8">kiosk catalog</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for p in regular_products %}
+                <div class="bg-white p-6 border-t-[4px] border-clay shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="h-48 bg-stone-50 mb-4 overflow-hidden flex items-center justify-center">
+                            <img src="{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}" alt="{{ p.name }}" class="object-cover h-full w-full">
+                        </div>
+                        <h4 class="font-ui font-semibold text-base text-dark-oak mb-1">{{ p.name }}</h4>
+                        <p class="font-serif text-xs text-stone-500 mb-4">{{ p.description }}</p>
+                    </div>
+
+                    <div>
+                        <div class="mb-4 font-ui">
+                            {% if p.has_discount %}
+                                <span class="line-through text-stone-400 text-xs">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
+                                <span class="font-bold text-base text-clay ml-1">{{ store.currency }}{{ "{:,.2f}".format(p.discount_price) }}</span>
+                            {% else %}
+                                <span class="font-bold text-base text-dark-oak">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
+                            {% endif %}
+                            <span class="text-[0.65rem] text-stone-400 block mt-0.5">{{ p.stock }} units left</span>
+                        </div>
+
+                        {% if p.stock > 0 %}
+                            <button onclick='openProductModal({{ p.id }}, {{ p.name|tojson }}, {{ p.current_price }}, {{ p.get_attributes()|tojson }}, {{ p.description|tojson }})' class="btn-oak w-full text-center">
+                                VIEW & ORDER
+                            </button>
+                        {% else %}
+                            <button disabled class="w-full py-3 bg-stone-100 text-stone-400 font-ui text-xs font-semibold uppercase tracking-wider cursor-not-allowed">
+                                OUT OF STOCK
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="font-serif italic text-stone-400 col-span-3">No regular items available in catalog right now.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- 📢 AD SLOT #3 (FOOTER BANNER) -->
+        {% if store.is_section_active('ads') and 3 in ad_slots %}
+        <div class="mt-10">
+            <a href="/ad/click/{{ ad_slots[3].id }}" target="_blank">
+                <img src="{{ ad_slots[3].banner_image if ad_slots[3].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[3].banner_image) }}" 
+                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
+            </a>
+        </div>
+        {% endif %}
+
+    </main>
+
+    <!-- Product Selection Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-8 max-w-md w-full border-t-[5px] border-clay shadow-2xl relative">
+            <button onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-400 font-bold text-xl">&times;</button>
+            <h3 id="modalProductName" class="font-ui text-xl font-bold mb-1 text-dark-oak"></h3>
+            <p id="modalProductDesc" class="font-serif text-xs text-stone-500 mb-2"></p>
+            <p id="modalProductPrice" class="font-ui text-clay font-bold text-lg mb-6"></p>
+
+            <div id="modalVariantsContainer" class="space-y-4 mb-6"></div>
+
+            <button onclick="confirmAddToCart()" class="btn-clay w-full text-center">
+                ADD TO SHOPPING BAG &rarr;
+            </button>
+        </div>
     </div>
 
-</div>
-{% endblock %}
+    <!-- Slide-Out Shopping Bag Drawer -->
+    <div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/30 z-40 hidden"></div>
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col justify-between p-6 translate-x-full transition-transform duration-300">
+        <div>
+            <div class="flex items-center justify-between pb-5 border-b border-[#eee] mb-5">
+                <h3 class="font-ui text-lg font-bold uppercase tracking-wider text-dark-oak m-0">Shopping Bag</h3>
+                <button onclick="toggleCart()" class="font-ui text-xs font-bold text-stone-400 hover:text-dark-oak">CLOSE &times;</button>
+            </div>
+            <div id="cartItemsList" class="space-y-4 max-h-[40vh] overflow-y-auto mb-6"></div>
+        </div>
+
+        <div class="pt-5 border-t border-[#eee]">
+            <div class="flex justify-between items-center mb-6">
+                <span class="font-ui text-xs uppercase tracking-wider text-stone-500">Order Subtotal:</span>
+                <span id="cartTotalPrice" class="font-ui font-bold text-xl text-dark-oak">{{ store.currency }}0.00</span>
+            </div>
+
+            <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
+                <input type="text" id="custName" required placeholder="Your Full Name" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
+                <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
+                <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay"></textarea>
+                
+                <button type="submit" id="checkoutBtn" class="btn-oak w-full text-center block py-4">
+                    CHECKOUT ON WHATSAPP &rarr;
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <footer class="bg-white border-t border-[#eee] py-8 text-center text-xs font-ui text-stone-400">
+        Made with <a href="/" class="text-clay font-bold">Marketplace</a> • Powered by Techlite
+    </footer>
+
+    <!-- Frontend Shopping Bag & Checkout Engine -->
+    <script>
+        const storeSlug = {{ store.slug|tojson }};
+        const storeCurrency = {{ store.currency|tojson }};
+        let cart = [];
+        let currentModalProduct = null;
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('translate-x-full');
+            document.getElementById('cartOverlay').classList.toggle('hidden');
+        }
+
+        function openProductModal(id, name, price, attributes, desc) {
+            currentModalProduct = { id, name, price, attributes };
+            document.getElementById('modalProductName').innerText = name;
+            document.getElementById('modalProductDesc').innerText = desc || '';
+            document.getElementById('modalProductPrice').innerText = `${storeCurrency}${price.toLocaleString()}`;
+
+            const container = document.getElementById('modalVariantsContainer');
+            container.innerHTML = '';
+
+            for (const [attrName, options] of Object.entries(attributes)) {
+                const group = document.createElement('div');
+                group.innerHTML = `
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-clay mb-1">${attrName}</label>
+                    <select class="variant-select w-full p-2.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none" data-attr="${attrName}">
+                        ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                    </select>
+                `;
+                container.appendChild(group);
+            }
+
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+            currentModalProduct = null;
+        }
+
+        function confirmAddToCart() {
+            if (!currentModalProduct) return;
+
+            const selectedVariants = [];
+            document.querySelectorAll('.variant-select').forEach(select => {
+                selectedVariants.push(`${select.getAttribute('data-attr')}: ${select.value}`);
+            });
+
+            cart.push({
+                product_id: currentModalProduct.id,
+                name: currentModalProduct.name,
+                price: currentModalProduct.price,
+                variants: selectedVariants.join(' | '),
+                quantity: 1
+            });
+
+            updateCartUI();
+            closeProductModal();
+            toggleCart();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cartItemsList');
+            const badge = document.getElementById('cartCountBadge');
+            const totalEl = document.getElementById('cartTotalPrice');
+
+            badge.innerText = cart.length;
+            list.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price * item.quantity;
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-start pb-3 border-b border-[#f5f5f5] text-xs font-ui';
+                div.innerHTML = `
+                    <div>
+                        <strong class="text-dark-oak">${item.name}</strong>
+                        ${item.variants ? `<p class="text-[0.65rem] text-stone-400 m-0">${item.variants}</p>` : ''}
+                        <span class="text-clay font-semibold">${storeCurrency}${item.price.toLocaleString()}</span>
+                    </div>
+                    <button onclick="cart.splice(${index}, 1); updateCartUI();" class="text-rose-500 font-bold ml-4">&times;</button>
+                `;
+                list.appendChild(div);
+            });
+
+            totalEl.innerText = `${storeCurrency}${total.toLocaleString()}`;
+        }
+
+        async function handleCheckout(event) {
+            event.preventDefault();
+            if (cart.length === 0) {
+                alert('Your shopping bag is empty.');
+                return;
+            }
+
+            const btn = document.getElementById('checkoutBtn');
+            btn.innerText = 'PROCESSING ORDER...';
+            btn.disabled = true;
+
+            const payload = {
+                customer_name: document.getElementById('custName').value,
+                customer_phone: document.getElementById('custPhone').value,
+                delivery_address: document.getElementById('custAddress').value,
+                cart: cart
+            };
+
+            try {
+                const res = await fetch(`/${storeSlug}/checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.status === 'success') {
+                    cart = [];
+                    updateCartUI();
+                    window.location.href = data.whatsapp_url;
+                } else {
+                    alert(data.message || 'Error creating order.');
+                    btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
