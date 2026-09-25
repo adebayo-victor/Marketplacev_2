@@ -1,0 +1,27 @@
+# Byte-compiled / Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets (NEVER PUSH TO GITHUB)
+.env
+.env.*
+*.env
+
+# SQLite Database & Backups
+*.db
+*.sqlite3
+backups/
+
+# Uploaded merchant media
+app/static/uploads/products/*
+app/static/uploads/ads/*
+app/static/uploads/logos/*
+app/static/uploads/heroes/*
+app/static/uploads/backgrounds/*
+!app/static/uploads/**/.gitkeep
+
+# IDE & OS junk
+.DS_Store
+.vscode/
+.idea/
