@@ -8,7 +8,7 @@
         system secrets & .env keys.
     </h1>
     <p class="font-serif italic text-stone-500 mt-1">
-        Configure production credentials securely. Changes write directly to the server's <code>.env</code> file on disk (protected from GitHub).
+        Configure production credentials securely. Changes write directly to the server's <code>.env</code> file on disk.
     </p>
 </div>
 
@@ -22,9 +22,9 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Cloud Name</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Cloud Name (Find this in your Cloudinary Dashboard)</label>
                     <input type="text" name="CLOUDINARY_CLOUD_NAME" value="{{ env_values.get('CLOUDINARY_CLOUD_NAME', '') }}" 
-                           placeholder="e.g. dxyz123abc"
+                           placeholder="e.g. dxyz123abc (Do NOT use 'Root')"
                            class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
                 </div>
                 <div>
@@ -42,16 +42,24 @@
             </div>
         </div>
 
-        <!-- AI Engine Keys -->
+        <!-- AI Engine Keys: Primary & Backup -->
         <div class="border-b border-stone-100 pb-6">
-            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">AI Engine Key (Qwen / Gemini)</h3>
-            <p class="font-serif italic text-xs text-stone-400 mb-4">Used for copywriting and automated template generation.</p>
+            <h3 class="font-ui text-sm font-bold uppercase tracking-wider text-clay mb-1">AI Engine Keys (Dual-Failover Architecture)</h3>
+            <p class="font-serif italic text-xs text-stone-400 mb-4">If Gemini fails or hits a quota limit, OpenRouter automatically generates the website.</p>
 
-            <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">AI API Key</label>
-                <input type="password" name="AI_API_KEY" value="{{ env_values.get('AI_API_KEY', '') }}" 
-                       placeholder="AI Studio or OpenRouter Key"
-                       class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+            <div class="space-y-4">
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Primary: Google Gemini API Key</label>
+                    <input type="password" name="AI_API_KEY" value="{{ env_values.get('AI_API_KEY', '') }}" 
+                           placeholder="AI Studio Key (AIzaSy...)"
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
+                <div>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Backup: OpenRouter API Key (sk-or-v1-...)</label>
+                    <input type="password" name="OPENROUTER_API_KEY" value="{{ env_values.get('OPENROUTER_API_KEY', '') }}" 
+                           placeholder="sk-or-v1-..."
+                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-mono text-xs outline-none focus:border-clay">
+                </div>
             </div>
         </div>
 
