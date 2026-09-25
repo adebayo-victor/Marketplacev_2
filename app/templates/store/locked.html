@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{% if is_owing %}
+    Shop Locked by Landlord // {{ store.name }}
+{% else %}
+    Grand Opening Soon // {{ store.name }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center p-6 text-center">
+    <div class="max-w-md w-full bg-white p-10 md:p-12 shadow-2xl border-t-[8px] {% if is_owing %}border-[#b33a3a]{% else %}border-clay{% endif %}">
+        
+        {% if is_owing %}
+            <!-- 🚪🔒 THE FUNNY NIGERIAN LANDLORD NOTICE (FOR DEACTIVATED/EXPIRED KIOSKS) -->
+            <div class="mb-4 inline-block bg-[#ffebeb] text-[#b33a3a] font-ui text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#b33a3a]/30">
+                🔒 SHOP TEMPORARILY LOCKED BY LANDLORD
+            </div>
+
+            <h1 class="font-ui text-2xl md:text-3xl font-black text-dark-oak mb-3 tracking-tight">
+                Landlord Don Put Padlock! 🚪🔑
+            </h1>
+
+            <p class="font-serif italic text-sm text-stone-600 mb-6 leading-relaxed">
+                E be like tenant never settle shop rent this month! 😅 Management don put big iron padlock for door. We dey wait for alert make landlord release key.
+            </p>
+
+            <div class="p-4 bg-[#fff9f5] border border-stone-200 rounded-xl mb-6 text-left">
+                <span class="font-ui text-[10px] font-bold uppercase tracking-wider text-clay block mb-1">Are you a customer?</span>
+                <p class="font-serif text-xs text-stone-500 m-0">
+                    Ping the merchant on WhatsApp make them know say customers dey wait outside!
+                </p>
+            </div>
+
+            <a href="https://wa.me/{{ store.whatsapp_number }}?text=Hello%20{{ store.name }},%20I%20visited%20your%20kiosk%20to%20buy%20items%20but%20saw%20that%20the%20shop%20is%20locked!%20Please%20let%20me%20know%20when%20you%20re-open." 
+               target="_blank"
+               class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold py-3.5 px-4 rounded-xl shadow-lg block text-xs uppercase tracking-wider transition">
+                PING MERCHANT ON WHATSAPP &rarr;
+            </a>
+
+            <p class="font-ui text-[9px] text-stone-400 mt-6 uppercase tracking-wider">
+                — Marketplace Tenancy & Landlord Association
+            </p>
+
+        {% else %}
+            <!-- ⏳ CLASSY NOTICE (FOR BRAND NEW KIOSKS STILL BEING SET UP) -->
+            <div class="mb-4 inline-block bg-[#fff9f5] text-clay font-ui text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-clay/30">
+                ⏳ PREPARING FOR LAUNCH
+            </div>
+
+            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight text-dark-oak mb-3">
+                grand opening soon.
+            </h1>
+
+            <p class="font-serif italic text-sm text-stone-500 mb-6 leading-relaxed">
+                The merchant for <strong>{{ store.name }}</strong> is currently stocking up the shelves and putting on the finishing touches. Check back soon for the official launch!
+            </p>
+
+            <div class="pt-6 border-t border-stone-100 font-ui text-xs text-stone-400">
+                Powered by <a href="/" class="text-clay font-bold hover:underline">Marketplace</a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
