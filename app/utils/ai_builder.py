@@ -1,14 +1,14 @@
 import os
 import re
 
-def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = None, hero_url: str = None, bg_url: str = None, currency: str = '₦') -> str:
+def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
-    Uses Gemini AI to write a complete, standalone Jinja2 HTML template 
+    Uses Gemini AI (or built-in fallback) to write a complete Jinja2 HTML template 
     incorporating the merchant's prompt and Cloudinary image links.
     """
     api_key = os.environ.get('AI_API_KEY')
 
-    # If Gemini API key is configured, query the model
+    # If Gemini API key is configured in .env, query the model
     if api_key:
         try:
             import google.generativeai as genai
@@ -21,16 +21,16 @@ Merchant Design Prompt: "{prompt}"
 Merchant Bio: "{bio}"
 
 Brand Assets Provided:
-- Logo Image URL: "{logo_url or ''}"
-- Hero / Showcase Banner URL: "{hero_url or ''}"
-- Background Image URL: "{bg_url or ''}"
+- Logo Image URL: "{logo_url}"
+- Hero Banner URL: "{hero_url}"
+- Background Image URL: "{bg_url}"
 - Currency Symbol: "{currency}"
 
 Write a COMPLETE, BEAUTIFUL, MOBILE-FIRST HTML5 page using Tailwind CSS via CDN.
 IMPORTANT JINJA2 / FUNCTIONAL REQUIREMENTS:
 1. Product Loop: You MUST iterate over regular products using:
    {{% for p in regular_products %}}
-     Display product name ({{{{ p.name }}}}), price ({{{{ store.currency }}}}{{{{ "{:,.2f}".format(p.current_price) }}}}), image ({{{{ url_for('static', filename='uploads/products/' + p.image) if not p.image.startswith('http') else p.image }}}}), description ({{{{ p.description }}}}).
+     Display product name ({{{{ p.name }}}}), price ({{{{ store.currency }}}}{{{{ "{:,.2f}".format(p.current_price) }}}}), image ({{{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}}}), description ({{{{ p.description }}}}).
      Include an order button calling: openProductModal({{{{ p.id }}}}, {{{{ p.name|tojson }}}}, {{{{ p.current_price }}}}, {{{{ p.get_attributes()|tojson }}}})
    {{% endfor %}}
 
@@ -50,14 +50,14 @@ Output ONLY the raw HTML code. Do NOT wrap in markdown ```html code blocks.
             response = model.generate_content(system_instruction)
             raw_html = response.text.strip()
             
-            # Clean markdown fences if any
+            # Clean markdown code fences if any
             raw_html = re.sub(r'^```html\s*', '', raw_html)
             raw_html = re.sub(r'```$', '', raw_html).strip()
             return raw_html
         except Exception as e:
-            print(f"Gemini generation error: {e}, using bespoke fallback.")
+            print(f"Gemini generation error: {e}, using tailored fallback.")
 
-    # Fallback Template (Clean & tailored with their Cloudinary assets)
+    # Tailored Fallback Template (Clean & responsive using their Cloudinary assets)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
