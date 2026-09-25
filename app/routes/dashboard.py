@@ -16,18 +16,19 @@ def slugify(text: str) -> str:
 
 
 # -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (All Kiosks Belonging to User)
+# LEVEL 1: THE MERCHANT HUB (All Kiosks Belonging to Merchant)
 # -------------------------------------------------------------
 @dashboard_bp.route('/')
 @login_required
 def overview():
     """Merchant Hub: Shows all storefronts/kiosks owned by this merchant."""
+    # Notice: using current_user.stores (plural)
     kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
 # -------------------------------------------------------------
-# OPEN A NEW KIOSK
+# OPEN AN ADDITIONAL KIOSK
 # -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
@@ -72,7 +73,7 @@ def new_kiosk():
 
 
 # -------------------------------------------------------------
-# LEVEL 2: SPECIFIC KIOSK CONTROL CENTER
+# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
@@ -202,7 +203,7 @@ def delete_product(kiosk_slug, id):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Settings & Branding (Logo, Hero, Background) for specific kiosk
+# Settings & Visuals (Logo, Hero, Background) for specific kiosk
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
