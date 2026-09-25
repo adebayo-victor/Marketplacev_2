@@ -28,9 +28,15 @@
 
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Password</label>
-                <input type="password" name="password" required 
-                       placeholder="••••••••"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+                <div class="relative flex items-center">
+                    <input type="password" name="password" id="regPassword" required 
+                           placeholder="••••••••"
+                           class="w-full p-3.5 pr-12 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+                    <button type="button" onclick="togglePassword('regPassword', 'regEyeIcon')" 
+                            class="absolute right-3 text-stone-400 hover:text-dark-oak focus:outline-none p-1">
+                        <span id="regEyeIcon" class="font-ui text-[11px] font-bold uppercase tracking-wider text-clay">Show</span>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn-clay w-full text-center block mt-2">
@@ -44,4 +50,18 @@
         </div>
     </div>
 </div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const label = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        label.innerText = 'Hide';
+    } else {
+        input.type = 'password';
+        label.innerText = 'Show';
+    }
+}
+</script>
 {% endblock %}
