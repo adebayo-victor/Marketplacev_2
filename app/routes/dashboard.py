@@ -1,71 +1,107 @@
-import os
 import json
-from werkzeug.utils import secure_filename
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+import re
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order
+from app.utils.media import upload_image
 from app.utils.whatsapp import clean_phone_number
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
-
-def save_uploaded_image(file, subfolder):
-    if not file or file.filename == '':
-        return None
-    if allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        dest_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], subfolder)
-        os.makedirs(dest_folder, exist_ok=True)
-        # Unique prefix using timestamp
-        import time
-        unique_name = f"{int(time.time())}_{filename}"
-        file.save(os.path.join(dest_folder, unique_name))
-        return unique_name
-    return None
+def slugify(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r'[^\w\s-]', '', text)
+    return re.sub(r'[-\s]+', '-', text)
 
 
+# -------------------------------------------------------------
+# LEVEL 1: THE MERCHANT HUB (All Kiosks Belonging to User)
+# -------------------------------------------------------------
 @dashboard_bp.route('/')
 @login_required
 def overview():
-    store = current_user.store
-    if not store:
-        flash('Please create a storefront first.', 'warning')
-        return redirect(url_for('auth.register'))
+    """Merchant Hub: Shows all storefronts/kiosks owned by this merchant."""
+    kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
+    return render_template('dashboard/overview.html', kiosks=kiosks)
 
-    products_count = store.products.count()
-    leads_count = store.orders.count()
-    recent_orders = store.orders.order_by(Order.created_at.desc()).limit(10).all()
 
-    # Calculate visit-to-lead conversion rate
-    conversion_rate = 0.0
-    if store.views_count > 0:
-        conversion_rate = round((leads_count / store.views_count) * 100, 1)
+# -------------------------------------------------------------
+# OPEN A NEW KIOSK
+# -------------------------------------------------------------
+@dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
+@login_required
+def new_kiosk():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        custom_slug = request.form.get('slug', '').strip()
+        whatsapp = request.form.get('whatsapp_number', '').strip()
+        bio = request.form.get('bio', 'Welcome to our official store!').strip()
+
+        if not name or not whatsapp:
+            flash('Store name and WhatsApp number are required.', 'danger')
+            return render_template('dashboard/kiosk_new.html')
+
+        slug = slugify(custom_slug) if custom_slug else slugify(name)
+        if Store.query.filter_by(slug=slug).first():
+            flash(f'The link "/{slug}" is already taken. Please choose another.', 'warning')
+            return render_template('dashboard/kiosk_new.html')
+
+        # Create Store under this Merchant
+        clean_phone = clean_phone_number(whatsapp)
+        store = Store(
+            user_id=current_user.id,
+            name=name,
+            slug=slug,
+            whatsapp_number=clean_phone,
+            bio=bio
+        )
+        db.session.add(store)
+        db.session.flush()
+
+        # Initialize the 3 default Ad Slots for this kiosk
+        for slot_num in [1, 2, 3]:
+            ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
+            db.session.add(ad)
+
+        db.session.commit()
+        flash(f'Kiosk "{name}" launched successfully!', 'success')
+        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=store.slug))
+
+    return render_template('dashboard/kiosk_new.html')
+
+
+# -------------------------------------------------------------
+# LEVEL 2: SPECIFIC KIOSK CONTROL CENTER
+# -------------------------------------------------------------
+@dashboard_bp.route('/<kiosk_slug>/manage')
+@login_required
+def manage_kiosk(kiosk_slug):
+    """Control room for ONE specific kiosk."""
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    products = kiosk.products.order_by(Product.created_at.desc()).all()
+    leads = kiosk.orders.order_by(Order.created_at.desc()).all()
+    ads = kiosk.ads.order_by(StoreAd.slot_number.asc()).all()
 
     return render_template(
-        'dashboard/overview.html',
-        store=store,
-        products_count=products_count,
-        leads_count=leads_count,
-        conversion_rate=conversion_rate,
-        recent_orders=recent_orders
+        'dashboard/kiosk_manage.html',
+        kiosk=kiosk,
+        products=products,
+        leads=leads,
+        ads=ads
     )
 
 
-@dashboard_bp.route('/products')
+# Product CRUD for specific kiosk
+@dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
-def products():
-    store = current_user.store
-    all_products = store.products.order_by(Product.created_at.desc()).all()
-    return render_template('dashboard/products.html', store=store, products=all_products)
-
-
-@dashboard_bp.route('/products/new', methods=['GET', 'POST'])
-@login_required
-def new_product():
-    store = current_user.store
+def new_product(kiosk_slug):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
@@ -75,25 +111,22 @@ def new_product():
         stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # Parse Custom Dynamic Attributes (e.g. Screen Size: 45, 60)
+        # Parse Custom Dynamic Attributes (e.g. Screen Size: 45", 60")
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
-
         for a_name, a_vals in zip(attr_names, attr_values):
-            clean_name = a_name.strip()
-            if clean_name and a_vals.strip():
-                # Split comma-separated options into clean array
-                options = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if options:
-                    attributes_dict[clean_name] = options
+            if a_name.strip() and a_vals.strip():
+                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
+                if opts:
+                    attributes_dict[a_name.strip()] = opts
 
-        # Handle Image Upload
+        # Upload image via Cloudinary or local fallback
         image_file = request.files.get('image')
-        image_name = save_uploaded_image(image_file, 'products') or 'default_product.png'
+        image_name = upload_image(image_file, 'products') or 'default_product.png'
 
         product = Product(
-            store_id=store.id,
+            store_id=kiosk.id,
             name=name,
             description=description,
             original_price=original_price,
@@ -103,122 +136,142 @@ def new_product():
             image=image_name,
             attributes_json=json.dumps(attributes_dict)
         )
-
         db.session.add(product)
         db.session.commit()
 
-        flash('Product added to inventory successfully!', 'success')
-        return redirect(url_for('dashboard.products'))
+        flash(f'Product "{name}" added to {kiosk.name}!', 'success')
+        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
-    return render_template('dashboard/product_form.html', store=store, product=None)
+    return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
 
-@dashboard_bp.route('/products/<int:id>/edit', methods=['GET', 'POST'])
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
-def edit_product(id):
-    store = current_user.store
-    product = Product.query.filter_by(id=id, store_id=store.id).first_or_404()
+def edit_product(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
 
     if request.method == 'POST':
         product.name = request.form.get('name', '').strip()
         product.description = request.form.get('description', '').strip()
         product.original_price = float(request.form.get('original_price', 0) or 0)
         
-        discount_price = request.form.get('discount_price', '').strip()
-        product.discount_price = float(discount_price) if discount_price else None
+        disc = request.form.get('discount_price', '').strip()
+        product.discount_price = float(disc) if disc else None
         
         product.stock = int(request.form.get('stock', 1) or 1)
         product.is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # Parse Custom Attributes
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
-
         for a_name, a_vals in zip(attr_names, attr_values):
-            clean_name = a_name.strip()
-            if clean_name and a_vals.strip():
-                options = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if options:
-                    attributes_dict[clean_name] = options
+            if a_name.strip() and a_vals.strip():
+                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
+                if opts:
+                    attributes_dict[a_name.strip()] = opts
 
         product.attributes_json = json.dumps(attributes_dict)
 
-        # Handle Image Replacement
         image_file = request.files.get('image')
-        new_image = save_uploaded_image(image_file, 'products')
-        if new_image:
-            product.image = new_image
+        new_img = upload_image(image_file, 'products')
+        if new_img:
+            product.image = new_img
 
         db.session.commit()
         flash('Product updated successfully!', 'success')
-        return redirect(url_for('dashboard.products'))
+        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
-    return render_template('dashboard/product_form.html', store=store, product=product)
+    return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
 
 
-@dashboard_bp.route('/products/<int:id>/delete', methods=['POST'])
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
 @login_required
-def delete_product(id):
-    store = current_user.store
-    product = Product.query.filter_by(id=id, store_id=store.id).first_or_404()
+def delete_product(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
     db.session.delete(product)
     db.session.commit()
-    flash('Product removed from inventory.', 'info')
-    return redirect(url_for('dashboard.products'))
+    flash('Product removed.', 'info')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-@dashboard_bp.route('/ads', methods=['GET', 'POST'])
+# Settings & Branding (Logo, Hero, Background) for specific kiosk
+@dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
-def manage_ads():
-    store = current_user.store
-    ads = StoreAd.query.filter_by(store_id=store.id).order_by(StoreAd.slot_number.asc()).all()
+def update_kiosk_settings(kiosk_slug):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
 
-    if request.method == 'POST':
-        slot_num = int(request.form.get('slot_number'))
-        ad = StoreAd.query.filter_by(store_id=store.id, slot_number=slot_num).first()
-        
-        if ad:
-            ad.target_link = request.form.get('target_link', '').strip()
-            ad.is_active = True if request.form.get('is_active') else False
-            
-            banner_file = request.files.get('banner_image')
-            new_banner = save_uploaded_image(banner_file, 'ads')
-            if new_banner:
-                ad.banner_image = new_banner
-            
-            db.session.commit()
-            flash(f'Ad Slot #{slot_num} updated successfully!', 'success')
-            return redirect(url_for('dashboard.manage_ads'))
+    kiosk.name = request.form.get('name', kiosk.name).strip()
+    kiosk.bio = request.form.get('bio', kiosk.bio).strip()
+    kiosk.currency = request.form.get('currency', '₦').strip()
+    kiosk.show_public_stats = True if request.form.get('show_public_stats') else False
+    
+    phone = request.form.get('whatsapp_number', '').strip()
+    if phone:
+        kiosk.whatsapp_number = clean_phone_number(phone)
 
-    return render_template('dashboard/ads.html', store=store, ads=ads)
+    # Visual Media Uploads (Cloudinary / Local)
+    logo_file = request.files.get('logo')
+    hero_file = request.files.get('hero_image')
+    bg_file = request.files.get('background_image')
+
+    new_logo = upload_image(logo_file, 'logos')
+    new_hero = upload_image(hero_file, 'heroes')
+    new_bg = upload_image(bg_file, 'backgrounds')
+
+    if new_logo: kiosk.logo = new_logo
+    if new_hero: kiosk.hero_image = new_hero
+    if new_bg: kiosk.background_image = new_bg
+
+    db.session.commit()
+    flash(f'Settings for "{kiosk.name}" updated successfully!', 'success')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-@dashboard_bp.route('/settings', methods=['GET', 'POST'])
+# Manage 3 Ad Slots for specific kiosk
+@dashboard_bp.route('/<kiosk_slug>/ads', methods=['POST'])
 @login_required
-def settings():
-    store = current_user.store
+def update_kiosk_ads(kiosk_slug):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
 
-    if request.method == 'POST':
-        store.name = request.form.get('name', '').strip()
-        store.bio = request.form.get('bio', '').strip()
-        store.currency = request.form.get('currency', '₦').strip()
+    slot_num = int(request.form.get('slot_number'))
+    ad = StoreAd.query.filter_by(store_id=kiosk.id, slot_number=slot_num).first()
+    if ad:
+        ad.target_link = request.form.get('target_link', '').strip()
+        ad.is_active = True if request.form.get('is_active') else False
         
-        # Public Stats Toggle (The Social Proof Feature!)
-        store.show_public_stats = True if request.form.get('show_public_stats') else False
-        
-        raw_whatsapp = request.form.get('whatsapp_number', '').strip()
-        if raw_whatsapp:
-            store.whatsapp_number = clean_phone_number(raw_whatsapp)
-
-        # Store Logo Upload
-        logo_file = request.files.get('logo')
-        new_logo = save_uploaded_image(logo_file, 'logos')
-        if new_logo:
-            store.logo = new_logo
+        banner_file = request.files.get('banner_image')
+        new_banner = upload_image(banner_file, 'ads')
+        if new_banner:
+            ad.banner_image = new_banner
 
         db.session.commit()
-        flash('Storefront settings updated successfully!', 'success')
-        return redirect(url_for('dashboard.settings'))
+        flash(f'Ad Slot #{slot_num} updated!', 'success')
 
-    return render_template('dashboard/settings.html', store=store)
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
+
+
+# Delete entire kiosk
+@dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
+@login_required
+def delete_kiosk(kiosk_slug):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    name = kiosk.name
+    db.session.delete(kiosk)
+    db.session.commit()
+    flash(f'Kiosk "{name}" deleted permanently.', 'info')
+    return redirect(url_for('dashboard.overview'))
