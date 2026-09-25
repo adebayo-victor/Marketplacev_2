@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Open a New Kiosk // Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center p-4 py-12">
+    <div class="max-w-md w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
+        
+        <div class="mb-8">
+            <a href="/dashboard" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to Merchant Hub</a>
+            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">open a new kiosk.</h1>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Set up another storefront under your merchant account.</p>
+        </div>
+
+        <form method="POST" class="space-y-5">
+            <div>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Kiosk Name</label>
+                <input type="text" name="name" id="name" required 
+                       placeholder="e.g. Vicky Luxury Perfumes"
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+            </div>
+
+            <div>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Store Link Slug</label>
+                <div class="flex items-center border border-[#eee] bg-[#fafafa] focus-within:border-clay px-3">
+                    <span class="font-ui text-xs text-stone-400 select-none">marketplace.com/</span>
+                    <input type="text" name="slug" id="slug" 
+                           placeholder="vicky-perfumes"
+                           class="w-full py-3.5 px-1 bg-transparent outline-none font-ui text-xs font-semibold text-dark-oak">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">WhatsApp Number for Customer Orders</label>
+                <input type="text" name="whatsapp_number" required 
+                       placeholder="e.g. 08012345678"
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+            </div>
+
+            <div>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Short Bio / Tagline</label>
+                <textarea name="bio" rows="2" placeholder="Original designers and luxury fragrances delivered fast."
+                          class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-serif text-xs text-dark-oak outline-none focus:border-clay"></textarea>
+            </div>
+
+            <button type="submit" class="btn-clay w-full text-center block mt-2">
+                LAUNCH KIOSK &rarr;
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    nameInput.addEventListener('input', () => {
+        slugInput.value = nameInput.value.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    });
+</script>
+{% endblock %}
