@@ -7,7 +7,18 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap');
         :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
         
-        body { background: var(--cream); color: var(--dark-oak); font-family: 'Georgia', serif; margin: 0; }
+        body { 
+            background-color: var(--cream); 
+            color: var(--dark-oak); 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            background-image: 
+                linear-gradient(rgba(249, 245, 240, 0.92), rgba(249, 245, 240, 0.92)),
+                url('/static/images/marketplace_bg.jpg');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+        }
 
         .nav-bar {
             background: white; padding: 20px 5%; display: flex; 
