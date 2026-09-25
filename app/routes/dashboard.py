@@ -1,5 +1,7 @@
+import os
 import json
 import re
+import urllib.request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
@@ -27,7 +29,7 @@ def overview():
 
 
 # -------------------------------------------------------------
-# OPEN A NEW KIOSK (With Sectional Activation at Creation!)
+# OPEN A NEW KIOSK
 # -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
@@ -39,7 +41,6 @@ def new_kiosk():
         bio = request.form.get('bio', 'Welcome to our official store!').strip()
         ai_prompt = request.form.get('ai_prompt', '').strip()
 
-        # Sectional Activation Toggles on Creation
         section_hero = True if request.form.get('section_hero') else False
         section_flash = True if request.form.get('section_flash') else False
         section_ads = True if request.form.get('section_ads') else False
@@ -88,6 +89,8 @@ def new_kiosk():
             background_image=bg_url,
             receipt_theme='classic',
             sections_config=json.dumps(sections_dict),
+            is_active=False,              # Starts in Preview Mode
+            has_ever_activated=False,     # Brand new!
             custom_html=generated_html
         )
         db.session.add(store)
@@ -98,10 +101,52 @@ def new_kiosk():
             db.session.add(ad)
 
         db.session.commit()
-        flash(f'Kiosk "{name}" launched successfully!', 'success')
-        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=store.slug))
+        flash(f'Kiosk "{name}" created in Preview Mode! Pay activation to go live.', 'success')
+        return redirect(url_for('dashboard.overview'))
 
     return render_template('dashboard/kiosk_new.html')
+
+
+# -------------------------------------------------------------
+# PAYSTACK ACTIVATION VERIFY (Sets has_ever_activated = True)
+# -------------------------------------------------------------
+@dashboard_bp.route('/<kiosk_slug>/activate/verify')
+@login_required
+def verify_kiosk_activation(kiosk_slug):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    reference = request.args.get('reference')
+    paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY')
+
+    # Dev/test instant unlock if no secret key set
+    if not paystack_secret:
+        kiosk.is_active = True
+        kiosk.has_ever_activated = True
+        db.session.commit()
+        flash(f'🎉 Kiosk "{kiosk.name}" is now officially LIVE to the public!', 'success')
+        return redirect(url_for('dashboard.overview'))
+
+    try:
+        url = f"https://api.paystack.co/transaction/verify/{reference}"
+        req = urllib.request.Request(url, headers={
+            "Authorization": f"Bearer {paystack_secret}",
+            "Content-Type": "application/json"
+        })
+        with urllib.request.urlopen(req, timeout=15) as res:
+            res_data = json.loads(res.read().decode('utf-8'))
+            if res_data.get('status') and res_data['data']['status'] == 'success':
+                kiosk.is_active = True
+                kiosk.has_ever_activated = True
+                db.session.commit()
+                flash(f'🎉 Payment verified! Kiosk "{kiosk.name}" is now officially LIVE!', 'success')
+            else:
+                flash('Payment verification failed.', 'danger')
+    except Exception as e:
+        flash(f'Verification error: {e}', 'danger')
+
+    return redirect(url_for('dashboard.overview'))
 
 
 # -------------------------------------------------------------
@@ -127,7 +172,7 @@ def manage_kiosk(kiosk_slug):
     )
 
 
-# Product CRUD with MINIMUM 2 CUSTOM FEATURES VALIDATION
+# Product CRUD
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -143,7 +188,6 @@ def new_product(kiosk_slug):
         stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # Parse Custom Attributes
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
@@ -153,9 +197,8 @@ def new_product(kiosk_slug):
                 if opts:
                     attributes_dict[a_name.strip()] = opts
 
-        # 🛑 RULE: Minimum of 2 Custom Features Required
         if len(attributes_dict) < 2:
-            flash('Validation Error: A minimum of TWO custom features/specifications is required (e.g. Size & Color, or Chain & License Tier).', 'danger')
+            flash('Validation Error: A minimum of TWO custom features/specifications is required.', 'danger')
             return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
         image_file = request.files.get('image')
@@ -210,7 +253,6 @@ def edit_product(kiosk_slug, id):
                 if opts:
                     attributes_dict[a_name.strip()] = opts
 
-        # 🛑 RULE: Minimum of 2 Custom Features Required
         if len(attributes_dict) < 2:
             flash('Validation Error: A minimum of TWO custom features/specifications is required.', 'danger')
             return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
@@ -272,7 +314,6 @@ def update_kiosk_settings(kiosk_slug):
     kiosk.show_public_stats = True if request.form.get('show_public_stats') else False
     kiosk.receipt_theme = request.form.get('receipt_theme', 'classic').strip()
 
-    # 🎛️ Sectional Activation Updates
     section_hero = True if request.form.get('section_hero') else False
     section_flash = True if request.form.get('section_flash') else False
     section_ads = True if request.form.get('section_ads') else False
