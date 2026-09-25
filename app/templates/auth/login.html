@@ -13,17 +13,24 @@
 
         <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-6">
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Email Address</label>
-                <input type="email" name="email" required 
-                       placeholder="merchant@domain.com"
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Username or Email</label>
+                <input type="text" name="login_input" required 
+                       placeholder="username or email@domain.com"
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
             </div>
 
+            <!-- Password with Show/Hide Toggle -->
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Password</label>
-                <input type="password" name="password" required 
-                       placeholder="••••••••"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
+                <div class="relative flex items-center">
+                    <input type="password" name="password" id="loginPassword" required 
+                           placeholder="••••••••"
+                           class="w-full p-3.5 pr-12 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay focus:bg-white transition">
+                    <button type="button" onclick="togglePassword('loginPassword', 'eyeIcon')" 
+                            class="absolute right-3 text-stone-400 hover:text-dark-oak focus:outline-none p-1">
+                        <span id="eyeIcon" class="font-ui text-[11px] font-bold uppercase tracking-wider text-clay">Show</span>
+                    </button>
+                </div>
             </div>
 
             <div class="flex items-center justify-between font-ui text-[0.7rem]">
@@ -44,4 +51,18 @@
         </div>
     </div>
 </div>
+
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const label = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        label.innerText = 'Hide';
+    } else {
+        input.type = 'password';
+        label.innerText = 'Show';
+    }
+}
+</script>
 {% endblock %}
