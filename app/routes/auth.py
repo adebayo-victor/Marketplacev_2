@@ -5,12 +5,6 @@ from app.models import User
 
 auth_bp = Blueprint('auth', __name__)
 
-def slugify(text: str) -> str:
-    """Converts a store name into a clean URL-friendly slug."""
-    text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    return re.sub(r'[-\s]+', '-', text)
-
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -29,13 +23,14 @@ def register():
             flash('That email address is already registered. Please log in.', 'warning')
             return render_template('auth/register.html')
 
+        # Create Merchant Account ONLY (No empty kiosks forced!)
         user = User(name=merchant_name, email=email)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
 
         login_user(user)
-        flash(f'Welcome, {merchant_name}! You can now open your first kiosk.', 'success')
+        flash(f'Welcome, {merchant_name}! Your merchant account is ready.', 'success')
         return redirect(url_for('dashboard.overview'))
 
     return render_template('auth/register.html')
@@ -70,4 +65,3 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
-
