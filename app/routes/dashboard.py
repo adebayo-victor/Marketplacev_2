@@ -27,7 +27,7 @@ def overview():
 
 
 # -------------------------------------------------------------
-# OPEN A NEW KIOSK (/kiosk/new)
+# OPEN A NEW KIOSK (With Sectional Activation at Creation!)
 # -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
@@ -38,6 +38,16 @@ def new_kiosk():
         whatsapp = request.form.get('whatsapp_number', '').strip()
         bio = request.form.get('bio', 'Welcome to our official store!').strip()
         ai_prompt = request.form.get('ai_prompt', '').strip()
+
+        # Sectional Activation Toggles on Creation
+        section_hero = True if request.form.get('section_hero') else False
+        section_flash = True if request.form.get('section_flash') else False
+        section_ads = True if request.form.get('section_ads') else False
+        sections_dict = {
+            "hero": section_hero,
+            "flash_sales": section_flash,
+            "ads": section_ads
+        }
 
         if not name or not whatsapp:
             flash('Store name and WhatsApp number are required.', 'danger')
@@ -77,6 +87,7 @@ def new_kiosk():
             hero_image=hero_url,
             background_image=bg_url,
             receipt_theme='classic',
+            sections_config=json.dumps(sections_dict),
             custom_html=generated_html
         )
         db.session.add(store)
@@ -116,7 +127,7 @@ def manage_kiosk(kiosk_slug):
     )
 
 
-# Product CRUD for specific kiosk
+# Product CRUD with MINIMUM 2 CUSTOM FEATURES VALIDATION
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -132,6 +143,7 @@ def new_product(kiosk_slug):
         stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
+        # Parse Custom Attributes
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
@@ -140,6 +152,11 @@ def new_product(kiosk_slug):
                 opts = [v.strip() for v in a_vals.split(',') if v.strip()]
                 if opts:
                     attributes_dict[a_name.strip()] = opts
+
+        # 🛑 RULE: Minimum of 2 Custom Features Required
+        if len(attributes_dict) < 2:
+            flash('Validation Error: A minimum of TWO custom features/specifications is required (e.g. Size & Color, or Chain & License Tier).', 'danger')
+            return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
         image_file = request.files.get('image')
         image_name = upload_image(image_file, 'products') or 'default_product.png'
@@ -193,6 +210,11 @@ def edit_product(kiosk_slug, id):
                 if opts:
                     attributes_dict[a_name.strip()] = opts
 
+        # 🛑 RULE: Minimum of 2 Custom Features Required
+        if len(attributes_dict) < 2:
+            flash('Validation Error: A minimum of TWO custom features/specifications is required.', 'danger')
+            return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
+
         product.attributes_json = json.dumps(attributes_dict)
 
         image_file = request.files.get('image')
@@ -236,7 +258,7 @@ def product_flyer(kiosk_slug, id):
     return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
 
 
-# Settings, Branding & Receipt Style Selection
+# Settings, Branding & Sectional Activation
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
@@ -248,9 +270,17 @@ def update_kiosk_settings(kiosk_slug):
     kiosk.bio = request.form.get('bio', kiosk.bio).strip()
     kiosk.currency = request.form.get('currency', '₦').strip()
     kiosk.show_public_stats = True if request.form.get('show_public_stats') else False
-    
-    # 🧾 SAVING THE CHOSEN RECEIPT THEME
     kiosk.receipt_theme = request.form.get('receipt_theme', 'classic').strip()
+
+    # 🎛️ Sectional Activation Updates
+    section_hero = True if request.form.get('section_hero') else False
+    section_flash = True if request.form.get('section_flash') else False
+    section_ads = True if request.form.get('section_ads') else False
+    kiosk.sections_config = json.dumps({
+        "hero": section_hero,
+        "flash_sales": section_flash,
+        "ads": section_ads
+    })
     
     phone = request.form.get('whatsapp_number', '').strip()
     if phone:
@@ -275,7 +305,7 @@ def update_kiosk_settings(kiosk_slug):
         kiosk.background_image = new_bg
 
     db.session.commit()
-    flash(f'Settings & Receipt Style for "{kiosk.name}" updated successfully!', 'success')
+    flash(f'Settings & Layout for "{kiosk.name}" updated successfully!', 'success')
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
@@ -305,7 +335,7 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Delete entire kiosk
+# Delete kiosk
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
