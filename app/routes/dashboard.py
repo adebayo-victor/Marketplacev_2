@@ -7,6 +7,7 @@ from app.models import Store, Product, StoreAd, Order
 from app.utils.media import upload_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
+from app.utils.media import upload_image, delete_image
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -212,20 +213,6 @@ def edit_product(kiosk_slug, id):
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
 
 
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
-@login_required
-def delete_product(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-    db.session.delete(product)
-    db.session.commit()
-    flash('Product removed.', 'info')
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
 # Settings & Branding
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
@@ -285,7 +272,29 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Delete kiosk
+
+
+
+# 2. Update delete_product to clean up image:
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_product(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
+    
+    # 🧹 Auto-delete image from Cloudinary/Local storage
+    delete_image(product.image, 'products')
+
+    db.session.delete(product)
+    db.session.commit()
+    flash('Product removed and storage cleaned up.', 'info')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
+
+
+# 3. Update delete_kiosk to clean up all kiosk assets:
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
@@ -294,7 +303,15 @@ def delete_kiosk(kiosk_slug):
         abort(403)
 
     name = kiosk.name
+
+    # 🧹 Auto-delete kiosk media (Logo, Hero, Background, and all product pictures)
+    delete_image(kiosk.logo, 'logos')
+    delete_image(kiosk.hero_image, 'heroes')
+    delete_image(kiosk.background_image, 'backgrounds')
+    for p in kiosk.products.all():
+        delete_image(p.image, 'products')
+
     db.session.delete(kiosk)
     db.session.commit()
-    flash(f'Kiosk "{name}" deleted permanently.', 'info')
+    flash(f'Kiosk "{name}" and all associated media deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
