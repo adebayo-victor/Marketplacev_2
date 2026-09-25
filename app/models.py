@@ -8,12 +8,13 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), default='Merchant')  # Merchant Name
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # Master Platform Clearance
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # One merchant can own multiple kiosks/storefronts
+    # One merchant owns many kiosks
     stores = db.relationship('Store', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
 
     def set_password(self, password):
