@@ -1,0 +1,98 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Vitals // Master Command{% endblock %}
+
+{% block admin_content %}
+<div class="mb-10">
+    <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">
+        platform vitals.
+    </h1>
+    <p class="font-serif italic text-stone-500 mt-1">Cross-platform ecosystem metrics and merchant kiosk oversight.</p>
+</div>
+
+<!-- Platform Vitals Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-10">
+    <div class="section-box mb-0 p-6">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Merchants</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ total_merchants }}</h2>
+        <p class="font-ui text-[0.6rem] text-clay mt-1">Registered accounts</p>
+    </div>
+
+    <div class="section-box mb-0 p-6">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Kiosks</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ total_kiosks }}</h2>
+        <p class="font-ui text-[0.6rem] text-stone-500 mt-1">Active storefronts</p>
+    </div>
+
+    <div class="section-box mb-0 p-6">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Avg Kiosks / Merchant</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ avg_kiosks }}</h2>
+        <p class="font-ui text-[0.6rem] text-[#16a34a] mt-1">Ecosystem ratio</p>
+    </div>
+
+    <div class="section-box mb-0 p-6">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Impressions</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ "{:,}".format(total_views) }}</h2>
+        <p class="font-ui text-[0.6rem] text-stone-500 mt-1">Across all kiosks</p>
+    </div>
+
+    <div class="section-box mb-0 p-6">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Platform Leads</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ total_orders }}</h2>
+        <p class="font-ui text-[0.6rem] text-clay mt-1">Total checkouts</p>
+    </div>
+</div>
+
+<!-- Kiosks Registry Table -->
+<div class="section-box">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">registered storefronts</h2>
+        <span class="font-ui text-xs font-semibold text-stone-400 uppercase tracking-wider">{{ kiosks|length }} Kiosks Active</span>
+    </div>
+
+    <table class="w-full text-left font-ui text-xs border-collapse">
+        <thead>
+            <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
+                <th class="py-3">Store Name & Slug</th>
+                <th class="py-3">Merchant Owner</th>
+                <th class="py-3">Visits</th>
+                <th class="py-3">Products</th>
+                <th class="py-3">Custom HTML</th>
+                <th class="py-3 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for k in kiosks %}
+            <tr class="border-b border-stone-100">
+                <td class="py-4">
+                    <strong class="text-dark-oak text-sm">{{ k.name }}</strong><br>
+                    <a href="/{{ k.slug }}" target="_blank" class="text-clay text-xs hover:underline">/{{ k.slug }} &nearr;</a>
+                </td>
+                <td class="py-4 text-stone-600">
+                    {{ k.owner.email }}<br>
+                    <span class="text-[0.65rem] text-stone-400">WA: {{ k.whatsapp_number }}</span>
+                </td>
+                <td class="py-4 font-semibold text-dark-oak">{{ "{:,}".format(k.views_count) }}</td>
+                <td class="py-4 text-stone-600">{{ k.products.count() }} items</td>
+                <td class="py-4">
+                    {% if k.custom_html %}
+                        <span class="bg-[#ebfeef] text-[#16a34a] font-bold text-[0.6rem] px-2 py-1 rounded">OVERRIDDEN</span>
+                    {% else %}
+                        <span class="text-stone-400 text-[0.65rem]">Standard Theme</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 text-right">
+                    <a href="{{ url_for('admin.edit_template', store_id=k.id) }}" class="btn-clay text-[0.65rem] py-2 px-3">
+                        EDIT TEMPLATE 🛠️
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center py-10 font-serif italic text-stone-400">No kiosks registered on the platform yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
