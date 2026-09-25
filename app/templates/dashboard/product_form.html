@@ -7,13 +7,13 @@
     <div class="max-w-2xl w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
         
         <div class="mb-8">
-            <a href="/{{ kiosk.slug }}/manage" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to {{ kiosk.name }} control room</a>
+            <a href="/{{ kiosk.slug }}/manage#inventory" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to {{ kiosk.name }} control room</a>
             <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">
                 {% if product %}edit product: {{ product.name }}{% else %}add product to {{ kiosk.name }}{% endif %}
             </h1>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" id="productForm" class="space-y-5">
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Product Name</label>
                 <input type="text" name="name" required value="{{ product.name if product else '' }}" 
@@ -56,21 +56,37 @@
                 </div>
             </div>
 
-            <!-- Custom Attributes Builder -->
+            <!-- 🛑 CUSTOM ATTRIBUTES BUILDER (MINIMUM 2 FEATURES REQUIRED) -->
             <div class="p-5 bg-[#fff9f5] border-l-4 border-clay my-4">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-clay">Custom Variants & Features</span>
+                <div class="flex justify-between items-center mb-1">
+                    <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-clay">Custom Specifications / Variants</span>
                     <button type="button" onclick="addAttributeRow()" class="btn-clay text-[0.6rem] py-1.5 px-3">+ Add Feature</button>
                 </div>
+                <p class="font-serif italic text-xs text-rose-600 mb-3 font-semibold">
+                    * Rule: Minimum of TWO custom features required (e.g. Size & Color, or Supported Chain & License Tier).
+                </p>
+
                 <div id="attributesContainer" class="space-y-2">
                     {% if product and product.get_attributes() %}
                         {% for a_name, a_vals in product.get_attributes().items() %}
-                        <div class="flex gap-2 items-center">
+                        <div class="attr-row flex gap-2 items-center">
                             <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
                             <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Options (e.g. 45, 60)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
                             <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
                         </div>
                         {% endfor %}
+                    {% else %}
+                        <!-- Default 2 starter rows to guide the merchant -->
+                        <div class="attr-row flex gap-2 items-center">
+                            <input type="text" name="attr_name[]" placeholder="Feature 1 (e.g. License Tier)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" placeholder="Options separated by comma (e.g. Single, Commercial)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
+                        </div>
+                        <div class="attr-row flex gap-2 items-center">
+                            <input type="text" name="attr_name[]" placeholder="Feature 2 (e.g. Framework)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" placeholder="Options separated by comma (e.g. Python, Node.js)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -91,13 +107,29 @@
 function addAttributeRow() {
     const container = document.getElementById('attributesContainer');
     const div = document.createElement('div');
-    div.className = 'flex gap-2 items-center';
+    div.className = 'attr-row flex gap-2 items-center';
     div.innerHTML = `
-        <input type="text" name="attr_name[]" placeholder="Feature (e.g. Screen Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-        <input type="text" name="attr_values[]" placeholder="Options comma-separated (e.g. 45, 60)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+        <input type="text" name="attr_name[]" placeholder="Feature Name (e.g. Color)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+        <input type="text" name="attr_values[]" placeholder="Options comma-separated (e.g. Red, Blue)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
         <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
     `;
     container.appendChild(div);
 }
+
+// 🛑 Enforce Minimum 2 Features in JavaScript before submitting
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const rows = document.querySelectorAll('.attr-row');
+    let validCount = 0;
+    rows.forEach(r => {
+        const name = r.querySelector('input[name="attr_name[]"]').value.trim();
+        const vals = r.querySelector('input[name="attr_values[]"]').value.trim();
+        if (name && vals) validCount++;
+    });
+
+    if (validCount < 2) {
+        e.preventDefault();
+        alert('Validation Error: A minimum of TWO custom features/specifications is required (e.g. Size and Color, or Chain and License Tier).');
+    }
+});
 </script>
 {% endblock %}
