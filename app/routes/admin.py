@@ -80,9 +80,11 @@ def env_manager():
         'CLOUDINARY_API_KEY',
         'CLOUDINARY_API_SECRET',
         'AI_API_KEY',
-        'OPENROUTER_API_KEY',  # <--- Added
-        'PAYSTACK_PUBLIC_KEY',  # <--- Added
-        'PAYSTACK_SECRET_KEY
+        'OPENROUTER_API_KEY',  
+        'PAYSTACK_PUBLIC_KEY',  
+        'PAYSTACK_SECRET_KEY',
+        'GOOGLE_CLIENT_ID',      
+        'GOOGLE_CLIENT_SECRET'
     ]
 
     if request.method == 'POST':
