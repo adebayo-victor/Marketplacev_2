@@ -30,18 +30,20 @@ def create_app(config_class=Config):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register Blueprints
+    # Inside create_app() in app/__init__.py:
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.storefront import storefront_bp
     from app.routes.audit import audit_bp
     from app.routes.api import api_bp
+    from app.routes.admin import admin_bp  # <--- Register Admin Blueprint
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(storefront_bp)
     app.register_blueprint(audit_bp, url_prefix='/dashboard/audit')
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(admin_bp, url_prefix='/admin')  # <--- At /admin
 
     # Create tables automatically
     with app.app_context():
