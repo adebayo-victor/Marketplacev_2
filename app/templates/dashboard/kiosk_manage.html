@@ -49,7 +49,7 @@
             <a href="#inventory">• Inventory</a>
             <a href="#leads">• Customer Leads</a>
             <a href="#ads">• Monetization Ads</a>
-            <a href="#branding">• Branding & Receipts</a>
+            <a href="#branding">• Branding, Layout & Receipts</a>
             <a href="/{{ kiosk.slug }}" target="_blank" style="margin-top: 20px; color: var(--brand); font-weight: 600;">View Public Kiosk &nearr;</a>
         </nav>
         <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee;">
@@ -60,7 +60,6 @@
     </aside>
 
     <main class="main-content">
-        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div style="margin-bottom: 30px;">
@@ -160,9 +159,9 @@
             </table>
         </div>
 
-        <!-- Section 3: Visual Branding, Settings & Receipt Style -->
+        <!-- Section 3: Branding, Settings, Section Toggles & Receipts -->
         <div class="section-box" id="branding">
-            <h2>Branding & Invoice Settings</h2>
+            <h2>Branding, Layout & Receipts</h2>
             <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px; max-width: 650px;">
                 <div>
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">Kiosk Name</label>
@@ -179,7 +178,29 @@
                     <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ kiosk.bio }}</textarea>
                 </div>
 
-                <!-- 🧾 RECEIPT & INVOICE SIGNATURE THEME PICKER -->
+                <!-- 🎛️ SECTIONAL ACTIVATION TOGGLES -->
+                <div style="background: #fafafa; border: 1px solid #eee; padding: 20px;">
+                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
+                        Website Section Activation
+                    </label>
+                    <p style="font-size: 0.7rem; color: var(--gray); margin-top: 0; margin-bottom: 12px;">Toggle which sections display on your public storefront:</p>
+                    <div style="display: flex; gap: 20px; font-family: 'Montserrat'; font-size: 0.75rem;">
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <input type="checkbox" name="section_hero" {% if kiosk.is_section_active('hero') %}checked{% endif %} style="accent-color: var(--brand);">
+                            Hero Banner
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <input type="checkbox" name="section_flash" {% if kiosk.is_section_active('flash_sales') %}checked{% endif %} style="accent-color: var(--brand);">
+                            Flash Deals
+                        </label>
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <input type="checkbox" name="section_ads" {% if kiosk.is_section_active('ads') %}checked{% endif %} style="accent-color: var(--brand);">
+                            Sponsor Ads
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Receipt Signature Style Picker -->
                 <div style="background: #fff9f5; border-left: 4px solid var(--brand); padding: 20px;">
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
                         Select Your Signature Receipt Style
