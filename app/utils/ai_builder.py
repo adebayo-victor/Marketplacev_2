@@ -1,51 +1,103 @@
 import os
 import re
+import json
+import urllib.request
+import urllib.error
+
+def clean_html_fences(raw_text: str) -> str:
+    """Strips markdown code fences like ```html ... ```."""
+    raw_text = re.sub(r'^```html\s*', '', raw_text.strip())
+    raw_text = re.sub(r'```$', '', raw_text).strip()
+    return raw_text
+
+
+def query_openrouter(prompt_instruction: str, api_key: str) -> str:
+    """Queries OpenRouter API (supports Qwen, Llama, and Gemini models)."""
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://marketplace.local",
+        "X-Title": "Marketplace Kiosk Engine"
+    }
+
+    # You can change model to "qwen/qwen-2.5-72b-instruct", "google/gemini-2.0-flash-exp:free", etc.
+    model_name = os.environ.get('OPENROUTER_MODEL', 'qwen/qwen-2.5-72b-instruct')
+
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "user", "content": prompt_instruction}
+        ]
+    }
+
+    req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+    with urllib.request.urlopen(req, timeout=40) as response:
+        res_data = json.loads(response.read().decode('utf-8'))
+        return res_data['choices'][0]['message']['content']
+
 
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
-    Uses Gemini AI (or a clean, tailored fallback) to write a complete Jinja2 HTML template 
-    incorporating the merchant's prompt and Cloudinary image links.
+    Dual-Engine AI Builder:
+    Tier 1: Google Gemini API
+    Tier 2: OpenRouter API (Qwen / Llama)
+    Tier 3: Tailored Fallback Template
     """
-    api_key = os.environ.get('AI_API_KEY')
+    system_instruction = (
+        f'You are an expert web designer creating a custom storefront website for a brand named "{kiosk_name}".\n'
+        f'Merchant Design Prompt: "{prompt}"\n'
+        f'Merchant Bio: "{bio}"\n\n'
+        f'Brand Assets:\n'
+        f'- Logo Image URL: "{logo_url}"\n'
+        f'- Hero Showcase Banner URL: "{hero_url}"\n'
+        f'- Background Image URL: "{bg_url}"\n'
+        f'- Currency Symbol: "{currency}"\n\n'
+        'Write a COMPLETE, BEAUTIFUL, MOBILE-FIRST HTML5 page using Tailwind CSS via CDN.\n'
+        'IMPORTANT JINJA2 / FUNCTIONAL REQUIREMENTS:\n'
+        '1. Regular Products Loop: You MUST iterate over regular products using:\n'
+        '   {% for p in regular_products %} ... display product name {{ p.name }}, price {{ store.currency }}{{ p.current_price }}, image {{ p.image if p.image.startswith("http") else url_for("static", filename="uploads/products/" + p.image) }}, description {{ p.description }} ... {% endfor %}\n'
+        '   Include an order button calling: openProductModal(p.id, p.name, p.current_price, p.get_attributes())\n'
+        '2. Flash Sales: Include {% if flash_sales %} ... {% for p in flash_sales %} ... {% endfor %} {% endif %}\n'
+        '3. Shopping Bag Drawer & Checkout: Include an interactive slide-out cart drawer and a checkout form submitting via fetch to /{{ store.slug }}/checkout.\n'
+        '4. Dynamic Open Graph tags in <head>: <meta property="og:title" content="{{ store.name }}">\n\n'
+        'Output ONLY the raw HTML code. Do NOT wrap in markdown code blocks.'
+    )
 
-    # 1. If Gemini API key is configured, query the model
-    if api_key:
+    # -------------------------------------------------------------
+    # TIER 1: GOOGLE GEMINI API
+    # -------------------------------------------------------------
+    gemini_key = os.environ.get('AI_API_KEY')
+    if gemini_key:
         try:
             import google.generativeai as genai
-            genai.configure(api_key=api_key)
+            genai.configure(api_key=gemini_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
-
-            system_instruction = (
-                f'You are an expert web designer creating a custom storefront website for a brand named "{kiosk_name}".\n'
-                f'Merchant Design Prompt: "{prompt}"\n'
-                f'Merchant Bio: "{bio}"\n\n'
-                f'Brand Assets:\n'
-                f'- Logo Image URL: "{logo_url}"\n'
-                f'- Hero Showcase Banner URL: "{hero_url}"\n'
-                f'- Background Image URL: "{bg_url}"\n'
-                f'- Currency Symbol: "{currency}"\n\n'
-                'Write a COMPLETE, BEAUTIFUL, MOBILE-FIRST HTML5 page using Tailwind CSS via CDN.\n'
-                'IMPORTANT JINJA2 / FUNCTIONAL REQUIREMENTS:\n'
-                '1. Regular Products Loop: You MUST iterate over regular products using:\n'
-                '   {% for p in regular_products %} ... display product name {{ p.name }}, price {{ store.currency }}{{ p.current_price }}, image, description ... {% endfor %}\n'
-                '   Include an order button calling: openProductModal(p.id, p.name, p.current_price, p.get_attributes())\n'
-                '2. Flash Sales: Include {% if flash_sales %} ... {% for p in flash_sales %} ... {% endfor %} {% endif %}\n'
-                '3. Shopping Bag Drawer & Checkout: Include an interactive slide-out cart drawer and a checkout form submitting via fetch to /{{ store.slug }}/checkout.\n'
-                '4. Dynamic Open Graph tags in <head>: <meta property="og:title" content="{{ store.name }}">\n\n'
-                'Output ONLY the raw HTML code. Do NOT wrap in markdown code blocks.'
-            )
-
             response = model.generate_content(system_instruction)
-            raw_html = response.text.strip()
-            
-            # Clean markdown code fences if any
-            raw_html = re.sub(r'^```html\s*', '', raw_html)
-            raw_html = re.sub(r'```$', '', raw_html).strip()
-            return raw_html
+            raw_html = clean_html_fences(response.text)
+            if raw_html:
+                print("Generated kiosk template using Primary: Google Gemini!")
+                return raw_html
         except Exception as e:
-            print(f"Gemini generation notice: {e}. Using tailored fallback.")
+            print(f"Tier 1 (Gemini) failed: {e}. Attempting Tier 2 (OpenRouter)...")
 
-    # 2. Tailored Fallback Template (Clean, robust, and styled with their assets)
+    # -------------------------------------------------------------
+    # TIER 2: OPENROUTER API (FAILOVER)
+    # -------------------------------------------------------------
+    openrouter_key = os.environ.get('OPENROUTER_API_KEY')
+    if openrouter_key:
+        try:
+            raw_response = query_openrouter(system_instruction, openrouter_key)
+            raw_html = clean_html_fences(raw_response)
+            if raw_html:
+                print("Generated kiosk template using Backup: OpenRouter (Qwen/Llama)!")
+                return raw_html
+        except Exception as e:
+            print(f"Tier 2 (OpenRouter) failed: {e}. Falling back to default template.")
+
+    # -------------------------------------------------------------
+    # TIER 3: TAILORED FALLBACK TEMPLATE
+    # -------------------------------------------------------------
     bg_style = f"background-image: url('{bg_url}'); background-size: cover; background-attachment: fixed;" if bg_url else "background-color: #fdfcfb;"
     logo_img = f"<img src='{logo_url}' class='h-10 w-10 object-contain rounded-full'>" if logo_url else ""
     hero_div = f"<div class='max-w-6xl mx-auto px-6 mt-6 w-full'><img src='{hero_url}' class='w-full h-48 md:h-64 object-cover rounded-2xl shadow-sm'></div>" if hero_url else ""
