@@ -1,28 +1,28 @@
 {% extends 'base.html' %}
 
-{% block title %}AI Kiosk Studio // Marketplace{% endblock %}
+{% block title %}Open a Kiosk // Marketplace{% endblock %}
 
 {% block content %}
 <div class="min-h-screen py-12 px-4 flex justify-center">
-    <div class="max-w-2xl w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
+    <div class="max-w-xl w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
         
         <div class="mb-8">
             <a href="/dashboard" class="font-ui text-xs font-semibold text-stone-400 no-underline">&larr; Back to Merchant Hub</a>
-            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">ai kiosk studio.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Upload your brand assets, tell our AI how you want your site to look, and watch it generate your website.</p>
+            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">open a new kiosk.</h1>
+            <p class="font-serif italic text-sm text-stone-500 mt-1">Configure your storefront link, WhatsApp intake, and branding.</p>
         </div>
 
         <form method="POST" enctype="multipart/form-data" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Kiosk / Brand Name</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Kiosk Name</label>
                     <input type="text" name="name" id="name" required 
                            placeholder="e.g. Plan All About Essentials"
                            class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
                 </div>
 
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Custom URL Slug</label>
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Store Link Slug</label>
                     <div class="flex items-center border border-[#eee] bg-[#fafafa] focus-within:border-clay px-3">
                         <span class="font-ui text-xs text-stone-400 select-none">marketplace.com/</span>
                         <input type="text" name="slug" id="slug" 
@@ -40,45 +40,32 @@
             </div>
 
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Brand Bio / Tagline</label>
+                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Tagline / Bio</label>
                 <input type="text" name="bio" placeholder="Top quality home and lifestyle essentials delivered fast."
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-serif text-xs text-dark-oak outline-none focus:border-clay">
             </div>
 
-            <!-- 🤖 AI DESIGN PROMPT BOX -->
-            <div class="p-6 bg-[#fff9f5] border-l-4 border-clay">
-                <label class="block font-ui text-xs font-bold uppercase tracking-wider text-dark-oak mb-2">
-                    🤖 AI Design Instructions (Prompt)
-                </label>
-                <p class="font-serif italic text-xs text-stone-500 mb-3">
-                    Describe how you want your website to look. Mention your style, vibe, favorite colors, or target customers.
-                </p>
-                <textarea name="ai_prompt" rows="3" 
-                          placeholder="e.g. Create a warm, minimalist boutique with earthy tones, generous white space, bold typography, and an elegant showcase for handmade crafts."
-                          class="w-full p-3.5 border border-[#eee] bg-white font-serif text-xs text-dark-oak outline-none focus:border-clay leading-relaxed"></textarea>
-            </div>
-
-            <!-- 📸 CLOUDINARY MEDIA UPLOADS -->
-            <div class="space-y-4">
-                <h3 class="font-ui text-xs font-bold uppercase tracking-wider text-dark-oak mb-1">Brand Visuals (Uploaded to Cloudinary CDN)</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Visual Media (Cloudinary Uploads) -->
+            <div class="space-y-3 pt-2 border-t border-stone-100">
+                <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-dark-oak block">Branding Assets (Optional)</span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Store Logo</label>
+                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Logo</label>
                         <input type="file" name="logo" accept="image/*" class="font-ui text-[0.65rem]">
                     </div>
                     <div>
-                        <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Hero Showcase Banner</label>
+                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Hero Banner</label>
                         <input type="file" name="hero_image" accept="image/*" class="font-ui text-[0.65rem]">
                     </div>
                     <div>
-                        <label class="block font-ui text-[0.65rem] font-semibold uppercase text-stone-600 mb-1">Background Wallpaper</label>
+                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Background</label>
                         <input type="file" name="background_image" accept="image/*" class="font-ui text-[0.65rem]">
                     </div>
                 </div>
             </div>
 
             <button type="submit" class="btn-clay w-full py-4 text-center block font-ui font-semibold text-sm">
-                GENERATE & LAUNCH KIOSK VIA AI &rarr;
+                LAUNCH STOREFRONT &rarr;
             </button>
         </form>
     </div>
