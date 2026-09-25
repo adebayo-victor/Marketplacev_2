@@ -16,9 +16,9 @@ def slugify(text: str) -> str:
 
 
 # -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (Starts Plain: 0 Kiosks)
+# LEVEL 1: THE MERCHANT HUB (/dashboard)
 # -------------------------------------------------------------
-@dashboard_bp.route('/')
+@dashboard_bp.route('/dashboard')
 @login_required
 def overview():
     """Merchant Hub: Shows all storefronts owned by this merchant."""
@@ -27,7 +27,7 @@ def overview():
 
 
 # -------------------------------------------------------------
-# OPEN A NEW KIOSK (PLAIN CREATION)
+# OPEN A NEW KIOSK (/kiosk/new)
 # -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
@@ -84,7 +84,7 @@ def new_kiosk():
 
 
 # -------------------------------------------------------------
-# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM
+# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (/<kiosk_slug>/manage)
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
@@ -123,7 +123,6 @@ def new_product(kiosk_slug):
         stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # Custom Dynamic Attributes (e.g. Screen Size: 45", 60")
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
@@ -133,7 +132,6 @@ def new_product(kiosk_slug):
                 if opts:
                     attributes_dict[a_name.strip()] = opts
 
-        # Image Upload
         image_file = request.files.get('image')
         image_name = upload_image(image_file, 'products') or 'default_product.png'
 
@@ -231,7 +229,6 @@ def update_kiosk_settings(kiosk_slug):
     if phone:
         kiosk.whatsapp_number = clean_phone_number(phone)
 
-    # Visual Media Uploads (Cloudinary / Local)
     logo_file = request.files.get('logo')
     hero_file = request.files.get('hero_image')
     bg_file = request.files.get('background_image')
