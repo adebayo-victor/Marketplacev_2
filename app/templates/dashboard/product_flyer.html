@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Graphic Card // {{ product.name }}</title>
+    <title>Product Graphic Studio // {{ product.name }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,38 +16,155 @@
         .font-ui { font-family: 'Montserrat', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        .theme-cyber { 
-            background: linear-gradient(145deg, #0d0e12 0%, #171821 100%) !important; 
-            color: #f4f4f5 !important; 
-            border: 2px solid #06b6d4 !important; 
-        }
-        .theme-clay { 
+        /* 🎨 12 CURATED BRAND THEMES */
+        
+        /* 1. Marketplace Signature (Default) */
+        .theme-marketplace { 
             background: linear-gradient(145deg, #f9f5f0 0%, #ede5dc 100%) !important; 
             color: #2d1e14 !important; 
             border: 2px solid #8d5b3e !important; 
         }
+        .theme-marketplace .accent-text { color: #8d5b3e !important; }
+        .theme-marketplace .badge-bg { background: #8d5b3e !important; color: white !important; }
+        .theme-marketplace .border-subtle { border-color: rgba(141, 91, 62, 0.2) !important; }
+        .theme-marketplace .tag-bg { background: rgba(141, 91, 62, 0.1) !important; color: #2d1e14 !important; border-color: rgba(141, 91, 62, 0.3) !important; }
+
+        /* 2. Cyber Obsidian */
+        .theme-cyber { 
+            background: linear-gradient(145deg, #09090b 0%, #18181b 100%) !important; 
+            color: #f4f4f5 !important; 
+            border: 2px solid #06b6d4 !important; 
+        }
+        .theme-cyber .accent-text { color: #06b6d4 !important; }
+        .theme-cyber .badge-bg { background: #06b6d4 !important; color: black !important; }
+        .theme-cyber .border-subtle { border-color: rgba(255, 255, 255, 0.1) !important; }
+        .theme-cyber .tag-bg { background: rgba(6, 182, 212, 0.1) !important; color: #f4f4f5 !important; border-color: rgba(6, 182, 212, 0.3) !important; }
+
+        /* 3. Sunset Flame (Grill / Smokehouse) */
+        .theme-flame { 
+            background: linear-gradient(145deg, #18100c 0%, #291710 100%) !important; 
+            color: #fff7ed !important; 
+            border: 2px solid #ea580c !important; 
+        }
+        .theme-flame .accent-text { color: #f97316 !important; }
+        .theme-flame .badge-bg { background: #ea580c !important; color: white !important; }
+        .theme-flame .border-subtle { border-color: rgba(234, 88, 12, 0.25) !important; }
+        .theme-flame .tag-bg { background: rgba(234, 88, 12, 0.15) !important; color: #ffedd5 !important; border-color: rgba(234, 88, 12, 0.4) !important; }
+
+        /* 4. Emerald Luxe */
         .theme-emerald { 
             background: linear-gradient(145deg, #022c22 0%, #064e3b 100%) !important; 
             color: #ecfdf5 !important; 
             border: 2px solid #10b981 !important; 
         }
+        .theme-emerald .accent-text { color: #34d399 !important; }
+        .theme-emerald .badge-bg { background: #10b981 !important; color: black !important; }
+        .theme-emerald .border-subtle { border-color: rgba(16, 185, 129, 0.2) !important; }
+        .theme-emerald .tag-bg { background: rgba(16, 185, 129, 0.15) !important; color: #ecfdf5 !important; border-color: rgba(16, 185, 129, 0.35) !important; }
 
+        /* 5. Royal Gold */
+        .theme-gold { 
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important; 
+            color: #f8fafc !important; 
+            border: 2px solid #f59e0b !important; 
+        }
+        .theme-gold .accent-text { color: #fbbf24 !important; }
+        .theme-gold .badge-bg { background: #f59e0b !important; color: black !important; }
+        .theme-gold .border-subtle { border-color: rgba(245, 158, 11, 0.2) !important; }
+        .theme-gold .tag-bg { background: rgba(245, 158, 11, 0.15) !important; color: #fef3c7 !important; border-color: rgba(245, 158, 11, 0.35) !important; }
+
+        /* 6. Velvet Rose */
+        .theme-rose { 
+            background: linear-gradient(145deg, #1c1015 0%, #2e1520 100%) !important; 
+            color: #fff1f2 !important; 
+            border: 2px solid #f43f5e !important; 
+        }
+        .theme-rose .accent-text { color: #fb7185 !important; }
+        .theme-rose .badge-bg { background: #f43f5e !important; color: white !important; }
+        .theme-rose .border-subtle { border-color: rgba(244, 63, 94, 0.2) !important; }
+        .theme-rose .tag-bg { background: rgba(244, 63, 94, 0.15) !important; color: #ffe4e6 !important; border-color: rgba(244, 63, 94, 0.35) !important; }
+
+        /* 7. Swiss Minimalist */
+        .theme-minimal { 
+            background: #ffffff !important; 
+            color: #18181b !important; 
+            border: 2px solid #18181b !important; 
+        }
+        .theme-minimal .accent-text { color: #18181b !important; }
+        .theme-minimal .badge-bg { background: #18181b !important; color: white !important; }
+        .theme-minimal .border-subtle { border-color: #e4e4e7 !important; }
+        .theme-minimal .tag-bg { background: #f4f4f5 !important; color: #18181b !important; border-color: #d4d4d8 !important; }
+
+        /* 8. Electric Violet */
+        .theme-violet { 
+            background: linear-gradient(145deg, #140d21 0%, #22123b 100%) !important; 
+            color: #faf5ff !important; 
+            border: 2px solid #a855f7 !important; 
+        }
+        .theme-violet .accent-text { color: #c084fc !important; }
+        .theme-violet .badge-bg { background: #a855f7 !important; color: white !important; }
+        .theme-violet .border-subtle { border-color: rgba(168, 85, 247, 0.2) !important; }
+        .theme-violet .tag-bg { background: rgba(168, 85, 247, 0.15) !important; color: #f3e8ff !important; border-color: rgba(168, 85, 247, 0.35) !important; }
+
+        /* 9. Espresso Mocha */
+        .theme-mocha { 
+            background: linear-gradient(145deg, #1c1514 0%, #2b1d1a 100%) !important; 
+            color: #fef3c7 !important; 
+            border: 2px solid #d97706 !important; 
+        }
+        .theme-mocha .accent-text { color: #f59e0b !important; }
+        .theme-mocha .badge-bg { background: #d97706 !important; color: white !important; }
+        .theme-mocha .border-subtle { border-color: rgba(217, 119, 6, 0.2) !important; }
+        .theme-mocha .tag-bg { background: rgba(217, 119, 6, 0.15) !important; color: #fef3c7 !important; border-color: rgba(217, 119, 6, 0.35) !important; }
+
+        /* 10. Nordic Frost */
+        .theme-arctic { 
+            background: linear-gradient(145deg, #09131f 0%, #0f1d30 100%) !important; 
+            color: #f0f9ff !important; 
+            border: 2px solid #38bdf8 !important; 
+        }
+        .theme-arctic .accent-text { color: #38bdf8 !important; }
+        .theme-arctic .badge-bg { background: #38bdf8 !important; color: black !important; }
+        .theme-arctic .border-subtle { border-color: rgba(56, 189, 248, 0.2) !important; }
+        .theme-arctic .tag-bg { background: rgba(56, 189, 248, 0.15) !important; color: #e0f2fe !important; border-color: rgba(56, 189, 248, 0.35) !important; }
+
+        /* 11. Streetwear Concrete */
+        .theme-concrete { 
+            background: linear-gradient(145deg, #191816 0%, #262420 100%) !important; 
+            color: #fef08a !important; 
+            border: 2px solid #eab308 !important; 
+        }
+        .theme-concrete .accent-text { color: #eab308 !important; }
+        .theme-concrete .badge-bg { background: #eab308 !important; color: black !important; }
+        .theme-concrete .border-subtle { border-color: rgba(234, 179, 8, 0.2) !important; }
+        .theme-concrete .tag-bg { background: rgba(234, 179, 8, 0.15) !important; color: #fef9c3 !important; border-color: rgba(234, 179, 8, 0.35) !important; }
+
+        /* 12. Fresh Matcha */
+        .theme-matcha { 
+            background: linear-gradient(145deg, #101c12 0%, #192e1c 100%) !important; 
+            color: #f7fee7 !important; 
+            border: 2px solid #84cc16 !important; 
+        }
+        .theme-matcha .accent-text { color: #a3e635 !important; }
+        .theme-matcha .badge-bg { background: #84cc16 !important; color: black !important; }
+        .theme-matcha .border-subtle { border-color: rgba(132, 204, 22, 0.2) !important; }
+        .theme-matcha .tag-bg { background: rgba(132, 204, 22, 0.15) !important; color: #ecfccb !important; border-color: rgba(132, 204, 22, 0.35) !important; }
+
+        /* 🖼️ WYSIWYG EXACT SIZING */
         .flyer-card-container {
-            width: 100%;
-            max-width: 380px;
+            width: 360px;
+            max-width: 92vw;
             box-sizing: border-box;
+            border-radius: 26px;
         }
 
-        /* 📸 ZERO-STRETCH PRODUCT IMAGE CANVAS */
         .product-image-box {
             width: 100%;
-            height: 240px;
+            height: 220px;
             background-size: cover !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
-            border-radius: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
         }
     </style>
 </head>
@@ -55,61 +172,71 @@
 
     <div class="max-w-md w-full flex justify-between items-center mb-4">
         <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white">&larr; Back to Inventory</a>
-        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">Product Graphic Card</span>
+        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">12 Visual Themes</span>
     </div>
 
-    <!-- Controls Bar -->
-    <div class="max-w-md w-full bg-stone-900 p-4 rounded-2xl mb-6 flex flex-wrap gap-4 items-center justify-between border border-stone-800 shadow-lg">
-        <div>
-            <label class="block text-[10px] font-mono uppercase text-stone-400 mb-1">Theme</label>
+    <!-- 🎨 12 THEMES HORIZONTAL SCROLL BAR -->
+    <div class="max-w-md w-full bg-stone-900 p-4 rounded-2xl mb-6 border border-stone-800 shadow-xl">
+        <div class="flex justify-between items-center mb-2.5">
+            <label class="text-[10px] font-mono uppercase text-stone-400 font-bold">Swipe / Click Theme</label>
             <div class="flex gap-2">
-                <button type="button" onclick="setTheme('theme-cyber')" class="px-3 py-1.5 rounded-lg bg-black text-cyan-400 border border-cyan-500/50 text-xs font-mono cursor-pointer">Cyber</button>
-                <button type="button" onclick="setTheme('theme-clay')" class="px-3 py-1.5 rounded-lg bg-[#f9f5f0] text-[#2d1e14] border border-[#8d5b3e] text-xs font-mono font-bold cursor-pointer">Clay</button>
-                <button type="button" onclick="setTheme('theme-emerald')" class="px-3 py-1.5 rounded-lg bg-[#064e3b] text-emerald-300 border border-emerald-500/50 text-xs font-mono cursor-pointer">Emerald</button>
+                <button type="button" onclick="downloadFlyerPNG()" id="pngBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold px-3 py-1.5 rounded-lg text-xs uppercase transition cursor-pointer">
+                    PNG 📸
+                </button>
+                <button type="button" onclick="downloadFlyerPDF()" id="pdfBtn" class="bg-stone-700 hover:bg-stone-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs uppercase transition cursor-pointer">
+                    PDF 🖨️
+                </button>
             </div>
         </div>
 
-        <div class="flex gap-2">
-            <button type="button" onclick="downloadFlyerPNG()" id="pngBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
-                PNG 📸
-            </button>
-            <button type="button" onclick="downloadFlyerPDF()" id="pdfBtn" class="bg-stone-700 hover:bg-stone-600 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
-                PDF 🖨️
-            </button>
+        <!-- Scrollable Theme Chips -->
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            <button type="button" onclick="setTheme('theme-marketplace')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#f9f5f0] text-[#2d1e14] border-2 border-[#8d5b3e] text-xs font-bold whitespace-nowrap cursor-pointer">1. Marketplace</button>
+            <button type="button" onclick="setTheme('theme-cyber')" class="theme-pill px-3 py-1.5 rounded-lg bg-black text-cyan-400 border border-cyan-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">2. Cyber</button>
+            <button type="button" onclick="setTheme('theme-flame')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#18100c] text-orange-400 border border-orange-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">3. Flame</button>
+            <button type="button" onclick="setTheme('theme-emerald')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#022c22] text-emerald-300 border border-emerald-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">4. Emerald</button>
+            <button type="button" onclick="setTheme('theme-gold')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#0f172a] text-amber-300 border border-amber-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">5. Royal Gold</button>
+            <button type="button" onclick="setTheme('theme-rose')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#1c1015] text-rose-300 border border-rose-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">6. Rose</button>
+            <button type="button" onclick="setTheme('theme-minimal')" class="theme-pill px-3 py-1.5 rounded-lg bg-white text-black border border-black text-xs font-bold whitespace-nowrap cursor-pointer">7. Minimal</button>
+            <button type="button" onclick="setTheme('theme-violet')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#140d21] text-purple-300 border border-purple-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">8. Violet</button>
+            <button type="button" onclick="setTheme('theme-mocha')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#1c1514] text-amber-200 border border-amber-600/50 text-xs font-mono whitespace-nowrap cursor-pointer">9. Mocha</button>
+            <button type="button" onclick="setTheme('theme-arctic')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#09131f] text-sky-300 border border-sky-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">10. Arctic</button>
+            <button type="button" onclick="setTheme('theme-concrete')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#191816] text-yellow-300 border border-yellow-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">11. Concrete</button>
+            <button type="button" onclick="setTheme('theme-matcha')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#101c12] text-lime-300 border border-lime-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">12. Matcha</button>
         </div>
     </div>
 
-    <!-- 📸 THE PRODUCT GRAPHIC CARD -->
-    <div id="flyerCard" class="theme-cyber flyer-card-container p-6 rounded-[28px] shadow-2xl flex flex-col gap-3.5 border-2">
+    <!-- 📸 THE PRODUCT GRAPHIC CARD (DEFAULTS TO SIGNATURE MARKETPLACE THEME) -->
+    <div id="flyerCard" class="theme-marketplace flyer-card-container p-6 shadow-2xl flex flex-col gap-3">
         
         <!-- 1. Header -->
-        <div class="flex items-center justify-between pb-2.5 border-b border-white/10">
+        <div class="flex items-center justify-between pb-2.5 border-b border-subtle">
             <div>
-                <span class="text-[9px] font-mono uppercase tracking-widest text-amber-400 block font-bold">OFFICIAL RELEASE</span>
-                <h3 class="font-extrabold text-sm tracking-tight m-0 text-white">{{ kiosk.name }}</h3>
+                <span class="text-[9px] font-mono uppercase tracking-widest accent-text block font-bold">OFFICIAL RELEASE</span>
+                <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
             </div>
             {% if product.is_flash_sale %}
-                <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2.5 py-1 rounded-full shadow">🔥 FLASH SALE</span>
+                <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">🔥 FLASH SALE</span>
             {% else %}
-                <span class="bg-cyan-500/20 text-cyan-400 font-mono text-[9px] font-bold uppercase px-2.5 py-1 rounded-full border border-cyan-500/30">IN STOCK</span>
+                <span class="badge-bg font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">IN STOCK</span>
             {% endif %}
         </div>
 
-        <!-- 2. Product Image Box (ZERO-DISTORTION via background-size: cover) -->
-        <div class="product-image-box" 
+        <!-- 2. Product Image Box (Exact 220px height, background-size: cover) -->
+        <div class="product-image-box border-subtle border shadow-inner" 
              style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
         </div>
 
         <!-- 3. Details -->
-        <div class="space-y-1.5">
-            <h2 class="text-lg font-black tracking-tight leading-tight text-white m-0">{{ product.name }}</h2>
-            <p class="text-[11px] opacity-75 leading-relaxed text-stone-300 m-0">{{ product.description }}</p>
+        <div class="space-y-1">
+            <h2 class="text-base font-black tracking-tight leading-snug m-0">{{ product.name }}</h2>
+            <p class="text-[11px] opacity-75 leading-relaxed m-0 line-clamp-2">{{ product.description }}</p>
 
             <!-- Custom Attributes Pills -->
             {% if product.get_attributes() %}
-            <div class="flex flex-wrap gap-1.5 pt-1">
+            <div class="flex flex-wrap gap-1 pt-1">
                 {% for a_name, a_vals in product.get_attributes().items() %}
-                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2.5 py-0.5 rounded-md text-stone-200">
+                    <span class="text-[9px] font-mono font-semibold tag-bg border px-2 py-0.5 rounded-md">
                         {{ a_name }}: {{ a_vals|join(', ') }}
                     </span>
                 {% endfor %}
@@ -118,49 +245,58 @@
         </div>
 
         <!-- 4. Price & WhatsApp Order Button -->
-        <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+        <div class="pt-2.5 border-t border-subtle flex items-center justify-between">
             <div>
                 <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
                 {% if product.has_discount %}
                     <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
-                    <div class="text-xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
                 {% else %}
-                    <div class="text-xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
                 {% endif %}
             </div>
 
             <div class="text-right">
-                <span class="text-[8px] font-mono text-emerald-400 font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg inline-block">
+                <span class="text-[8px] font-mono accent-text font-bold block mb-1">ORDER ON WHATSAPP:</span>
+                <span class="bg-[#16a34a] text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-md inline-block">
                     💬 {{ kiosk.whatsapp_number }}
                 </span>
             </div>
         </div>
 
         <!-- 5. Watermark -->
-        <div class="text-center pt-2 border-t border-white/5">
-            <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest text-stone-400">
+        <div class="text-center pt-2 border-t border-subtle">
+            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">
                 marketplace.com/{{ kiosk.slug }} • Powered by Techlite
             </span>
         </div>
     </div>
 
-    <!-- 🎯 WYSIWYG ZERO-STRETCH CAPTURE SCRIPT -->
+    <!-- 🎯 100% WYSIWYG CAPTURE SCRIPT WITH FONT SYNC -->
     <script>
+        const allThemes = [
+            'theme-marketplace', 'theme-cyber', 'theme-flame', 'theme-emerald', 
+            'theme-gold', 'theme-rose', 'theme-minimal', 'theme-violet', 
+            'theme-mocha', 'theme-arctic', 'theme-concrete', 'theme-matcha'
+        ];
+
         function setTheme(themeClass) {
             const card = document.getElementById('flyerCard');
-            card.classList.remove('theme-cyber', 'theme-clay', 'theme-emerald');
+            card.classList.remove(...allThemes);
             card.classList.add(themeClass);
         }
 
-        function downloadFlyerPNG() {
+        async function downloadFlyerPNG() {
             const btn = document.getElementById('pngBtn');
-            btn.innerText = 'CAPTURING...';
+            btn.innerText = 'GENERATING...';
             btn.disabled = true;
 
             const originalCard = document.getElementById('flyerCard');
 
-            // Clone to match exact screen dimensions
+            // 1. Wait for all Google Fonts to be 100% ready (eliminates font shift)
+            await document.fonts.ready;
+
+            // 2. Clone using exact rendered pixel width & let height follow natural content
             const clone = originalCard.cloneNode(true);
             clone.id = 'flyerClone';
             clone.style.position = 'fixed';
@@ -178,7 +314,8 @@
                 scale: 2.5,
                 useCORS: true,
                 allowTaint: false,
-                backgroundColor: null
+                backgroundColor: null,
+                logging: false
             }).then(canvas => {
                 document.body.removeChild(clone);
 
@@ -200,14 +337,15 @@
             });
         }
 
-        function downloadFlyerPDF() {
+        async function downloadFlyerPDF() {
+            await document.fonts.ready;
             const card = document.getElementById('flyerCard');
             const opt = {
                 margin: 5,
                 filename: `Flyer_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: [100, 140], orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: [100, 135], orientation: 'portrait' }
             };
             html2pdf().set(opt).from(card).save();
         }
