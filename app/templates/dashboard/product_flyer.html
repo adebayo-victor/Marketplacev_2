@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ad Flyer Studio // {{ product.name }}</title>
+    <title>Product Graphic Card // {{ product.name }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,25 +17,25 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
         .theme-cyber { 
-            background: linear-gradient(135deg, #09090b 0%, #18181b 100%) !important; 
+            background: linear-gradient(145deg, #0d0e12 0%, #171821 100%) !important; 
             color: #f4f4f5 !important; 
             border: 2px solid #06b6d4 !important; 
         }
         .theme-clay { 
-            background: linear-gradient(135deg, #f9f5f0 0%, #ede5dc 100%) !important; 
+            background: linear-gradient(145deg, #f9f5f0 0%, #ede5dc 100%) !important; 
             color: #2d1e14 !important; 
             border: 2px solid #8d5b3e !important; 
         }
         .theme-emerald { 
-            background: linear-gradient(135deg, #022c22 0%, #064e3b 100%) !important; 
+            background: linear-gradient(145deg, #022c22 0%, #064e3b 100%) !important; 
             color: #ecfdf5 !important; 
             border: 2px solid #10b981 !important; 
         }
 
-        /* Responsive on-screen preview card */
-        .flyer-preview-box {
+        /* 🖼️ COMPACT PRODUCT CARD (TIGHT FIT, NOT FULL SCREEN) */
+        .compact-flyer-card {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             box-sizing: border-box;
         }
     </style>
@@ -44,7 +44,7 @@
 
     <div class="max-w-md w-full flex justify-between items-center mb-4">
         <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white">&larr; Back to Inventory</a>
-        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">Social Flyer Studio (9:16)</span>
+        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">Product Graphic Card</span>
     </div>
 
     <!-- Controls Bar -->
@@ -68,14 +68,14 @@
         </div>
     </div>
 
-    <!-- 📸 THE FLYER CANVAS CONTAINER -->
-    <div id="flyerCard" class="theme-cyber flyer-preview-box p-8 rounded-[36px] shadow-2xl flex flex-col justify-between border-2">
+    <!-- 📸 COMPACT PRODUCT GRAPHIC CARD (WRAPS TIGHTLY AROUND CONTENT) -->
+    <div id="flyerCard" class="theme-cyber compact-flyer-card p-6 md:p-7 rounded-[32px] shadow-2xl flex flex-col gap-4 border-2">
         
-        <!-- 1. Header Block -->
-        <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-white/10">
             <div>
                 <span class="text-[9px] font-mono uppercase tracking-widest text-amber-400 block font-bold">OFFICIAL RELEASE</span>
-                <h3 class="font-extrabold text-base tracking-tight m-0 text-white">{{ kiosk.name }}</h3>
+                <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
             </div>
             {% if product.is_flash_sale %}
                 <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2.5 py-1 rounded-full shadow">🔥 FLASH SALE</span>
@@ -84,67 +84,62 @@
             {% endif %}
         </div>
 
-        <!-- 2. Product Image Container -->
-        <div class="my-2">
-            <div class="h-60 w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center">
-                <img src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/products/' + product.image) }}" 
-                     crossorigin="anonymous"
-                     alt="{{ product.name }}" 
-                     class="h-full w-full object-cover">
-            </div>
+        <!-- Product Image (Proportional, tightly fitted) -->
+        <div class="w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center">
+            <img src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/products/' + product.image) }}" 
+                 crossorigin="anonymous"
+                 alt="{{ product.name }}" 
+                 class="w-full max-h-64 object-cover">
         </div>
 
-        <!-- 3. Details & Specs -->
-        <div class="my-2">
-            <h2 class="text-xl font-black tracking-tight mb-1 leading-snug text-white">{{ product.name }}</h2>
-            <p class="text-xs opacity-75 mb-3 leading-relaxed text-stone-300">{{ product.description }}</p>
+        <!-- Details -->
+        <div class="space-y-2">
+            <h2 class="text-xl font-black tracking-tight leading-snug">{{ product.name }}</h2>
+            <p class="text-xs opacity-80 leading-relaxed">{{ product.description }}</p>
 
-            <!-- Custom Attributes Badges -->
+            <!-- Custom Attributes Pills -->
             {% if product.get_attributes() %}
-            <div class="flex flex-wrap gap-1.5 mb-3">
+            <div class="flex flex-wrap gap-1.5 pt-1">
                 {% for a_name, a_vals in product.get_attributes().items() %}
-                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2 py-0.5 rounded-md text-stone-200">
+                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2.5 py-1 rounded-md">
                         {{ a_name }}: {{ a_vals|join(', ') }}
                     </span>
                 {% endfor %}
             </div>
             {% endif %}
+        </div>
 
-            <!-- Price & WhatsApp Order Box -->
-            <div class="pt-3 border-t border-white/10 flex items-center justify-between">
-                <div>
-                    <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
-                    {% if product.has_discount %}
-                        <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
-                        <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
-                    {% else %}
-                        <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
-                    {% endif %}
-                </div>
+        <!-- Price & WhatsApp Order Button -->
+        <div class="pt-3 border-t border-white/10 flex items-center justify-between mt-1">
+            <div>
+                <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
+                {% if product.has_discount %}
+                    <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
+                    <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                {% else %}
+                    <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                {% endif %}
+            </div>
 
-                <div class="text-right">
-                    <span class="text-[8px] font-mono text-emerald-400 font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                    <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg inline-block">
-                        💬 {{ kiosk.whatsapp_number }}
-                    </span>
-                </div>
+            <div class="text-right">
+                <span class="text-[8px] font-mono text-emerald-400 font-bold block mb-1">ORDER ON WHATSAPP:</span>
+                <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg inline-block">
+                    💬 {{ kiosk.whatsapp_number }}
+                </span>
             </div>
         </div>
 
-        <!-- 4. Footer Watermark -->
-        <div class="text-center pt-3 mt-2 border-t border-white/10">
-            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest text-stone-400">
+        <!-- Watermark -->
+        <div class="text-center pt-2 border-t border-white/5">
+            <span class="text-[8px] font-mono opacity-40 uppercase tracking-widest">
                 marketplace.com/{{ kiosk.slug }} • Powered by Techlite
             </span>
         </div>
     </div>
 
-    <!-- 🎯 ZERO-CLIPPING SNAPSHOT ENGINE -->
+    <!-- 🎯 COMPACT ZERO-STRETCH CAPTURE ENGINE -->
     <script>
-        let currentTheme = 'theme-cyber';
-
         function setTheme(themeClass) {
-            currentTheme = themeClass;
             const card = document.getElementById('flyerCard');
             card.classList.remove('theme-cyber', 'theme-clay', 'theme-emerald');
             card.classList.add(themeClass);
@@ -157,33 +152,33 @@
 
             const originalCard = document.getElementById('flyerCard');
 
-            // 1. CLONE CARD INTO ISOLATED ZERO-OFFSET CONTAINER
+            // 1. CLONE TO EXACT NATURAL DIMENSIONS (NO FULL-SCREEN STRETCH)
             const clone = originalCard.cloneNode(true);
             clone.id = 'flyerClone';
             clone.style.position = 'fixed';
             clone.style.top = '0px';
             clone.style.left = '0px';
             clone.style.zIndex = '-99999';
-            clone.style.width = '420px';
-            clone.style.height = 'auto';
+            clone.style.width = '420px';    // Fixed compact card width
+            clone.style.height = 'auto';    // Wraps tightly around content!
             clone.style.margin = '0';
             clone.style.transform = 'none';
 
             document.body.appendChild(clone);
 
-            // 2. CAPTURE FROM ORIGIN (0, 0) - ELIMINATES MOBILE SCROLL SHIFT!
+            // 2. CAPTURE PRECISE CARD BOUNDS ONLY
             html2canvas(clone, {
-                scale: 2.6,        // Produces crisp ~1080 x 1920 Instagram/WhatsApp Status
+                scale: 2.5,
                 useCORS: true,
                 allowTaint: false,
                 scrollY: 0,
                 scrollX: 0,
-                backgroundColor: null
+                backgroundColor: null       // Transparent outer canvas
             }).then(canvas => {
                 document.body.removeChild(clone);
 
                 const link = document.createElement('a');
-                link.download = `Status_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
+                link.download = `Card_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 
@@ -204,10 +199,10 @@
             const card = document.getElementById('flyerCard');
             const opt = {
                 margin: 5,
-                filename: `Flyer_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
+                filename: `Card_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-                jsPDF: { unit: 'mm', format: [110, 195], orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: [110, 160], orientation: 'portrait' }
             };
             html2pdf().set(opt).from(card).save();
         }
