@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Merchant Hub // Marketplace</title>
+    
+    <!-- Real Paystack SDK -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
@@ -52,6 +54,7 @@
         .kiosk-card h3 { font-family: 'Montserrat'; font-size: 1.5rem; margin: 0; }
         .live-badge { font-family: 'Montserrat'; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; background: #ebfeef; color: #16a34a; padding: 4px 8px; border-radius: 4px; }
         .lock-badge { font-family: 'Montserrat'; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; background: #ffebeb; color: #b33a3a; padding: 4px 8px; border-radius: 4px; }
+        .building-badge { font-family: 'Montserrat'; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; background: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 4px; border: 1px solid #fde68a; }
 
         .kiosk-card p { font-size: 0.85rem; color: #888; margin-bottom: 30px; margin-top: 5px; }
         .stats-row { display: flex; gap: 20px; margin-bottom: 30px; padding: 15px 0; border-top: 1px solid #f4f4f4; }
@@ -67,6 +70,14 @@
         .btn-view { border: 1px solid #ddd; color: #777; background: white; grid-column: span 2; }
         .btn-copy.copied { background: #16a34a !important; color: white !important; border-color: #16a34a !important; }
 
+        .btn-disabled {
+            background: #f3f4f6 !important;
+            color: #9ca3af !important;
+            border: 1px solid #e5e7eb !important;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+
         .pay-ribbon { 
             margin-top: 20px; padding: 15px; background: #fff9f5; 
             border-left: 3px solid var(--clay); display: flex; 
@@ -77,10 +88,11 @@
             text-transform: uppercase; letter-spacing: 0.5px; color: var(--dark-oak); 
         }
         .btn-pay-small { 
-            background: var(--clay); color: white; padding: 8px 14px; 
+            background: #16a34a; color: white; padding: 8px 14px; 
             border: none; cursor: pointer; font-family: 'Montserrat'; 
-            font-size: 0.65rem; font-weight: 600; letter-spacing: 0.5px; 
+            font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; 
         }
+        .btn-pay-small:hover { background: #15803d; }
         
         .btn-add-kiosk { display: inline-block; background: var(--clay); color: white; padding: 18px 35px; text-decoration: none; font-family: 'Montserrat'; font-weight: 600; font-size: 0.8rem; margin-top: 40px; }
 
@@ -136,17 +148,28 @@
 
         <div class="kiosk-grid">
             {% for kiosk in kiosks %}
-            <div class="kiosk-card">
+            <div class="kiosk-card" id="card-{{ kiosk.slug }}" data-status="{{ kiosk.build_status }}">
                 <div>
                     <div class="kiosk-card-header">
                         <h3>{{ kiosk.name }}</h3>
-                        {% if kiosk.is_active %}
+                        
+                        <!-- 🏷️ STATUS BADGES (Building vs Live vs Preview) -->
+                        {% if kiosk.build_status == 'building' %}
+                            <span class="building-badge animate-pulse">⏳ BUILDING IN BACKGROUND</span>
+                        {% elif kiosk.is_active %}
                             <span class="live-badge">🟢 LIVE</span>
                         {% else %}
                             <span class="lock-badge">🔒 PREVIEW ONLY</span>
                         {% endif %}
                     </div>
-                    <p>{{ kiosk.bio or "No description set." }}</p>
+                    
+                    <p>
+                        {% if kiosk.build_status == 'building' %}
+                            <em style="color: #b45309;">🤖 Our AI is currently assembling this storefront in the background. You cannot open it until creation finishes...</em>
+                        {% else %}
+                            {{ kiosk.bio or "No description set." }}
+                        {% endif %}
+                    </p>
                 </div>
                 
                 <div>
@@ -165,20 +188,27 @@
                         </div>
                     </div>
 
-                    <!-- 🔘 ACTION BUTTONS -->
+                    <!-- 🔘 ACTION BUTTONS: LOCKED/DISABLED IF STILL BUILDING -->
                     <div class="actions">
-                        <a href="/{{ kiosk.slug }}/manage" class="btn btn-manage">MANAGE</a>
-                        <button type="button" onclick="openPhonePreview('{{ kiosk.slug }}')" class="btn btn-preview">PREVIEW 👁️</button>
-                        <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)" class="btn btn-copy">📋 COPY LINK</button>
-                        <a href="/{{ kiosk.slug }}" target="_blank" class="btn btn-view">VIEW LIVE SITE &nearr;</a>
+                        {% if kiosk.build_status == 'building' %}
+                            <button type="button" class="btn btn-disabled" title="Cannot open yet — AI is assembling this kiosk">LOCKED ⏳</button>
+                            <button type="button" class="btn btn-disabled">PREVIEW ⏳</button>
+                            <button type="button" class="btn btn-disabled">COPY LINK</button>
+                            <button type="button" class="btn btn-disabled">WAITING ON AI...</button>
+                        {% else %}
+                            <a href="/{{ kiosk.slug }}/manage" class="btn btn-manage">MANAGE</a>
+                            <button type="button" onclick="openPhonePreview('{{ kiosk.slug }}')" class="btn btn-preview">PREVIEW 👁️</button>
+                            <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)" class="btn btn-copy">📋 COPY LINK</button>
+                            <a href="/{{ kiosk.slug }}" target="_blank" class="btn btn-view">VIEW LIVE SITE &nearr;</a>
+                        {% endif %}
                     </div>
 
-                    <!-- Paystack Activation Ribbon If Locked -->
-                    {% if not kiosk.is_active %}
+                    <!-- 💳 PAYSTACK ACTIVATION (ONLY ONCE READY & IF LOCKED) -->
+                    {% if kiosk.build_status != 'building' and not kiosk.is_active %}
                     <div class="pay-ribbon">
                         <span class="pay-ribbon-text">Hidden from customers</span>
-                        <button onclick="payToActivate('{{ kiosk.slug }}', '{{ kiosk.name }}')" class="btn-pay-small">
-                            Go Live (₦10,000)
+                        <button onclick="payToActivateReal('{{ kiosk.slug }}', '{{ kiosk.name }}')" class="btn-pay-small">
+                            Go Live (₦10,000) &rarr;
                         </button>
                     </div>
                     {% endif %}
@@ -217,42 +247,70 @@
         function copyKioskLink(slug, btn) {
             const fullUrl = window.location.origin + '/' + slug;
             navigator.clipboard.writeText(fullUrl).then(() => {
-                const originalText = btn.innerText;
+                const orig = btn.innerText;
                 btn.innerText = 'COPIED! ✅';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.remove('copied');
-                }, 2000);
-            }).catch(err => {
-                prompt('Copy your store link:', fullUrl);
-            });
+                setTimeout(() => { btn.innerText = orig; }, 2000);
+            }).catch(() => { prompt('Copy link:', fullUrl); });
         }
 
-        function payToActivate(kioskSlug, kioskName) {
+        // 💳 REAL PAYSTACK CHECKOUT (ZERO SIMULATION)
+        function payToActivateReal(kioskSlug, kioskName) {
             const paystackPubKey = "{{ config.PAYSTACK_PUBLIC_KEY or '' }}";
             const userEmail = "{{ current_user.email }}";
 
             if (!paystackPubKey) {
-                if (confirm(`Activate and unlock "${kioskName}" to the public now? (Dev Simulation)`)) {
-                    window.location.href = `/${kioskSlug}/activate/verify?reference=dev_unlock`;
-                }
+                alert('Paystack is not configured. Please add PAYSTACK_PUBLIC_KEY in Master Command (/admin/system/env) to accept live payments.');
                 return;
             }
 
             const handler = PaystackPop.setup({
                 key: paystackPubKey,
                 email: userEmail,
-                amount: 1000000,
+                amount: 1000000, // ₦10,000 in kobo
                 currency: "NGN",
                 ref: 'ACT_' + Math.floor((Math.random() * 1000000000) + 1),
+                metadata: {
+                    custom_fields: [
+                        { display_name: "Kiosk Name", variable_name: "kiosk_name", value: kioskName },
+                        { display_name: "Kiosk Slug", variable_name: "kiosk_slug", value: kioskSlug }
+                    ]
+                },
                 callback: function(response) {
                     window.location.href = `/${kioskSlug}/activate/verify?reference=` + response.reference;
                 },
-                onClose: function() { alert('Payment window closed.'); }
+                onClose: function() {
+                    alert('Activation payment was cancelled.');
+                }
             });
             handler.openIframe();
         }
+
+        // 🔄 SILENT BACKGROUND STATUS POLLER: Auto-unlocks card as soon as AI finishes!
+        document.addEventListener('DOMContentLoaded', function() {
+            const buildingCards = document.querySelectorAll('.kiosk-card[data-status="building"]');
+            if (buildingCards.length > 0) {
+                const poller = setInterval(async () => {
+                    let allFinished = true;
+                    for (let card of buildingCards) {
+                        const slug = card.id.replace('card-', '');
+                        try {
+                            const res = await fetch(`/${slug}/status`);
+                            const data = await res.json();
+                            if (data.build_status === 'ready') {
+                                clearInterval(poller);
+                                window.location.reload(); // Auto-unlock with full access!
+                                return;
+                            } else {
+                                allFinished = false;
+                            }
+                        } catch (e) {
+                            allFinished = false;
+                        }
+                    }
+                    if (allFinished) clearInterval(poller);
+                }, 3000); // Checks every 3 seconds
+            }
+        });
     </script>
 </body>
 </html>
