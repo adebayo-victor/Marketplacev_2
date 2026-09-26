@@ -31,7 +31,6 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* 🌙 DARK MODE PALETTE */
         body.dark-mode {
             background-color: #09090b !important;
             color: #f4f4f5 !important;
@@ -79,6 +78,32 @@
             letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
             border: none; cursor: pointer; transition: 0.3s;
         }
+
+        /* 💬 FLOATING MERCHANT SUPPORT WIDGET (08136390030) */
+        .floating-support-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: #16a34a;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 50px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.4);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .floating-support-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(22, 163, 74, 0.5);
+            background: #15803d;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -87,13 +112,15 @@
     <header class="nav-bar sticky top-0 z-40">
         <a href="/" class="brand-logo">MARKETPLACE.</a>
         <div class="flex items-center gap-4">
-            <!-- ☀️ / 🌙 THEME TOGGLE BUTTON -->
             <button type="button" onclick="toggleTheme()" class="p-2 rounded-full border border-stone-300 text-xs font-mono cursor-pointer" title="Toggle Light/Dark Theme">
                 <span id="themeIcon">🌙</span>
             </button>
 
             {% if current_user.is_authenticated %}
                 <a href="/dashboard" class="font-ui text-xs text-clay font-bold tracking-wider uppercase">Hub</a>
+                {% if current_user.is_admin %}
+                    <a href="/admin" class="font-ui text-xs text-[#f59e0b] font-bold tracking-wider uppercase">Master Command</a>
+                {% endif %}
                 <a href="{{ url_for('auth.logout') }}" class="font-ui text-xs text-rose-500 font-semibold tracking-wider uppercase">Log Out</a>
             {% else %}
                 <a href="{{ url_for('auth.login') }}" class="font-ui text-xs text-stone-600 font-semibold tracking-wider uppercase">Log In</a>
@@ -124,8 +151,17 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- 💬 FLOATING MERCHANT SUPPORT BUTTON (08136390030) -->
+    <a href="https://wa.me/2348136390030?text=Hello%20Marketplace%20Support,%20I%20am%20a%20merchant%20and%20need%20assistance%20with%20my%20storefront." 
+       target="_blank" 
+       class="floating-support-btn">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+        </svg>
+        <span>Merchant Support</span>
+    </a>
+
     <script>
-        // Theme Persistence
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
