@@ -18,6 +18,9 @@ def slugify(text: str) -> str:
     return re.sub(r'[-\s]+', '-', text)
 
 
+# -------------------------------------------------------------
+# LEVEL 1: THE MERCHANT HUB (/dashboard)
+# -------------------------------------------------------------
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
@@ -25,6 +28,9 @@ def overview():
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
+# -------------------------------------------------------------
+# OPEN A NEW KIOSK (With 10 Categories & Section Toggles)
+# -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -33,8 +39,10 @@ def new_kiosk():
         custom_slug = request.form.get('slug', '').strip()
         whatsapp = request.form.get('whatsapp_number', '').strip()
         bio = request.form.get('bio', 'Welcome to our official store!').strip()
+        category = request.form.get('category', 'General Retail').strip()
         ai_prompt = request.form.get('ai_prompt', '').strip()
 
+        # Sectional Activation Toggles on Creation
         section_hero = True if request.form.get('section_hero') else False
         section_flash = True if request.form.get('section_flash') else False
         section_ads = True if request.form.get('section_ads') else False
@@ -61,10 +69,13 @@ def new_kiosk():
         hero_url = upload_image(hero_file, 'heroes') or ''
         bg_url = upload_image(bg_file, 'backgrounds') or ''
 
+        # Combine category with user prompt for maximum design precision
+        full_design_prompt = f"Category: {category}. Client Style Notes: {ai_prompt or 'Bespoke high-end modern layout'}"
+
         generated_html = generate_kiosk_template(
             kiosk_name=name,
             bio=bio,
-            prompt=ai_prompt or f"A clean, modern storefront for {name}",
+            prompt=full_design_prompt,
             logo_url=logo_url,
             hero_url=hero_url,
             bg_url=bg_url,
@@ -101,6 +112,9 @@ def new_kiosk():
     return render_template('dashboard/kiosk_new.html')
 
 
+# -------------------------------------------------------------
+# PAYSTACK ACTIVATION VERIFY
+# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
 def verify_kiosk_activation(kiosk_slug):
@@ -139,6 +153,9 @@ def verify_kiosk_activation(kiosk_slug):
     return redirect(url_for('dashboard.overview'))
 
 
+# -------------------------------------------------------------
+# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (/<kiosk_slug>/manage)
+# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
 def manage_kiosk(kiosk_slug):
@@ -159,6 +176,7 @@ def manage_kiosk(kiosk_slug):
     )
 
 
+# 🔄 UPDATE ORDER STATUS
 @dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
 @login_required
 def update_order_status(kiosk_slug, order_id):
@@ -178,7 +196,7 @@ def update_order_status(kiosk_slug, order_id):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
 
 
-# Product CRUD with UNLIMITED STOCK HANDLING
+# Product CRUD with 2-VALUES PER FEATURE & UNLIMITED STOCK
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -193,7 +211,6 @@ def new_product(kiosk_slug):
         discount_price = request.form.get('discount_price', '').strip()
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        # 🍲 Unlimited Stock Check
         is_unlimited = True if request.form.get('is_unlimited_stock') else False
         stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
 
@@ -201,6 +218,7 @@ def new_product(kiosk_slug):
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
 
+        # 🛑 RULE: Every feature MUST have at least 2 choices/values (e.g. 3000, 5000)
         for a_name, a_vals in zip(attr_names, attr_values):
             clean_name = a_name.strip()
             if clean_name and a_vals.strip():
@@ -302,6 +320,7 @@ def delete_product(kiosk_slug, id):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#inventory')
 
 
+# The Social Flyer Studio
 @dashboard_bp.route('/<kiosk_slug>/product/<int:id>/flyer')
 @login_required
 def product_flyer(kiosk_slug, id):
@@ -313,6 +332,7 @@ def product_flyer(kiosk_slug, id):
     return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
 
 
+# Settings, Branding & Sectional Activation
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
@@ -362,6 +382,7 @@ def update_kiosk_settings(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
+# Manage 3 Ad Slots
 @dashboard_bp.route('/<kiosk_slug>/ads', methods=['POST'])
 @login_required
 def update_kiosk_ads(kiosk_slug):
@@ -387,6 +408,7 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
+# Delete kiosk
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
