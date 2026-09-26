@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Merchant Hub // Marketplace</title>
-    
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
@@ -215,7 +214,6 @@
             document.getElementById('previewModal').style.display = 'none';
         }
 
-        // 📋 Instant Link Copy to Clipboard
         function copyKioskLink(slug, btn) {
             const fullUrl = window.location.origin + '/' + slug;
             navigator.clipboard.writeText(fullUrl).then(() => {
@@ -231,7 +229,6 @@
             });
         }
 
-        // Paystack Activation Handler
         function payToActivate(kioskSlug, kioskName) {
             const paystackPubKey = "{{ config.PAYSTACK_PUBLIC_KEY or '' }}";
             const userEmail = "{{ current_user.email }}";
