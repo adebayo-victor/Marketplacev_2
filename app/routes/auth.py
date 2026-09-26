@@ -1,5 +1,6 @@
 import os
 import re
+import urllib.parse
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
@@ -69,37 +70,59 @@ def login():
     return render_template('auth/login.html')
 
 
+# -------------------------------------------------------------
+# 💬 WHATSAPP FORGOT PASSWORD FLOW (Direct to 08136390030)
+# -------------------------------------------------------------
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        account_input = request.form.get('account_input', '').strip()
+        if not account_input:
+            flash('Please enter your registered username or email.', 'warning')
+            return render_template('auth/forgot_password.html')
+
+        # Format message to Admin WhatsApp: 08136390030 (2348136390030)
+        admin_phone = "2348136390030"
+        msg = (
+            f"Hello Marketplace Support,\n\n"
+            f"I forgot my account password and need assistance resetting it.\n"
+            f"• Registered Account: {account_input}\n\n"
+            f"Please help me issue a temporary login credential. Thank you!"
+        )
+        encoded_msg = urllib.parse.quote(msg)
+        whatsapp_url = f"https://wa.me/{admin_phone}?text={encoded_msg}"
+
+        return render_template('auth/forgot_password_confirm.html', account=account_input, whatsapp_url=whatsapp_url)
+
+    return render_template('auth/forgot_password.html')
+
+
+# Google OAuth
 @auth_bp.route('/login/google')
 def google_login():
-    """Initiates Google OAuth flow."""
     google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
     if not google_client_id:
         flash('Google Sign-In is not configured yet.', 'warning')
         return redirect(url_for('auth.login'))
 
     redirect_uri = url_for('auth.google_callback', _external=True)
+    if redirect_uri.startswith('http://') and 'localhost' not in redirect_uri:
+        redirect_uri = redirect_uri.replace('http://', 'https://', 1)
+
     return oauth.google.authorize_redirect(redirect_uri)
 
 
 @auth_bp.route('/login/google/callback')
 def google_callback():
-    """Handles callback response from Google and extracts real name."""
     try:
         token = oauth.google.authorize_access_token()
-        user_info = token.get('userinfo')
-        if not user_info:
-            user_info = oauth.google.userinfo()
-
+        user_info = token.get('userinfo') or oauth.google.userinfo()
         email = user_info['email'].lower()
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            # 🎯 Extract actual Name from Google (e.g., "Victor" or "Victor Adebayo")
             google_name = user_info.get('given_name') or user_info.get('name')
-            if google_name:
-                base_username = slugify(google_name)
-            else:
-                base_username = slugify(email.split('@')[0])
+            base_username = slugify(google_name) if google_name else slugify(email.split('@')[0])
 
             username = base_username
             count = 1
