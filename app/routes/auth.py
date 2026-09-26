@@ -1,10 +1,10 @@
 import os
 import re
-import urllib.parse
+import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User
+from app.models import User, PasswordResetTicket
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -71,30 +71,52 @@ def login():
 
 
 # -------------------------------------------------------------
-# 💬 WHATSAPP FORGOT PASSWORD FLOW (Direct to 08136390030)
+# 🎫 HELPDESK TICKET PASSWORD RESET (IN-APP SECURE SYSTEM)
 # -------------------------------------------------------------
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    ticket_info = None
+
     if request.method == 'POST':
-        account_input = request.form.get('account_input', '').strip()
-        if not account_input:
-            flash('Please enter your registered username or email.', 'warning')
-            return render_template('auth/forgot_password.html')
+        action = request.form.get('action')
 
-        # Format message to Admin WhatsApp: 08136390030 (2348136390030)
-        admin_phone = "2348136390030"
-        msg = (
-            f"Hello Marketplace Support,\n\n"
-            f"I forgot my account password and need assistance resetting it.\n"
-            f"• Registered Account: {account_input}\n\n"
-            f"Please help me issue a temporary login credential. Thank you!"
-        )
-        encoded_msg = urllib.parse.quote(msg)
-        whatsapp_url = f"https://wa.me/{admin_phone}?text={encoded_msg}"
+        # Action A: Submit a New Reset Ticket
+        if action == 'submit_ticket':
+            email = request.form.get('email', '').strip().lower()
+            details = request.form.get('details', '').strip()
 
-        return render_template('auth/forgot_password_confirm.html', account=account_input, whatsapp_url=whatsapp_url)
+            if not email or not details:
+                flash('Please enter your email and proof of account ownership.', 'warning')
+                return render_template('auth/forgot_password.html', ticket_info=None)
 
-    return render_template('auth/forgot_password.html')
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                # Security best practice: don't reveal if email exists, but accept ticket
+                flash('If that email is registered, your ticket has been submitted to admin.', 'info')
+
+            ticket_ref = "REQ-" + str(uuid.uuid4())[:8].upper()
+            ticket = PasswordResetTicket(
+                ticket_ref=ticket_ref,
+                email=email,
+                submitted_details=details,
+                status='pending'
+            )
+            db.session.add(ticket)
+            db.session.commit()
+
+            ticket_info = ticket
+            flash(f'Ticket #{ticket_ref} created! Save this ID to check your status.', 'success')
+
+        # Action B: Check Existing Ticket Status
+        elif action == 'check_status':
+            req_ref = request.form.get('ticket_ref', '').strip().upper()
+            ticket = PasswordResetTicket.query.filter_by(ticket_ref=req_ref).first()
+            if not ticket:
+                flash('Ticket ID not found. Please check spelling.', 'danger')
+            else:
+                ticket_info = ticket
+
+    return render_template('auth/forgot_password.html', ticket_info=ticket_info)
 
 
 # Google OAuth
