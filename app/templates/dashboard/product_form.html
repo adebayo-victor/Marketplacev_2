@@ -31,8 +31,8 @@
                 <div>
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Original Price ({{ kiosk.currency }})</label>
                     <input type="number" step="0.01" name="original_price" required value="{{ product.original_price if product else '' }}" 
-                           placeholder="50000"
-                           class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
+                       placeholder="50000"
+                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
                 </div>
                 <div>
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Discount Price ({{ kiosk.currency }}) — Optional</label>
@@ -56,36 +56,30 @@
                 </div>
             </div>
 
-            <!-- 🛑 CUSTOM ATTRIBUTES BUILDER (MINIMUM 2 FEATURES REQUIRED) -->
+            <!-- CUSTOM ATTRIBUTES BUILDER (MINIMUM 2 VALUES PER FEATURE) -->
             <div class="p-5 bg-[#fff9f5] border-l-4 border-clay my-4">
                 <div class="flex justify-between items-center mb-1">
                     <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-clay">Custom Specifications / Variants</span>
-                    <button type="button" onclick="addAttributeRow()" class="btn-clay text-[0.6rem] py-1.5 px-3">+ Add Feature</button>
+                    <button type="button" id="addAttrBtn" class="btn-clay text-[0.6rem] py-1.5 px-3">+ Add Feature</button>
                 </div>
-                <p class="font-serif italic text-xs text-rose-600 mb-3 font-semibold">
-                    * Rule: Minimum of TWO custom features required (e.g. Size & Color, or Supported Chain & License Tier).
+                <p class="font-serif italic text-xs text-stone-500 mb-3">
+                    * Rule: Every feature MUST have at least TWO choices separated by commas (e.g. <code>3000, 5000</code> or <code>45, 60</code>).
                 </p>
 
                 <div id="attributesContainer" class="space-y-2">
                     {% if product and product.get_attributes() %}
                         {% for a_name, a_vals in product.get_attributes().items() %}
                         <div class="attr-row flex gap-2 items-center">
-                            <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Options (e.g. 45, 60)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
+                            <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Screen Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Minimum 2 options (e.g. 3000, 5000)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <!-- Default 2 starter rows to guide the merchant -->
                         <div class="attr-row flex gap-2 items-center">
-                            <input type="text" name="attr_name[]" placeholder="Feature 1 (e.g. License Tier)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <input type="text" name="attr_values[]" placeholder="Options separated by comma (e.g. Single, Commercial)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
-                        </div>
-                        <div class="attr-row flex gap-2 items-center">
-                            <input type="text" name="attr_name[]" placeholder="Feature 2 (e.g. Framework)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <input type="text" name="attr_values[]" placeholder="Options separated by comma (e.g. Python, Node.js)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
+                            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Screen Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. 45, 60)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
                         </div>
                     {% endif %}
                 </div>
@@ -104,32 +98,45 @@
 </div>
 
 <script>
-function addAttributeRow() {
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.getElementById('addAttrBtn');
     const container = document.getElementById('attributesContainer');
-    const div = document.createElement('div');
-    div.className = 'attr-row flex gap-2 items-center';
-    div.innerHTML = `
-        <input type="text" name="attr_name[]" placeholder="Feature Name (e.g. Color)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-        <input type="text" name="attr_values[]" placeholder="Options comma-separated (e.g. Red, Blue)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-        <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 font-bold px-2">&times;</button>
-    `;
-    container.appendChild(div);
-}
 
-// 🛑 Enforce Minimum 2 Features in JavaScript before submitting
-document.getElementById('productForm').addEventListener('submit', function(e) {
-    const rows = document.querySelectorAll('.attr-row');
-    let validCount = 0;
-    rows.forEach(r => {
-        const name = r.querySelector('input[name="attr_name[]"]').value.trim();
-        const vals = r.querySelector('input[name="attr_values[]"]').value.trim();
-        if (name && vals) validCount++;
+    // Add Feature Row
+    addBtn.addEventListener('click', function() {
+        const div = document.createElement('div');
+        div.className = 'attr-row flex gap-2 items-center';
+        div.innerHTML = `
+            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Storage)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. 64GB, 128GB)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+            <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
+        `;
+        container.appendChild(div);
     });
 
-    if (validCount < 2) {
-        e.preventDefault();
-        alert('Validation Error: A minimum of TWO custom features/specifications is required (e.g. Size and Color, or Chain and License Tier).');
-    }
+    // Remove Feature Row
+    container.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('remove-btn')) {
+            e.target.parentElement.remove();
+        }
+    });
+
+    // Enforce Minimum 2 Choices per Feature
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        const rows = document.querySelectorAll('.attr-row');
+        for (let r of rows) {
+            const name = r.querySelector('input[name="attr_name[]"]').value.trim();
+            const vals = r.querySelector('input[name="attr_values[]"]').value.trim();
+            if (name || vals) {
+                const choices = vals.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                if (choices.length < 2) {
+                    e.preventDefault();
+                    alert(`Validation Error: Feature "${name || 'Unnamed'}" must have at least 2 choices separated by commas (e.g. 3000, 5000).`);
+                    return;
+                }
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
