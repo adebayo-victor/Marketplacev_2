@@ -1,49 +1,375 @@
 {% extends 'base.html' %}
 
-{% block title %}Directory // Marketplace{% endblock %}
+{% block title %}Marketplace // The Anti-Cookie-Cutter AI Storefront Engine{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-6 py-16 max-w-6xl">
-    
-    <div class="welcome-header mb-12">
-        <h1 class="font-ui text-4xl font-normal lowercase tracking-tight m-0 text-dark-oak">
-            active storefronts.
-        </h1>
-        <p class="font-serif italic text-stone-500 mt-2">Discover verified artisan, gadget, and boutique kiosks on Marketplace.</p>
-    </div>
+<div class="relative overflow-hidden font-ui">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {% for s in stores %}
-        <div class="bg-white p-8 border-t-[5px] border-clay shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-ui text-xl font-normal text-dark-oak m-0">{{ s.name }}</h3>
-                    {% if s.show_public_stats %}
-                        <span class="font-ui text-[0.6rem] font-semibold uppercase tracking-wider bg-[#fff9f5] text-clay px-2.5 py-1 border border-clay/20">
-                            🔥 {{ "{:,}".format(s.views_count) }} visits
-                        </span>
-                    {% else %}
-                        <span class="font-ui text-[0.6rem] font-semibold uppercase tracking-wider bg-stone-100 text-stone-600 px-2.5 py-1">
-                            ✓ Verified
-                        </span>
-                    {% endif %}
+    <!-- ========================================== -->
+    <!-- 1. HERO SECTION                            -->
+    <!-- ========================================== -->
+    <section class="max-w-6xl mx-auto px-6 pt-16 pb-20 text-center">
+        <!-- Floating Pill Badge -->
+        <div class="inline-flex items-center gap-2 bg-[#fff9f5] border border-clay/30 px-4 py-1.5 rounded-full mb-6 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[11px] font-bold uppercase tracking-widest text-clay font-mono">
+                0% Transaction Fees • WhatsApp Native • AI-Designed
+            </span>
+        </div>
+
+        <!-- Main Headline -->
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-dark-oak tracking-tight leading-[1.1] mb-6 max-w-4xl mx-auto">
+            Turn WhatsApp Inquiries Into <br class="hidden sm:inline">
+            <span class="text-clay underline decoration-clay/30">7-Figure Sales</span> With AI Storefronts.
+        </h1>
+
+        <!-- Sub-headline -->
+        <p class="font-serif italic text-base sm:text-lg text-stone-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Stop using boring white-grid catalogs. Marketplace uses AI to design bespoke, high-converting digital storefronts tailored to your exact niche in under 60 seconds.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <a href="{{ url_for('auth.register') }}" class="btn-clay text-sm py-4 px-8 rounded-none shadow-xl tracking-wider font-bold w-full sm:w-auto text-center">
+                LAUNCH YOUR KIOSK FREE &rarr;
+            </a>
+            <a href="#comparison" class="btn-oak text-sm py-4 px-8 rounded-none tracking-wider font-semibold w-full sm:w-auto text-center border border-stone-800">
+                SEE HOW WE BEAT SHOPIFY &darr;
+            </a>
+        </div>
+
+        <!-- Metrics Ticker Bar -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-white/80 backdrop-blur border border-stone-200 shadow-sm max-w-4xl mx-auto">
+            <div class="border-r border-stone-200 last:border-none p-2">
+                <span class="font-mono text-2xl font-black text-dark-oak block">60s</span>
+                <span class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">AI Setup Speed</span>
+            </div>
+            <div class="border-r border-stone-200 last:border-none p-2">
+                <span class="font-mono text-2xl font-black text-emerald-600 block">0%</span>
+                <span class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">Transaction Cuts</span>
+            </div>
+            <div class="border-r border-stone-200 last:border-none p-2">
+                <span class="font-mono text-2xl font-black text-clay block">1 Tap</span>
+                <span class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">Status Flyer Studio</span>
+            </div>
+            <div class="p-2">
+                <span class="font-mono text-2xl font-black text-dark-oak block">100%</span>
+                <span class="text-[11px] uppercase tracking-wider text-stone-500 font-semibold">WhatsApp Native</span>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 2. THE "ANTI-COOKIE-CUTTER" PROOF          -->
+    <!-- ========================================== -->
+    <section class="max-w-6xl mx-auto px-6 py-16 border-t border-stone-200/60">
+        <div class="text-center mb-12">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-1">
+                Visual Identity Showcase
+            </span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">
+                Your Brand Shouldn't Look Like A Spreadsheet.
+            </h2>
+            <p class="font-serif italic text-sm text-stone-500 mt-2 max-w-xl mx-auto">
+                On generic platforms, every store is the exact same white grid. On Marketplace, every store gets a bespoke identity crafted for its industry.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Store 1: TechLight -->
+            <div class="bg-[#09090b] text-white p-7 border-t-[5px] border-cyan-500 shadow-xl flex flex-col justify-between" style="min-height: 380px;">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-800 mb-4">
+                        <span class="text-[9px] font-mono text-cyan-400 font-bold uppercase tracking-wider">CYBER TERMINAL</span>
+                        <span class="bg-cyan-950 text-cyan-400 border border-cyan-500/30 text-[9px] font-mono px-2 py-0.5 rounded">BOTS & CODE</span>
+                    </div>
+                    <h3 class="font-mono font-black text-xl text-white mb-2">TechLight Digital</h3>
+                    <p class="text-xs text-stone-400 mb-6 leading-relaxed">
+                        High-contrast dark mode, monospace code specs, automated trading bot suites, and instant file intake.
+                    </p>
                 </div>
-                <p class="font-serif text-sm text-stone-500 mb-6">{{ s.bio }}</p>
+                <div class="p-4 bg-[#121217] border border-cyan-900/40 rounded-xl font-mono text-xs text-cyan-400 flex justify-between items-center">
+                    <span>AlphaSniper DEX Bot</span>
+                    <strong class="text-white">₦95,000</strong>
+                </div>
             </div>
 
-            <div class="pt-6 border-t border-stone-100 flex items-center justify-between">
-                <span class="font-ui text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                    {{ s.products.count() }} items listed
+            <!-- Store 2: Urban Sizzle -->
+            <div class="bg-[#140e0c] text-white p-7 border-t-[5px] border-orange-500 shadow-xl flex flex-col justify-between" style="min-height: 380px;">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-800 mb-4">
+                        <span class="text-[9px] font-mono text-orange-400 font-bold uppercase tracking-wider">SMOKEHOUSE THEME</span>
+                        <span class="bg-orange-950 text-orange-400 border border-orange-500/30 text-[9px] font-mono px-2 py-0.5 rounded">GRILL & FOOD</span>
+                    </div>
+                    <h3 class="font-ui font-black text-xl text-white mb-2">Urban Sizzle Kitchen</h3>
+                    <p class="text-xs text-stone-400 mb-6 leading-relaxed">
+                        Fiery ember accents, unlimited cooked-to-order inventory, spice-level variant selector, and hot food dispatch.
+                    </p>
+                </div>
+                <div class="p-4 bg-[#1f1411] border border-orange-900/40 rounded-xl font-mono text-xs text-orange-400 flex justify-between items-center">
+                    <span>Double Truffle Burger</span>
+                    <strong class="text-white">₦7,200</strong>
+                </div>
+            </div>
+
+            <!-- Store 3: Dope Store -->
+            <div class="bg-[#0b0c10] text-white p-7 border-t-[5px] border-amber-400 shadow-xl flex flex-col justify-between" style="min-height: 380px;">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-stone-800 mb-4">
+                        <span class="text-[9px] font-mono text-amber-400 font-bold uppercase tracking-wider">STREETWEAR DROP</span>
+                        <span class="bg-amber-950 text-amber-400 border border-amber-500/30 text-[9px] font-mono px-2 py-0.5 rounded">APPAREL</span>
+                    </div>
+                    <h3 class="font-ui font-black text-xl text-white mb-2">Dope Store Apparel</h3>
+                    <p class="text-xs text-stone-400 mb-6 leading-relaxed">
+                        Curated streetwear silhouettes, ghost watermark backdrop, sizing modal (S to XXL), and flash drop timers.
+                    </p>
+                </div>
+                <div class="p-4 bg-[#14161f] border border-blue-900/40 rounded-xl font-mono text-xs text-amber-400 flex justify-between items-center">
+                    <span>BY Fit Hoodie</span>
+                    <strong class="text-white">₦5,500</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 3. THE 4 PILLARS OF POWER (BENTO GRID)     -->
+    <!-- ========================================== -->
+    <section class="max-w-6xl mx-auto px-6 py-16 border-t border-stone-200/60">
+        <div class="text-center mb-14">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-1">Integrated Toolkit</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Everything Built-In. Zero Extra Apps.</h2>
+            <p class="font-serif italic text-sm text-stone-500 mt-2">On other platforms, you pay for 5 different subscriptions. On Marketplace, it's native.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Bento Box 1: The Social Flyer Studio -->
+            <div class="bg-white p-8 border-t-[5px] border-clay shadow-md flex flex-col justify-between">
+                <div>
+                    <div class="w-10 h-10 bg-[#fff9f5] border border-clay/20 rounded-xl flex items-center justify-center text-lg mb-4">📸</div>
+                    <h3 class="font-ui text-xl font-bold text-dark-oak mb-2">The 1-Click Social Flyer Studio</h3>
+                    <p class="font-serif text-sm text-stone-600 leading-relaxed mb-6">
+                        Stop spending 2 hours every morning fighting Canva. Marketplace automatically extracts your product photos, prices, discounts, and WhatsApp number into <strong>12 high-fashion Status & Story graphics</strong>. Tap download to save high-res PNGs directly to your phone.
+                    </p>
+                </div>
+                <div class="p-3 bg-stone-50 border border-stone-200 font-mono text-xs text-clay font-bold">
+                    ✓ 12 Themes (Clay, Cyber, Flame, Rose, Minimal) • Instant Gallery Download
+                </div>
+            </div>
+
+            <!-- Bento Box 2: Dual Invoicing Engine -->
+            <div class="bg-white p-8 border-t-[5px] border-clay shadow-md flex flex-col justify-between">
+                <div>
+                    <div class="w-10 h-10 bg-[#fff9f5] border border-clay/20 rounded-xl flex items-center justify-center text-lg mb-4">📄</div>
+                    <h3 class="font-ui text-xl font-bold text-dark-oak mb-2">Commercial Invoice vs. Sales Receipt</h3>
+                    <p class="font-serif text-sm text-stone-600 leading-relaxed mb-6">
+                        Real business requires two documents: an <strong>Invoice before payment</strong> (with bank settlement instructions so the buyer knows where to pay) and a <strong>Receipt after payment</strong> (stamped with an official "PAID IN FULL" seal). Switch between both with one tap and export PDF invoices on demand.
+                    </p>
+                </div>
+                <div class="p-3 bg-stone-50 border border-stone-200 font-mono text-xs text-clay font-bold">
+                    ✓ Pre-Payment Invoices • Post-Payment Receipts • 1-Click PDF Export
+                </div>
+            </div>
+
+            <!-- Bento Box 3: WhatsApp Checkout & Lost Leads -->
+            <div class="bg-white p-8 border-t-[5px] border-clay shadow-md flex flex-col justify-between">
+                <div>
+                    <div class="w-10 h-10 bg-[#fff9f5] border border-clay/20 rounded-xl flex items-center justify-center text-lg mb-4">🛒</div>
+                    <h3 class="font-ui text-xl font-bold text-dark-oak mb-2">WhatsApp Checkout + Lost Leads Nudge</h3>
+                    <p class="font-serif text-sm text-stone-600 leading-relaxed mb-6">
+                        Customers select their size, color, or portion and tap order. You receive an itemized receipt in WhatsApp ready for delivery negotiation. If a buyer fills their name but forgets to send, our <strong>Lost Leads Engine</strong> arms you with a 1-click WhatsApp follow-up link to recover the sale.
+                    </p>
+                </div>
+                <div class="p-3 bg-stone-50 border border-stone-200 font-mono text-xs text-clay font-bold">
+                    ✓ Structured WhatsApp Cart • Abandoned Cart Recovery • 0% Cut
+                </div>
+            </div>
+
+            <!-- Bento Box 4: Adaptive Inventory & Multi-Kiosks -->
+            <div class="bg-white p-8 border-t-[5px] border-clay shadow-md flex flex-col justify-between">
+                <div>
+                    <div class="w-10 h-10 bg-[#fff9f5] border border-clay/20 rounded-xl flex items-center justify-center text-lg mb-4">🍲</div>
+                    <h3 class="font-ui text-xl font-bold text-dark-oak mb-2">Adaptive Inventory & Multi-Kiosks</h3>
+                    <p class="font-serif text-sm text-stone-600 leading-relaxed mb-6">
+                        Run a fashion store, a cloud kitchen, and a tech bot store under one single login. Toggle between <strong>Fixed Stock</strong> (for retail gadgets) and <strong>Unlimited Made-to-Order Stock</strong> (for cooked meals, bakery, and digital software that never runs out).
+                    </p>
+                </div>
+                <div class="p-3 bg-stone-50 border border-stone-200 font-mono text-xs text-clay font-bold">
+                    ✓ Multi-Kiosk Hub • Unlimited Food/Code Mode • 2-Values Variant Rule
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 4. COMPARISON TABLE: US VS. SHOPIFY       -->
+    <!-- ========================================== -->
+    <section id="comparison" class="max-w-5xl mx-auto px-6 py-16 border-t border-stone-200/60">
+        <div class="text-center mb-12">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-1">The Honest Truth</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Why Social Vendors Switch to Us</h2>
+        </div>
+
+        <div class="bg-white border border-stone-200 shadow-md overflow-x-auto">
+            <table class="w-full text-left font-ui text-xs">
+                <thead>
+                    <tr class="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase tracking-wider text-[11px]">
+                        <th class="p-4">Feature / Metric</th>
+                        <th class="p-4 text-rose-600 font-bold">Shopify</th>
+                        <th class="p-4 text-stone-400">Generic Builders</th>
+                        <th class="p-4 text-clay font-black bg-[#fff9f5]">Marketplace v2</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100">
+                    <tr>
+                        <td class="p-4 font-bold text-dark-oak">Monthly Cost</td>
+                        <td class="p-4 text-stone-500">~$39/mo (₦60,000/mo)</td>
+                        <td class="p-4 text-stone-500">₦5,000 – ₦15,000/mo</td>
+                        <td class="p-4 font-bold text-clay bg-[#fff9f5]">Free Preview / ₦10k Once</td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-bold text-dark-oak">Transaction Fees</td>
+                        <td class="p-4 text-stone-500">2% + Card Gateway Fees</td>
+                        <td class="p-4 text-stone-500">1.5% - 3.5% Cut</td>
+                        <td class="p-4 font-bold text-emerald-600 bg-[#fff9f5]">0% (Zero Commissions)</td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-bold text-dark-oak">Visual Customization</td>
+                        <td class="p-4 text-stone-500">Complex Liquid Code</td>
+                        <td class="p-4 text-stone-500">Identical White Grids</td>
+                        <td class="p-4 font-bold text-clay bg-[#fff9f5]">Bespoke AI Architecture</td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-bold text-dark-oak">Social Status Flyers</td>
+                        <td class="p-4 text-stone-500">Paid 3rd-Party Apps</td>
+                        <td class="p-4 text-stone-500">Manual Canva Stress</td>
+                        <td class="p-4 font-bold text-clay bg-[#fff9f5]">1-Click Studio (12 Themes)</td>
+                    </tr>
+                    <tr>
+                        <td class="p-4 font-bold text-dark-oak">Checkout Friction</td>
+                        <td class="p-4 text-stone-500">High Card Dropouts (70%+)</td>
+                        <td class="p-4 text-stone-500">Basic Form</td>
+                        <td class="p-4 font-bold text-clay bg-[#fff9f5]">Direct to WhatsApp Chat</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 5. HOW IT WORKS (THE 3-STEP JOURNEY)       -->
+    <!-- ========================================== -->
+    <section class="max-w-6xl mx-auto px-6 py-16 border-t border-stone-200/60">
+        <div class="text-center mb-12">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-1">Simple Onboarding</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Live in 3 Simple Steps</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 border-t-[4px] border-stone-300 shadow-sm">
+                <span class="font-mono text-3xl font-black text-clay/40 block mb-2">01</span>
+                <h3 class="font-bold text-lg text-dark-oak mb-2">Claim Your Handle</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed">
+                    Sign up with your username or Google 1-Click. Your merchant hub is activated instantly with zero empty-state confusion.
+                </p>
+            </div>
+            <div class="bg-white p-8 border-t-[4px] border-clay shadow-sm">
+                <span class="font-mono text-3xl font-black text-clay block mb-2">02</span>
+                <h3 class="font-bold text-lg text-dark-oak mb-2">Instruct the AI</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed">
+                    Select your category, upload banners, and describe your vibe. In 3 seconds, Gemini & OpenRouter generate your tailored storefront.
+                </p>
+            </div>
+            <div class="bg-white p-8 border-t-[4px] border-stone-300 shadow-sm">
+                <span class="font-mono text-3xl font-black text-clay/40 block mb-2">03</span>
+                <h3 class="font-bold text-lg text-dark-oak mb-2">Sell on WhatsApp</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed">
+                    Share your link on Instagram bio or WhatsApp status. Receive structured orders with selected variants and issue PDF invoices.
+                </p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 6. PRICING & THE DIGITAL LANDLORD MODEL    -->
+    <!-- ========================================== -->
+    <section class="max-w-4xl mx-auto px-6 py-16 border-t border-stone-200/60">
+        <div class="text-center mb-12">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-1">Transparent Pricing</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Pay Only When You're Ready to Launch</h2>
+            <p class="font-serif italic text-sm text-stone-500 mt-2">Zero hidden commissions. Zero forced monthly debit alerts.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            <!-- Free Preview Tier -->
+            <div class="bg-white p-8 border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400">Sandbox</span>
+                    <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Preview Mode</h3>
+                    <p class="text-xs text-stone-500 mb-6 font-serif italic">Build, test, and design your store completely free.</p>
+                    <div class="text-3xl font-black text-dark-oak font-mono mb-6">₦0</div>
+                    <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
+                        <li>✓ Unlimited AI store redesigns</li>
+                        <li>✓ Add products & custom variants</li>
+                        <li>✓ Generate social flyers (PNG & PDF)</li>
+                        <li>✓ In-Hub smartphone live preview</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('auth.register') }}" class="btn-oak text-center block text-xs py-3.5 tracking-wider">
+                    START BUILDING FREE &rarr;
+                </a>
+            </div>
+
+            <!-- Go Live Pro Activation -->
+            <div class="bg-white p-8 border-t-[6px] border-clay shadow-xl flex flex-col justify-between relative">
+                <span class="absolute top-4 right-4 bg-[#ebfeef] text-[#16a34a] font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded border border-[#16a34a]/30">
+                    ONE-TIME FEE
                 </span>
-                <a href="/{{ s.slug }}" class="btn-oak text-center">
-                    VISIT STORE &rarr;
+                <div>
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-clay">Production</span>
+                    <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Live Public Kiosk</h3>
+                    <p class="text-xs text-stone-500 mb-6 font-serif italic">Unlock your storefront link to the entire world.</p>
+                    <div class="text-3xl font-black text-clay font-mono mb-6">₦10,000 <span class="text-xs font-normal text-stone-400">once</span></div>
+                    <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
+                        <li>✓ Public access at <code>marketplace.com/slug</code></li>
+                        <li>✓ Live WhatsApp order intake</li>
+                        <li>✓ Digital Invoices & PAID Receipts</li>
+                        <li>✓ 3 Sponsor Ad slots for extra revenue</li>
+                        <li>✓ 0% transaction commission forever</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('auth.register') }}" class="btn-clay text-center block text-xs py-3.5 tracking-wider font-bold">
+                    CLAIM YOUR KIOSK &rarr;
                 </a>
             </div>
         </div>
-        {% else %}
-        <p class="font-serif italic text-stone-400 col-span-3">No storefronts available yet.</p>
-        {% endfor %}
-    </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 7. FINAL CALL-TO-ACTION                    -->
+    <!-- ========================================== -->
+    <section class="max-w-6xl mx-auto px-6 py-20 text-center border-t border-stone-200/60">
+        <div class="bg-dark-oak text-white p-12 md:p-16 rounded-3xl shadow-2xl relative overflow-hidden">
+            <h2 class="text-3xl md:text-5xl font-black tracking-tight mb-4 uppercase">
+                Claim Your Digital Real Estate Today.
+            </h2>
+            <p class="font-serif italic text-stone-300 max-w-xl mx-auto mb-8 text-sm leading-relaxed">
+                Join forward-thinking Nigerian vendors who have stopped wasting money on expensive software and started closing structured sales on WhatsApp.
+            </p>
+            <a href="{{ url_for('auth.register') }}" class="btn-clay text-sm py-4 px-10 tracking-widest font-black inline-block shadow-xl">
+                GET STARTED IN 60 SECONDS &rarr;
+            </a>
+            <div class="mt-8 text-[11px] text-stone-400 font-mono">
+                Need guidance? Tap the green Merchant Support badge in the corner.
+            </div>
+        </div>
+    </section>
 
 </div>
 {% endblock %}
