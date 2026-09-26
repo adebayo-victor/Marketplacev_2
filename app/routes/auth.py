@@ -69,15 +69,12 @@ def login():
     return render_template('auth/login.html')
 
 
-# -------------------------------------------------------------
-# GOOGLE OAUTH 2.0 SIGN-IN
-# -------------------------------------------------------------
 @auth_bp.route('/login/google')
 def google_login():
     """Initiates Google OAuth flow."""
     google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
     if not google_client_id:
-        flash('Google Sign-In is not configured yet. Please configure it in Master Command.', 'warning')
+        flash('Google Sign-In is not configured yet.', 'warning')
         return redirect(url_for('auth.login'))
 
     redirect_uri = url_for('auth.google_callback', _external=True)
@@ -86,7 +83,7 @@ def google_login():
 
 @auth_bp.route('/login/google/callback')
 def google_callback():
-    """Handles callback response from Google."""
+    """Handles callback response from Google and extracts real name."""
     try:
         token = oauth.google.authorize_access_token()
         user_info = token.get('userinfo')
@@ -97,8 +94,13 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            # Auto-create merchant account with unique username from email
-            base_username = slugify(email.split('@')[0])
+            # 🎯 Extract actual Name from Google (e.g., "Victor" or "Victor Adebayo")
+            google_name = user_info.get('given_name') or user_info.get('name')
+            if google_name:
+                base_username = slugify(google_name)
+            else:
+                base_username = slugify(email.split('@')[0])
+
             username = base_username
             count = 1
             while User.query.filter_by(username=username).first():
@@ -106,7 +108,6 @@ def google_callback():
                 count += 1
 
             user = User(username=username, email=email)
-            # Random strong password for OAuth account
             user.set_password(os.urandom(16).hex())
             db.session.add(user)
             db.session.commit()
