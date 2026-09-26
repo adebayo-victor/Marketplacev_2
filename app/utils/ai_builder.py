@@ -216,4 +216,167 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
 
     <!-- Shopping Bag Drawer -->
     <div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/40 z-40 hidden"></div>
-    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl p-6 flex flex-col justify-between translate-x-ful
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl p-6 flex flex-col justify-between translate-x-full transition-transform duration-300">
+        <div>
+            <div class="flex justify-between items-center pb-4 border-b border-stone-100 mb-4">
+                <h3 class="font-bold text-sm uppercase tracking-wider text-stone-900">Your Bag</h3>
+                <button type="button" onclick="toggleCart()" class="text-xs font-bold text-stone-400 cursor-pointer">&times; CLOSE</button>
+            </div>
+            <div id="cartItemsList" class="space-y-3 max-h-[45vh] overflow-y-auto"></div>
+        </div>
+        <div class="pt-4 border-t border-stone-100">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xs uppercase text-stone-400 font-bold">Total</span>
+                <span id="cartTotalPrice" class="font-bold text-lg text-stone-900">{{ store.currency }}0.00</span>
+            </div>
+            <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
+                <input type="text" id="custName" required placeholder="Full Name" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none">
+                <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none">
+                <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none"></textarea>
+                <button type="submit" id="checkoutBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer">
+                    CHECKOUT ON WHATSAPP &rarr;
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <footer class="bg-white border-t border-stone-100 py-6 text-center text-xs text-stone-400">
+        Made with <a href="/" class="font-bold text-stone-800">Marketplace</a> • Powered by Techlite
+    </footer>
+
+    <script>
+        const storeSlug = {{ store.slug|tojson }};
+        const storeCurrency = {{ store.currency|tojson }};
+        let cart = [];
+        let currentModalProduct = null;
+
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('translate-x-full');
+            document.getElementById('cartOverlay').classList.toggle('hidden');
+        }
+
+        function openProductModal(productId) {
+            const product = window.KIOSK_PRODUCTS[productId];
+            if (!product) return;
+
+            currentModalProduct = product;
+            document.getElementById('modalProductName').innerText = product.name;
+            document.getElementById('modalProductDesc').innerText = product.description || '';
+            document.getElementById('modalProductPrice').innerText = `${storeCurrency}${product.price.toLocaleString()}`;
+
+            const container = document.getElementById('modalVariantsContainer');
+            container.innerHTML = '';
+
+            const attrs = product.attributes || {};
+            for (const [attr, opts] of Object.entries(attrs)) {
+                const group = document.createElement('div');
+                group.innerHTML = `
+                    <label class='text-[10px] font-bold text-stone-500 uppercase block mb-1'>${attr}</label>
+                    <select class='variant-select w-full p-2.5 border border-stone-200 rounded-lg text-xs outline-none' data-attr='${attr}'>
+                        ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>
+                `;
+                container.appendChild(group);
+            }
+
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+            currentModalProduct = null;
+        }
+
+        function confirmAddToCart() {
+            if (!currentModalProduct) return;
+
+            const selected = [];
+            document.querySelectorAll('.variant-select').forEach(s => {
+                selected.push(`${s.getAttribute('data-attr')}: ${s.value}`);
+            });
+
+            cart.push({
+                product_id: currentModalProduct.id,
+                name: currentModalProduct.name,
+                price: currentModalProduct.price,
+                variants: selected.join(' | '),
+                quantity: 1
+            });
+
+            updateCartUI();
+            closeProductModal();
+            toggleCart();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cartItemsList');
+            const badge = document.getElementById('cartCountBadge');
+            const totalEl = document.getElementById('cartTotalPrice');
+
+            badge.innerText = cart.length;
+            list.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, idx) => {
+                total += item.price * item.quantity;
+                const d = document.createElement('div');
+                d.className = 'flex justify-between items-center text-xs pb-3 border-b border-stone-50';
+                d.innerHTML = `
+                    <div>
+                        <strong class="text-stone-900 block">${item.name}</strong>
+                        ${item.variants ? `<p class="text-[10px] text-stone-400 m-0">${item.variants}</p>` : ''}
+                        <span class="text-emerald-600 font-bold">${storeCurrency}${item.price.toLocaleString()}</span>
+                    </div>
+                    <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-500 font-bold text-base px-2">&times;</button>
+                `;
+                list.appendChild(d);
+            });
+
+            totalEl.innerText = `${storeCurrency}${total.toLocaleString()}`;
+        }
+
+        async function handleCheckout(e) {
+            e.preventDefault();
+            if (cart.length === 0) {
+                alert('Your shopping bag is empty. Please select an item first.');
+                return;
+            }
+
+            const btn = document.getElementById('checkoutBtn');
+            btn.innerText = 'ROUTING TO WHATSAPP...';
+            btn.disabled = true;
+
+            const payload = {
+                customer_name: document.getElementById('custName').value,
+                customer_phone: document.getElementById('custPhone').value,
+                delivery_address: document.getElementById('custAddress').value,
+                cart: cart
+            };
+
+            try {
+                const res = await fetch(`/${storeSlug}/checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    cart = [];
+                    updateCartUI();
+                    window.location.href = data.whatsapp_url;
+                } else {
+                    alert(data.message || 'Error processing checkout.');
+                    btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Connection error. Please try again.');
+                btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>"""
+
+    return fallback_html.replace("__BG_STYLE__", bg_style).replace("__LOGO_IMG__", logo_img).replace("__HERO_DIV__", hero_div)
