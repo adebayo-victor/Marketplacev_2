@@ -27,7 +27,6 @@
             font-family: 'Georgia', serif;
             margin: 0;
 
-            /* 🎨 SMART BACKGROUND DIMMER (Ensures text is 100% readable even over busy doodle patterns) */
             {% if store.background_image %}
             background-image: 
                 linear-gradient(rgba(249, 245, 240, 0.88), rgba(249, 245, 240, 0.88)),
@@ -44,17 +43,22 @@
             letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
             border: none; cursor: pointer; transition: 0.3s;
         }
-        .btn-oak:hover { opacity: 0.9; }
         .btn-clay {
             background: var(--clay); color: white; padding: 12px 20px;
             font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 600;
             letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
             border: none; cursor: pointer; transition: 0.3s;
         }
-        .btn-clay:hover { opacity: 0.9; }
+        .ad-corner-tag {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0, 0, 0, 0.65); color: #fff;
+            padding: 2px 8px; border-radius: 4px; font-family: monospace;
+            font-size: 9px; font-weight: bold; letter-spacing: 1px;
+            backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+        }
     </style>
 
-    <!-- SAFE GLOBAL PRODUCT LOOKUP -->
     <script>
         window.KIOSK_PRODUCTS = {
             {% for p in regular_products + flash_sales %}
@@ -95,10 +99,11 @@
 
         <!-- AD SLOT #1 (HEADER BANNER) -->
         {% if store.is_section_active('ads') and 1 in ad_slots %}
-        <div class="mb-10">
+        <div class="mb-10 relative">
+            <span class="ad-corner-tag">AD</span>
             <a href="/ad/click/{{ ad_slots[1].id }}" target="_blank">
                 <img src="{{ ad_slots[1].banner_image if ad_slots[1].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[1].banner_image) }}" 
-                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
+                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm rounded-xl">
             </a>
         </div>
         {% endif %}
@@ -146,28 +151,28 @@
         </section>
         {% endif %}
 
-        <!-- AD SLOT #2 (MID-CATALOG BANNER) -->
-        {% if store.is_section_active('ads') and 2 in ad_slots %}
-        <div class="my-10">
-            <a href="/ad/click/{{ ad_slots[2].id }}" target="_blank">
-                <img src="{{ ad_slots[2].banner_image if ad_slots[2].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[2].banner_image) }}" 
-                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
-            </a>
+        <!-- SEARCH BAR & CATALOG HEADER -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-[#eee]">
+            <div>
+                <h3 class="font-ui text-xl font-normal lowercase tracking-tight m-0">kiosk catalog</h3>
+                <p class="font-serif italic text-xs text-stone-400 m-0">Freshly prepared & available items</p>
+            </div>
+            
+            <input type="text" id="catalogSearchInput" onkeyup="filterCatalog()" 
+                   placeholder="Search menu or products..." 
+                   class="p-2.5 border border-stone-200 text-xs font-ui outline-none w-64 rounded-xl bg-white shadow-sm focus:border-clay">
         </div>
-        {% endif %}
 
         <!-- REGULAR PRODUCTS GRID -->
         <section class="mb-14">
-            <h3 class="font-ui text-xl font-normal lowercase tracking-tight mb-8">kiosk catalog</h3>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="catalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {% for p in regular_products %}
-                <div class="bg-white p-6 border-t-[4px] border-clay shadow-sm flex flex-col justify-between">
+                <div class="catalog-item bg-white p-6 border-t-[4px] border-clay shadow-sm flex flex-col justify-between">
                     <div>
                         <div class="h-48 bg-stone-50 mb-4 overflow-hidden flex items-center justify-center">
                             <img src="{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}" alt="{{ p.name }}" class="object-cover h-full w-full">
                         </div>
-                        <h4 class="font-ui font-semibold text-base text-dark-oak mb-1">{{ p.name }}</h4>
+                        <h4 class="product-title font-ui font-semibold text-base text-dark-oak mb-1">{{ p.name }}</h4>
                         <p class="font-serif text-xs text-stone-500 mb-4">{{ p.description }}</p>
                     </div>
 
@@ -180,7 +185,6 @@
                                 <span class="font-bold text-base text-dark-oak">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
                             {% endif %}
                             
-                            <!-- 🍲 Dynamic Stock Indicator -->
                             {% if p.is_unlimited_stock %}
                                 <span class="text-[0.65rem] text-emerald-600 font-bold block mt-0.5">● Freshly Made / In Stock</span>
                             {% else %}
@@ -207,10 +211,11 @@
 
         <!-- AD SLOT #3 (FOOTER BANNER) -->
         {% if store.is_section_active('ads') and 3 in ad_slots %}
-        <div class="mt-10">
+        <div class="mt-10 relative">
+            <span class="ad-corner-tag">AD</span>
             <a href="/ad/click/{{ ad_slots[3].id }}" target="_blank">
                 <img src="{{ ad_slots[3].banner_image if ad_slots[3].banner_image.startswith('http') else url_for('static', filename='uploads/ads/' + ad_slots[3].banner_image) }}" 
-                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm">
+                     alt="Sponsor Ad" class="w-full h-28 md:h-36 object-cover border border-[#eee] shadow-sm rounded-xl">
             </a>
         </div>
         {% endif %}
@@ -266,12 +271,19 @@
         Made with <a href="/" class="text-clay font-bold">Marketplace</a> • Powered by Techlite
     </footer>
 
-    <!-- Frontend Shopping Bag & Checkout Engine -->
     <script>
         const storeSlug = {{ store.slug|tojson }};
         const storeCurrency = {{ store.currency|tojson }};
         let cart = [];
         let currentModalProduct = null;
+
+        function filterCatalog() {
+            const query = document.getElementById('catalogSearchInput').value.toLowerCase();
+            document.querySelectorAll('.catalog-item').forEach(item => {
+                const title = item.querySelector('.product-title').innerText.toLowerCase();
+                item.style.display = title.includes(query) ? '' : 'none';
+            });
+        }
 
         function toggleCart() {
             document.getElementById('cartDrawer').classList.toggle('translate-x-full');
