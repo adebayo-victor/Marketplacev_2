@@ -44,7 +44,7 @@
             font-family: 'Montserrat', sans-serif; 
             font-size: 0.75rem; 
             font-weight: 600;
-            line-height: 3; 
+            line-height: 2.8; 
             letter-spacing: 0.5px;
         }
         .sidebar nav a { 
@@ -111,6 +111,7 @@
             
             <nav>
                 <a href="{{ url_for('admin.overview') }}">• Platform Analytics</a>
+                <a href="{{ url_for('admin.reset_tickets') }}">• Password Reset Tickets 🎫</a>
                 <a href="{{ url_for('admin.env_manager') }}">• Secrets & .env Keys</a>
                 <a href="{{ url_for('dashboard.overview') }}" style="margin-top: 30px; color: #f59e0b;">
                     &larr; Switch to Merchant View
@@ -125,7 +126,6 @@
     </aside>
 
     <main class="main-content">
-        <!-- Flash Banners -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mb-8">
