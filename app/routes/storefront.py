@@ -25,10 +25,8 @@ def store_catalog(store_slug):
     if not store.is_active:
         is_owner = current_user.is_authenticated and (current_user.id == store.user_id or current_user.is_admin)
         if not is_owner:
-            # Outside visitor sees the Landlord / Coming Soon notice
             return render_template('store/locked.html', store=store, is_owing=store.has_ever_activated)
         else:
-            # Store owner gets in, but with an unmistakable PREVIEW banner!
             is_preview = True
 
     # Track view count
@@ -43,7 +41,7 @@ def store_catalog(store_slug):
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
-    # Render Custom HTML (from AI or Admin)
+    # Custom HTML rendering
     if store.custom_html and store.custom_html.strip():
         from flask import render_template_string
         rendered = render_template_string(
@@ -115,7 +113,9 @@ def checkout(store_slug):
         chosen_variants = item.get('variants', '')
 
         product = Product.query.filter_by(id=product_id, store_id=store.id).first()
-        if not product or product.stock < qty:
+        
+        # Check availability (Respects unlimited stock!)
+        if not product or not product.is_available:
             db.session.rollback()
             return jsonify({"status": "error", "message": f"Sorry, '{product.name if product else 'Item'}' is out of stock."}), 400
 
@@ -123,7 +123,9 @@ def checkout(store_slug):
         subtotal = unit_price * qty
         total_amount += subtotal
 
-        product.stock -= qty
+        # Deduct stock only if not unlimited
+        if not product.is_unlimited_stock:
+            product.stock -= qty
 
         order_item = OrderItem(
             order_id=order.id,
