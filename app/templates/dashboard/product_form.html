@@ -17,13 +17,13 @@
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Product Name</label>
                 <input type="text" name="name" required value="{{ product.name if product else '' }}" 
-                       placeholder="e.g. Smart 4K Television"
+                       placeholder="e.g. Jollof Rice & Spicy Chicken"
                        class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
             </div>
 
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Description</label>
-                <textarea name="description" rows="3" placeholder="Key specs, warranty, or details..."
+                <textarea name="description" rows="3" placeholder="Key specs, taste notes, or preparation details..."
                           class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-serif text-xs outline-none focus:border-clay">{{ product.description if product else '' }}</textarea>
             </div>
 
@@ -31,8 +31,8 @@
                 <div>
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Original Price ({{ kiosk.currency }})</label>
                     <input type="number" step="0.01" name="original_price" required value="{{ product.original_price if product else '' }}" 
-                       placeholder="50000"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
+                           placeholder="50000"
+                           class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
                 </div>
                 <div>
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Discount Price ({{ kiosk.currency }}) — Optional</label>
@@ -42,43 +42,56 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 items-center">
-                <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Stock Units</label>
-                    <input type="number" name="stock" value="{{ product.stock if product else 1 }}" min="0" 
-                           class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
-                </div>
-                <div class="pt-6">
-                    <label class="font-ui text-xs font-semibold cursor-pointer flex items-center">
-                        <input type="checkbox" name="is_flash_sale" {% if product and product.is_flash_sale %}checked{% endif %} class="mr-2">
-                        🔥 Pin as Flash Deal
+            <!-- Stock Controls & Unlimited Stock Toggle -->
+            <div class="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="font-ui text-xs font-bold uppercase tracking-wider text-dark-oak">Stock & Inventory Mode</span>
+                    <label class="font-ui text-xs font-bold text-clay cursor-pointer flex items-center gap-2">
+                        <input type="checkbox" name="is_unlimited_stock" id="unlimitedStockToggle" 
+                               {% if product and product.is_unlimited_stock %}checked{% endif %}
+                               onchange="toggleStockField()"
+                               class="accent-clay">
+                        <span>Always in Stock (Made-to-Order / Food / Code)</span>
                     </label>
+                </div>
+                <div id="stockUnitsContainer">
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-stone-500 mb-1">Fixed Stock Count</label>
+                    <input type="number" name="stock" id="stockInput" value="{{ product.stock if product else 1 }}" min="0" 
+                           class="w-full p-3 border border-[#eee] bg-white font-ui text-xs outline-none focus:border-clay">
+                    <p class="font-serif italic text-[11px] text-stone-400 mt-1">Leave unchecked if you want the item to auto-mark "OUT OF STOCK" when sold out.</p>
                 </div>
             </div>
 
-            <!-- CUSTOM ATTRIBUTES BUILDER (MINIMUM 2 VALUES PER FEATURE) -->
+            <div>
+                <label class="font-ui text-xs font-semibold cursor-pointer flex items-center">
+                    <input type="checkbox" name="is_flash_sale" {% if product and product.is_flash_sale %}checked{% endif %} class="mr-2">
+                    🔥 Pin as Flash Deal
+                </label>
+            </div>
+
+            <!-- Custom Attributes Builder -->
             <div class="p-5 bg-[#fff9f5] border-l-4 border-clay my-4">
                 <div class="flex justify-between items-center mb-1">
                     <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-clay">Custom Specifications / Variants</span>
                     <button type="button" id="addAttrBtn" class="btn-clay text-[0.6rem] py-1.5 px-3">+ Add Feature</button>
                 </div>
                 <p class="font-serif italic text-xs text-stone-500 mb-3">
-                    * Rule: Every feature MUST have at least TWO choices separated by commas (e.g. <code>3000, 5000</code> or <code>45, 60</code>).
+                    * Rule: Every feature MUST have at least TWO choices separated by commas (e.g. <code>3000, 5000</code> or <code>Spicy, Mild</code>).
                 </p>
 
                 <div id="attributesContainer" class="space-y-2">
                     {% if product and product.get_attributes() %}
                         {% for a_name, a_vals in product.get_attributes().items() %}
                         <div class="attr-row flex gap-2 items-center">
-                            <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Screen Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Minimum 2 options (e.g. 3000, 5000)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_name[]" value="{{ a_name }}" placeholder="Feature (e.g. Spice Level)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" value="{{ a_vals|join(', ') }}" placeholder="Minimum 2 options (e.g. Mild, Extra Spicy)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
                             <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
                         </div>
                         {% endfor %}
                     {% else %}
                         <div class="attr-row flex gap-2 items-center">
-                            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Screen Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-                            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. 45, 60)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Portion / Size)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+                            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. Regular, Jumbo)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
                             <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
                         </div>
                     {% endif %}
@@ -98,30 +111,35 @@
 </div>
 
 <script>
+function toggleStockField() {
+    const isUnlimited = document.getElementById('unlimitedStockToggle').checked;
+    const container = document.getElementById('stockUnitsContainer');
+    container.style.opacity = isUnlimited ? '0.4' : '1';
+    document.getElementById('stockInput').disabled = isUnlimited;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    toggleStockField();
     const addBtn = document.getElementById('addAttrBtn');
     const container = document.getElementById('attributesContainer');
 
-    // Add Feature Row
     addBtn.addEventListener('click', function() {
         const div = document.createElement('div');
         div.className = 'attr-row flex gap-2 items-center';
         div.innerHTML = `
-            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Storage)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
-            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. 64GB, 128GB)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+            <input type="text" name="attr_name[]" placeholder="Feature (e.g. Side Dish)" class="w-1/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
+            <input type="text" name="attr_values[]" placeholder="Minimum 2 options (e.g. Jollof, Fries)" class="w-2/3 p-2.5 border border-[#eee] bg-white font-ui text-xs">
             <button type="button" class="remove-btn text-rose-500 font-bold px-2">&times;</button>
         `;
         container.appendChild(div);
     });
 
-    // Remove Feature Row
     container.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('remove-btn')) {
             e.target.parentElement.remove();
         }
     });
 
-    // Enforce Minimum 2 Choices per Feature
     document.getElementById('productForm').addEventListener('submit', function(e) {
         const rows = document.querySelectorAll('.attr-row');
         for (let r of rows) {
