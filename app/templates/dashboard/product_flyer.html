@@ -32,11 +32,22 @@
             border: 2px solid #10b981 !important; 
         }
 
-        /* 🖼️ COMPACT CARD: Hugs content naturally without screen stretching */
         .flyer-card-container {
             width: 100%;
             max-width: 380px;
             box-sizing: border-box;
+        }
+
+        /* 📸 ZERO-STRETCH PRODUCT IMAGE CANVAS */
+        .product-image-box {
+            width: 100%;
+            height: 240px;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            border-radius: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -68,7 +79,7 @@
         </div>
     </div>
 
-    <!-- 📸 THE PRODUCT GRAPHIC CARD (WYSIWYG: Exactly what downloads) -->
+    <!-- 📸 THE PRODUCT GRAPHIC CARD -->
     <div id="flyerCard" class="theme-cyber flyer-card-container p-6 rounded-[28px] shadow-2xl flex flex-col gap-3.5 border-2">
         
         <!-- 1. Header -->
@@ -84,12 +95,9 @@
             {% endif %}
         </div>
 
-        <!-- 2. Product Image (Tightly framed, no empty dead space) -->
-        <div class="w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center">
-            <img src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/products/' + product.image) }}" 
-                 crossorigin="anonymous"
-                 alt="{{ product.name }}" 
-                 class="w-full h-52 object-cover">
+        <!-- 2. Product Image Box (ZERO-DISTORTION via background-size: cover) -->
+        <div class="product-image-box" 
+             style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
         </div>
 
         <!-- 3. Details -->
@@ -101,7 +109,7 @@
             {% if product.get_attributes() %}
             <div class="flex flex-wrap gap-1.5 pt-1">
                 {% for a_name, a_vals in product.get_attributes().items() %}
-                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2 py-0.5 rounded-md text-stone-200">
+                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2.5 py-0.5 rounded-md text-stone-200">
                         {{ a_name }}: {{ a_vals|join(', ') }}
                     </span>
                 {% endfor %}
@@ -123,7 +131,7 @@
 
             <div class="text-right">
                 <span class="text-[8px] font-mono text-emerald-400 font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-lg inline-block">
+                <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg inline-block">
                     💬 {{ kiosk.whatsapp_number }}
                 </span>
             </div>
@@ -137,7 +145,7 @@
         </div>
     </div>
 
-    <!-- 🎯 WYSIWYG CAPTURE ENGINE: Captures the EXACT on-screen dimensions -->
+    <!-- 🎯 WYSIWYG ZERO-STRETCH CAPTURE SCRIPT -->
     <script>
         function setTheme(themeClass) {
             const card = document.getElementById('flyerCard');
@@ -150,32 +158,32 @@
             btn.innerText = 'CAPTURING...';
             btn.disabled = true;
 
-            const card = document.getElementById('flyerCard');
+            const originalCard = document.getElementById('flyerCard');
 
-            // 🎯 Clone the card using its EXACT on-screen width & height
-            const clone = card.cloneNode(true);
+            // Clone to match exact screen dimensions
+            const clone = originalCard.cloneNode(true);
             clone.id = 'flyerClone';
             clone.style.position = 'fixed';
             clone.style.top = '0px';
             clone.style.left = '0px';
             clone.style.zIndex = '-99999';
-            clone.style.width = card.offsetWidth + 'px';
-            clone.style.height = card.offsetHeight + 'px';
+            clone.style.width = originalCard.offsetWidth + 'px';
+            clone.style.height = originalCard.offsetHeight + 'px';
             clone.style.margin = '0';
             clone.style.transform = 'none';
 
             document.body.appendChild(clone);
 
             html2canvas(clone, {
-                scale: 2,                  // Clean, sharp 2x retina replica
+                scale: 2.5,
                 useCORS: true,
                 allowTaint: false,
-                backgroundColor: null      // Transparent outer edges
+                backgroundColor: null
             }).then(canvas => {
                 document.body.removeChild(clone);
 
                 const link = document.createElement('a');
-                link.download = `Card_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
+                link.download = `Flyer_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 
@@ -196,7 +204,7 @@
             const card = document.getElementById('flyerCard');
             const opt = {
                 margin: 5,
-                filename: `Card_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
+                filename: `Flyer_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: [100, 140], orientation: 'portrait' }
