@@ -224,7 +224,27 @@ def new_product(kiosk_slug):
 
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
+# In app/routes/dashboard.py:
 
+@dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
+@login_required
+def update_order_status(kiosk_slug, order_id):
+    """Updates order status from Pending to Paid, Shipped, or Completed."""
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    if request.method == 'POST':
+        order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
+        new_status = request.form.get('status', 'pending').strip().lower()
+
+        if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
+            order.status = new_status
+            db.session.commit()
+            flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
+
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
+    
 @dashboard_bp.route('/<kiosk_slug>/product/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_product(kiosk_slug, id):
