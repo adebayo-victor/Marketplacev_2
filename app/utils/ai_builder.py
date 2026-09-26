@@ -4,7 +4,7 @@ import json
 import urllib.request
 import urllib.error
 
-# 🛡️ THE BULLETPROOF INTERACTIVE ENGINE (INJECTED INTO AI-GENERATED PAGES)
+# 🛡️ THE BULLETPROOF INTERACTIVE ENGINE (INJECTED INTO EVERY GENERATED KIOSK)
 GUARANTEED_CART_ENGINE = """
 <!-- ========================================== -->
 <!-- BULLETPROOF SHOPPING BAG & CHECKOUT ENGINE -->
@@ -24,44 +24,54 @@ GUARANTEED_CART_ENGINE = """
 </script>
 
 <!-- Product Specs & Options Modal -->
-<div id="productModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 hidden">
-    <div class="bg-white p-6 max-w-sm w-full rounded-2xl shadow-2xl relative text-stone-900">
-        <button type="button" onclick="closeProductModal()" class="absolute top-3 right-3 text-stone-400 hover:text-black font-bold text-xl cursor-pointer">&times;</button>
-        <h3 id="modalProductName" class="font-bold text-base mb-1 text-stone-900"></h3>
-        <p id="modalProductDesc" class="text-xs text-stone-500 mb-3 leading-relaxed"></p>
-        <p id="modalProductPrice" class="text-emerald-600 font-bold text-base mb-4"></p>
-        <div id="modalVariantsContainer" class="space-y-3 mb-5"></div>
-        <button type="button" id="modalAddBtn" onclick="confirmAddToCart()" class="w-full bg-stone-900 hover:bg-black text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition">
+<div id="productModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 hidden">
+    <div class="bg-[#14161f] border border-blue-500/40 p-8 max-w-sm w-full rounded-3xl shadow-2xl relative text-white">
+        <button type="button" onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white font-bold text-xl cursor-pointer">&times;</button>
+        <span class="text-[10px] font-mono text-amber-400 uppercase tracking-widest block mb-1">Select Options & Specs</span>
+        <h3 id="modalProductName" class="font-black text-lg text-white mb-2 uppercase"></h3>
+        <p id="modalProductDesc" class="text-xs text-stone-400 mb-4 leading-relaxed"></p>
+        <p id="modalProductPrice" class="font-mono text-2xl font-black text-amber-400 mb-6"></p>
+
+        <div id="modalVariantsContainer" class="space-y-4 mb-6"></div>
+
+        <button type="button" onclick="confirmAddToCart()" 
+                class="w-full bg-amber-400 hover:bg-amber-300 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg shadow-amber-400/20">
             ADD TO BAG &rarr;
         </button>
     </div>
 </div>
 
 <!-- Slide-Out Shopping Bag Drawer -->
-<div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998] hidden"></div>
-<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-[99999] shadow-2xl p-6 flex flex-col justify-between translate-x-full transition-transform duration-300 text-stone-900">
+<div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998] hidden"></div>
+<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#111218] border-l border-stone-800 z-[99999] p-6 flex flex-col justify-between translate-x-full transition-transform duration-300 text-white">
     <div>
-        <div class="flex justify-between items-center pb-4 border-b border-stone-100 mb-4">
+        <div class="flex justify-between items-center pb-4 border-b border-stone-800 mb-6">
             <div>
-                <h3 class="font-bold text-sm uppercase tracking-wider text-stone-900 m-0">Your Bag</h3>
-                <span class="text-[10px] text-stone-400 font-mono">WhatsApp Checkout</span>
+                <h3 class="font-black text-base uppercase tracking-wider text-white m-0">Your Shopping Bag</h3>
+                <span class="text-[10px] text-stone-400 font-mono">Direct WhatsApp Intake</span>
             </div>
-            <button type="button" onclick="toggleCart()" class="text-xs font-bold text-stone-400 hover:text-black cursor-pointer">&times; CLOSE</button>
+            <button type="button" onclick="toggleCart()" class="text-xs font-mono font-bold text-stone-400 hover:text-white cursor-pointer">&times; CLOSE</button>
         </div>
-        <div id="cartItemsList" class="space-y-3 max-h-[45vh] overflow-y-auto"></div>
+        <div id="cartItemsList" class="space-y-3 max-h-[40vh] overflow-y-auto pr-1"></div>
     </div>
 
-    <div class="pt-4 border-t border-stone-100">
-        <div class="flex justify-between items-center mb-4 font-mono">
-            <span class="text-xs uppercase text-stone-400 font-bold">Total:</span>
-            <span id="cartTotalPrice" class="font-bold text-xl text-emerald-600">{{ store.currency }}0.00</span>
+    <div class="pt-6 border-t border-stone-800">
+        <div class="flex justify-between items-center mb-6 font-mono">
+            <span class="text-xs uppercase text-stone-400">Total:</span>
+            <span id="cartTotalPrice" class="font-black text-2xl text-amber-400">{{ store.currency }}0.00</span>
         </div>
+
         <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
-            <input type="text" id="custName" required placeholder="Your Full Name" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-900">
-            <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900">
-            <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900"></textarea>
-            <button type="submit" id="checkoutBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition shadow-lg shadow-emerald-600/20">
-                CHECKOUT ON WHATSAPP &rarr;
+            <input type="text" id="custName" required placeholder="Your Full Name" 
+                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500">
+            <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" 
+                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500">
+            <textarea id="custAddress" required placeholder="Delivery Address / City / Notes" rows="2" 
+                      class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"></textarea>
+
+            <button type="submit" id="checkoutBtn" 
+                    class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg shadow-green-600/20">
+                COMPLETE ORDER ON WHATSAPP &rarr;
             </button>
         </form>
     </div>
@@ -96,8 +106,8 @@ GUARANTEED_CART_ENGINE = """
         for (const [attr, opts] of Object.entries(attrs)) {
             const group = document.createElement('div');
             group.innerHTML = `
-                <label class='text-[10px] font-bold text-stone-500 uppercase block mb-1'>${attr}</label>
-                <select class='variant-select w-full p-2.5 border border-stone-200 rounded-lg text-xs outline-none bg-stone-50' data-attr='${attr}'>
+                <label class='block font-mono text-[10px] uppercase text-amber-400 mb-1 font-bold'>${attr}</label>
+                <select class='variant-select w-full p-2.5 bg-[#181a24] border border-stone-800 text-white font-mono text-xs rounded-xl outline-none focus:border-amber-400' data-attr='${attr}'>
                     ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
                 </select>
             `;
@@ -147,14 +157,14 @@ GUARANTEED_CART_ENGINE = """
         cart.forEach((item, idx) => {
             total += item.price * item.quantity;
             const d = document.createElement('div');
-            d.className = 'flex justify-between items-center text-xs pb-3 border-b border-stone-100';
+            d.className = 'flex justify-between items-start p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs font-mono';
             d.innerHTML = `
                 <div>
-                    <strong class="text-stone-900 block">${item.name}</strong>
-                    ${item.variants ? `<p class="text-[10px] text-stone-400 m-0">${item.variants}</p>` : ''}
-                    <span class="text-emerald-600 font-bold">${storeCurrency}${item.price.toLocaleString()}</span>
+                    <strong class="text-white block font-bold">${item.name}</strong>
+                    ${item.variants ? `<span class="text-[10px] text-amber-400 block">${item.variants}</span>` : ''}
+                    <span class="text-blue-400 font-bold mt-1 block">${storeCurrency}${item.price.toLocaleString()}</span>
                 </div>
-                <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-500 font-bold text-base px-2 cursor-pointer">&times;</button>
+                <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-400 hover:text-rose-300 font-bold ml-3 text-base cursor-pointer">&times;</button>
             `;
             list.appendChild(d);
         });
@@ -165,12 +175,12 @@ GUARANTEED_CART_ENGINE = """
     async function handleCheckout(e) {
         e.preventDefault();
         if (cart.length === 0) {
-            alert('Your shopping bag is empty. Please select an item first.');
+            alert('Your bag is empty. Please select an item first.');
             return;
         }
 
         const btn = document.getElementById('checkoutBtn');
-        btn.innerText = 'ROUTING TO WHATSAPP...';
+        btn.innerText = 'GENERATING WHATSAPP RECEIPT...';
         btn.disabled = true;
 
         const payload = {
@@ -192,13 +202,13 @@ GUARANTEED_CART_ENGINE = """
                 updateCartUI();
                 window.location.href = data.whatsapp_url;
             } else {
-                alert(data.message || 'Error processing checkout.');
-                btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                alert(data.message || 'Error creating order.');
+                btn.innerText = 'COMPLETE ORDER ON WHATSAPP →';
                 btn.disabled = false;
             }
         } catch (err) {
             alert('Connection error. Please try again.');
-            btn.innerText = 'CHECKOUT ON WHATSAPP →';
+            btn.innerText = 'COMPLETE ORDER ON WHATSAPP →';
             btn.disabled = false;
         }
     }
@@ -207,7 +217,7 @@ GUARANTEED_CART_ENGINE = """
 
 def clean_html_fences(raw_text: str) -> str:
     raw_text = re.sub(r'^```html\s*', '', raw_text.strip())
-    raw_text = re.sub(r'```$', '', raw_text).strip()
+    raw_text = re.sub(r'```$', '', raw_text.strip())
     return raw_text
 
 
@@ -247,36 +257,55 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
             return res_data['choices'][0]['message']['content']
     except urllib.error.HTTPError as e:
         error_msg = e.read().decode('utf-8')
-        print(f"OpenRouter HTTP {e.code} Error Details: {error_msg}")
+        print("OpenRouter HTTP Error: " + str(e.code) + " - " + error_msg)
         return None
     except Exception as e:
-        print(f"OpenRouter Connection Error: {e}")
+        print("OpenRouter Connection Error: " + str(e))
         return None
 
 
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
-    AI Visual Generator:
-    - Queries Gemini / OpenRouter to design unique storefronts.
-    - If AI succeeds, injects the bulletproof interactive cart engine.
-    - If AI fails or times out, returns "" so Flask automatically renders templates/store/catalog.html!
+    MASTER DESIGN AGENCY PROMPT:
+    Forces the AI to generate high-end, bespoke boutique storefronts
+    with custom typography, ghost backdrops, layered depth, and micro-tags.
     """
     system_instruction = (
-        'You are an elite web designer creating a custom storefront website for a brand named "' + kiosk_name + '".\n'
-        'Merchant Design Instructions: "' + prompt + '"\n'
-        'Merchant Bio: "' + bio + '"\n\n'
-        'Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", Currency="' + currency + '".\n'
-        'Write a COMPLETE, BEAUTIFUL, MOBILE-FIRST HTML5 page using Tailwind CSS via CDN and Google Fonts.\n'
-        'CRITICAL CONTRACT:\n'
-        '1. In the header, include a BAG button that calls: onclick="toggleCart()"\n'
-        '   with an element <span id="cartCountBadge">0</span>.\n'
-        '2. Products Loop: Iterate using:\n'
-        '   {% for p in regular_products %} ... display image {{ p.image if p.image.startswith("http") else url_for("static", filename="uploads/products/" + p.image) }}, title {{ p.name }}, price {{ store.currency }}{{ p.current_price }} ...\n'
-        '   Every product card MUST have an order button calling: onclick="openProductModal({{ p.id }})"\n'
-        '   {% endfor %}\n'
-        '3. Flash Sales: Include {% if flash_sales %} ... {% for p in flash_sales %} ... {% endfor %} {% endif %}\n'
-        'Do NOT write the modal or cart drawer HTML yourself—it will be automatically injected. Just build the storefront, header, and product cards!\n'
-        'Output ONLY pure HTML.'
+        'You are an award-winning creative art director and lead web architect. You design bespoke, $10,000 storefronts for high-end boutique brands.\n'
+        'You NEVER build generic, pale, plain, or cookie-cutter templates. Every site you create looks like an editorial showcase from Awwwards or Dribbble.\n\n'
+        'CLIENT BRIEF:\n'
+        '- Brand Name: "' + kiosk_name + '"\n'
+        '- Creative Design Request: "' + prompt + '"\n'
+        '- Brand Bio: "' + bio + '"\n'
+        '- Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", Currency="' + currency + '"\n\n'
+        'EXECUTIVE DESIGN SPECIFICATIONS (FOLLOW EXACTLY):\n\n'
+        '1. TYPOGRAPHY PAIRINGS:\n'
+        '   - Import TWO contrasting Google Fonts in the <head>:\n'
+        '     • Display/Headline Font: One of ["Syne", "Space Grotesk", "Clash Display", "Cinzel", "Outfit", "Playfair Display"].\n'
+        '     • Body/UI Font: One of ["Space Grotesk", "Plus Jakarta Sans", "JetBrains Mono", "Inter"].\n\n'
+        '2. COLOR HARMONY & DEPTH:\n'
+        '   - Use rich layered surfaces with deep contrast (e.g. obsidian #09090b, deep charcoal #12131a, midnight navy, warm espresso, or vibrant boutique tones).\n'
+        '   - Add glow shadows to buttons (e.g. shadow-lg shadow-amber-400/20 or shadow-cyan-500/20).\n'
+        '   - Add subtle border glows on cards with hover states.\n\n'
+        '3. THE "GHOST WATERMARK" HERO SECTION:\n'
+        '   - Build a dramatic hero container with rounded-3xl corners.\n'
+        '   - Include a pre-headline badge pill (e.g. "⚡ LIMITED RUN // EXCLUSIVE APPAREL" or "⚡ AUDITED CODE // INSTANT INTAKE").\n'
+        '   - Headline: Massive, bold, characterful typography (text-3xl md:text-5xl font-black uppercase tracking-tight).\n'
+        '   - In the background of the hero container, embed an OVERSIZED semi-transparent ghost word from the brand name (e.g. class="absolute -right-8 -bottom-12 opacity-5 text-8xl md:text-9xl font-black uppercase select-none pointer-events-none") for depth.\n\n'
+        '4. PRODUCT CATALOG CARDS:\n'
+        '   - Iterate using: {% for p in regular_products %} ... {% endfor %}\n'
+        '   - Image container: Clean aspect ratio with dark/contrast backdrop.\n'
+        '   - Above product title: Include an editorial micro-tag (e.g. <span class="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block mb-1">[VERIFIED // DROP]</span>).\n'
+        '   - Title ({{ p.name }}), Description ({{ p.description }}), Stock units remaining.\n'
+        '   - Price block: If p.has_discount, show strikethrough original and bold colored current price.\n'
+        '   - Action Button: Prominent, high-contrast, uppercase button that calls: onclick="openProductModal({{ p.id }})"\n\n'
+        '5. FLASH SALES SECTION:\n'
+        '   - Include: {% if flash_sales %} ... with 🔥 FLASH DROP badge and urgent action buttons ... {% endif %}\n\n'
+        '6. HEADER & FOOTER:\n'
+        '   - Sticky glassmorphism header with logo/avatar, brand title with VERIFIED badge, and a BAG button with onclick="toggleCart()" containing <span id="cartCountBadge">0</span>.\n'
+        '   - Footer with "Powered by Marketplace • ' + kiosk_name + '".\n\n'
+        'IMPORTANT: Do NOT write the modal or cart drawer HTML yourself. It is automatically injected. Just deliver the complete, stunning visual page from <!DOCTYPE html> to </html>!\n'
+        'Output ONLY pure HTML. No markdown code blocks.'
     )
 
     # 1. Primary: Google Gemini
@@ -289,10 +318,10 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
             response = model.generate_content(system_instruction)
             raw_html = clean_html_fences(response.text)
             if raw_html:
-                print("Generated custom kiosk via Primary: Gemini! Injecting bulletproof engine...")
+                print("Generated bespoke showcase via Primary: Gemini!")
                 return inject_bulletproof_chassis(raw_html)
         except Exception as e:
-            print(f"Gemini API error: {e}")
+            print("Gemini API notice: " + str(e))
 
     # 2. Fast Backup: OpenRouter
     openrouter_key = (os.environ.get('OPENROUTER_API_KEY') or '').strip()
@@ -301,9 +330,9 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
         if raw_response:
             raw_html = clean_html_fences(raw_response)
             if raw_html:
-                print("Generated custom kiosk via Backup: OpenRouter! Injecting bulletproof engine...")
+                print("Generated bespoke showcase via Backup: OpenRouter!")
                 return inject_bulletproof_chassis(raw_html)
 
-    # 3. Clean Native Fallback: Returns empty string so Flask seamlessly renders app/templates/store/catalog.html!
-    print("AI generation skipped or failed. Falling back to default catalog.html template.")
+    # 3. Clean Native Fallback
+    print("AI generation skipped or unavailable. Falling back to default catalog.html template.")
     return ""
