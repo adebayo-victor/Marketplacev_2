@@ -293,32 +293,29 @@ def edit_product(kiosk_slug, id):
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
 
 
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
+#delete products
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_product(kiosk_slug, id):
+    """Safely deletes product by unlinking past order history so receipts never break."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
     product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
+
+    # 1. Unlink from past orders so PostgreSQL foreign key doesn't block deletion
+    from app.models import OrderItem
+    OrderItem.query.filter_by(product_id=product.id).update({'product_id': None})
+
+    # 2. Clean up media from Cloudinary
     delete_image(product.image, 'products')
 
+    # 3. Safely delete the product
     db.session.delete(product)
     db.session.commit()
-    flash('Product removed and storage cleaned up.', 'info')
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
-# The Social Flyer Studio
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/flyer')
-@login_required
-def product_flyer(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-    return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
+    flash(f'Product "{product.name}" deleted and past order receipts safely preserved.', 'info')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#inventory')
 
 
 # Settings, Branding & Sectional Activation
