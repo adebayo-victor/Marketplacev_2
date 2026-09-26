@@ -1,19 +1,20 @@
 import os
+import random
+import string
 from functools import wraps
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
-from app.models import User, Store, Product, Order
+from app.models import User, Store, PasswordResetTicket
 
 admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
-    """Restricts access to Master Admins only, with a first-time claim prompt if no admin exists."""
     @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
-            # Check if any admin exists in the system
             admin_count = User.query.filter_by(is_admin=True).count()
             if admin_count == 0:
                 flash('No Master Admin exists yet. You can claim Master access below.', 'warning')
@@ -23,21 +24,20 @@ def admin_required(f):
     return decorated_function
 
 
-@admin_bp.route('/')
+@admin_bp.route('/', strict_slashes=False)
 @admin_required
 def overview():
-    """Master Command Center: Platform vitals and kiosk registry."""
     total_merchants = User.query.count()
     total_kiosks = Store.query.count()
+    from app.models import Order
     total_orders = Order.query.count()
     
-    # Calculate Average Kiosks Per Merchant
     avg_kiosks = round(total_kiosks / total_merchants, 2) if total_merchants > 0 else 0.0
-    
-    # Total platform visitor impressions
     total_views = db.session.query(db.func.sum(Store.views_count)).scalar() or 0
-
     kiosks = Store.query.order_by(Store.created_at.desc()).all()
+
+    # Count pending password reset requests
+    pending_resets_count = PasswordResetTicket.query.filter_by(status='pending').count()
 
     return render_template(
         'admin/overview.html',
@@ -46,45 +46,88 @@ def overview():
         avg_kiosks=avg_kiosks,
         total_views=total_views,
         total_orders=total_orders,
-        kiosks=kiosks
+        kiosks=kiosks,
+        pending_resets_count=pending_resets_count
     )
+
+
+# -------------------------------------------------------------
+# 🎫 PASSWORD RESET HELPDESK QUEUE
+# -------------------------------------------------------------
+@admin_bp.route('/resets')
+@admin_required
+def reset_tickets():
+    """List of all password reset requests with user data cross-referencing."""
+    tickets = PasswordResetTicket.query.order_by(PasswordResetTicket.created_at.desc()).all()
+    
+    ticket_cards = []
+    for t in tickets:
+        user = User.query.filter_by(email=t.email).first()
+        stores = user.stores.all() if user else []
+        ticket_cards.append({
+            "ticket": t,
+            "user": user,
+            "stores": stores
+        })
+
+    return render_template('admin/resets.html', ticket_cards=ticket_cards)
+
+
+@admin_bp.route('/resets/<int:ticket_id>/approve', methods=['POST'])
+@admin_required
+def approve_reset(ticket_id):
+    """Generates a temporary password, updates user account, and marks ticket approved."""
+    ticket = PasswordResetTicket.query.get_or_404(ticket_id)
+    user = User.query.filter_by(email=ticket.email).first()
+
+    if not user:
+        flash(f'Cannot approve: No user found with email {ticket.email}.', 'danger')
+        return redirect(url_for('admin.reset_tickets'))
+
+    # Generate random temporary password
+    temp_pass = 'Market_' + ''.join(random.choices(string.digits, k=4)) + '!'
+    user.set_password(temp_pass)
+
+    ticket.status = 'approved'
+    ticket.temp_password = temp_pass
+    ticket.resolved_at = datetime.utcnow()
+
+    db.session.commit()
+    flash(f'Approved ticket #{ticket.ticket_ref}! Temporary password set to: {temp_pass}', 'success')
+    return redirect(url_for('admin.reset_tickets'))
+
+
+@admin_bp.route('/resets/<int:ticket_id>/reject', methods=['POST'])
+@admin_required
+def reject_reset(ticket_id):
+    ticket = PasswordResetTicket.query.get_or_404(ticket_id)
+    ticket.status = 'rejected'
+    ticket.resolved_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'Rejected ticket #{ticket.ticket_ref}.', 'info')
+    return redirect(url_for('admin.reset_tickets'))
 
 
 @admin_bp.route('/kiosk/<int:store_id>/template', methods=['GET', 'POST'])
 @admin_required
 def edit_template(store_id):
-    """In-browser HTML Template Inspector & Code Editor for any kiosk."""
     store = Store.query.get_or_404(store_id)
-
     if request.method == 'POST':
-        raw_html = request.form.get('custom_html', '')
-        store.custom_html = raw_html
+        store.custom_html = request.form.get('custom_html', '')
         db.session.commit()
         flash(f'HTML template for "{store.name}" updated successfully!', 'success')
         return redirect(url_for('admin.edit_template', store_id=store.id))
-
     return render_template('admin/template_editor.html', store=store)
 
 
 @admin_bp.route('/system/env', methods=['GET', 'POST'])
 @admin_required
 def env_manager():
-    """Secure Secrets & Environment Variables Manager (Writes directly to .env on disk)."""
     env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
-    
-    # Tracked secret keys
-    # In app/routes/admin.py, update target_keys to:
     target_keys = [
-        'SECRET_KEY',
-        'CLOUDINARY_CLOUD_NAME',
-        'CLOUDINARY_API_KEY',
-        'CLOUDINARY_API_SECRET',
-        'AI_API_KEY',
-        'OPENROUTER_API_KEY',  
-        'PAYSTACK_PUBLIC_KEY',  
-        'PAYSTACK_SECRET_KEY',
-        'GOOGLE_CLIENT_ID',      
-        'GOOGLE_CLIENT_SECRET'
+        'SECRET_KEY', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET',
+        'AI_API_KEY', 'OPENROUTER_API_KEY', 'PAYSTACK_PUBLIC_KEY', 'PAYSTACK_SECRET_KEY',
+        'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'
     ]
 
     if request.method == 'POST':
@@ -93,36 +136,31 @@ def env_manager():
             val = request.form.get(key, '').strip()
             if val:
                 new_env_data[key] = val
-                os.environ[key] = val  # Update active runtime environment
+                os.environ[key] = val
 
-        # Safely write to .env file
         try:
             with open(env_path, 'w') as f:
                 for k, v in new_env_data.items():
                     f.write(f"{k}={v}\n")
             flash('Environment secrets updated safely on server disk!', 'success')
         except Exception as e:
-            flash(f'Error writing .env file: {e}', 'danger')
+            flash(f'Notice: On serverless/read-only hosts, update keys in provider dashboard: {e}', 'info')
 
         return redirect(url_for('admin.env_manager'))
 
-    # Read existing values
     current_values = {key: os.environ.get(key, '') for key in target_keys}
-
     return render_template('admin/env_manager.html', env_values=current_values)
 
 
 @admin_bp.route('/claim-master', methods=['GET', 'POST'])
 @login_required
 def claim_master():
-    """Allows the first merchant to safely promote themselves to Master Admin."""
     admin_count = User.query.filter_by(is_admin=True).count()
     if admin_count > 0 and not current_user.is_admin:
         abort(403)
 
     if request.method == 'POST':
         passphrase = request.form.get('passphrase', '').strip()
-        # Default fallback key if not set in environment
         expected_pass = os.environ.get('MASTER_CLAIM_KEY', 'marketplace2026')
 
         if passphrase == expected_pass or admin_count == 0:
