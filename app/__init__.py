@@ -31,13 +31,14 @@ def create_app(config_class=Config):
         client_kwargs={'scope': 'openid email profile'}
     )
 
-    # Ensure upload directory exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'products'), exist_ok=True)
-    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'ads'), exist_ok=True)
-    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'logos'), exist_ok=True)
-    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'heroes'), exist_ok=True)
-    os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'backgrounds'), exist_ok=True)
+    # Ensure upload directory exists (Safely handled for Vercel's read-only filesystem)
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+        for sub in ['products', 'ads', 'logos', 'heroes', 'backgrounds']:
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], sub), exist_ok=True)
+    except OSError:
+        # On Vercel serverless, uploads route straight to Cloudinary CDN
+        pass
 
     # User loader for Flask-Login
     from app.models import User
@@ -60,11 +61,11 @@ def create_app(config_class=Config):
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
 
-    # Create tables automatically
+    # Create tables automatically in Aiven PostgreSQL
     with app.app_context():
         db.create_all()
 
-    # Tell Flask it is behind a cloud reverse proxy (GitHub Codespaces / Render)
+    # Tell Flask it is behind a cloud reverse proxy (Vercel / Render)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     return app
