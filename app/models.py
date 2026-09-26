@@ -32,9 +32,8 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
-    # 🔒 Digital Landlord State Tracking
-    is_active = db.Column(db.Boolean, default=False)           # Current live status
-    has_ever_activated = db.Column(db.Boolean, default=False)  # Distinguishes brand new vs closed/owing
+    is_active = db.Column(db.Boolean, default=False)
+    has_ever_activated = db.Column(db.Boolean, default=False)
     
     logo = db.Column(db.String(500), default='default_logo.png')
     hero_image = db.Column(db.String(500), default='')
@@ -93,7 +92,10 @@ class Product(db.Model):
     discount_price = db.Column(db.Float, nullable=True)
     is_flash_sale = db.Column(db.Boolean, default=False)
     
+    # 🍲 UNLIMITED STOCK TOGGLE (For food, digital code, made-to-order)
+    is_unlimited_stock = db.Column(db.Boolean, default=False)
     stock = db.Column(db.Integer, default=1)
+    
     is_active = db.Column(db.Boolean, default=True)
     attributes_json = db.Column(db.Text, default='{}')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -107,6 +109,11 @@ class Product(db.Model):
     @property
     def has_discount(self):
         return bool(self.discount_price and self.discount_price < self.original_price)
+
+    @property
+    def is_available(self):
+        """Returns True if unlimited or if stock is greater than 0"""
+        return self.is_unlimited_stock or self.stock > 0
 
     def get_attributes(self):
         try:
