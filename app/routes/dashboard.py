@@ -5,7 +5,7 @@ import urllib.request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from app import db
-from app.models import Store, Product, StoreAd, Order
+from app.models import Store, Product, StoreAd, Order, OrderItem
 from app.utils.media import upload_image, delete_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
@@ -18,9 +18,6 @@ def slugify(text: str) -> str:
     return re.sub(r'[-\s]+', '-', text)
 
 
-# -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (/dashboard)
-# -------------------------------------------------------------
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
@@ -28,9 +25,6 @@ def overview():
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
-# -------------------------------------------------------------
-# OPEN A NEW KIOSK
-# -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -107,9 +101,6 @@ def new_kiosk():
     return render_template('dashboard/kiosk_new.html')
 
 
-# -------------------------------------------------------------
-# PAYSTACK ACTIVATION VERIFY
-# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
 def verify_kiosk_activation(kiosk_slug):
@@ -120,7 +111,6 @@ def verify_kiosk_activation(kiosk_slug):
     reference = request.args.get('reference')
     paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY')
 
-    # Instant dev simulation if no secret key set
     if not paystack_secret or reference == 'dev_unlock':
         kiosk.is_active = True
         kiosk.has_ever_activated = True
@@ -149,9 +139,6 @@ def verify_kiosk_activation(kiosk_slug):
     return redirect(url_for('dashboard.overview'))
 
 
-# -------------------------------------------------------------
-# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (/<kiosk_slug>/manage)
-# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
 def manage_kiosk(kiosk_slug):
@@ -172,7 +159,26 @@ def manage_kiosk(kiosk_slug):
     )
 
 
-# Product CRUD with 2-VALUES PER FEATURE RULE
+@dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
+@login_required
+def update_order_status(kiosk_slug, order_id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    if request.method == 'POST':
+        order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
+        new_status = request.form.get('status', 'pending').strip().lower()
+
+        if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
+            order.status = new_status
+            db.session.commit()
+            flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
+
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
+
+
+# Product CRUD with UNLIMITED STOCK HANDLING
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -185,14 +191,16 @@ def new_product(kiosk_slug):
         description = request.form.get('description', '').strip()
         original_price = float(request.form.get('original_price', 0) or 0)
         discount_price = request.form.get('discount_price', '').strip()
-        stock = int(request.form.get('stock', 1) or 1)
         is_flash_sale = True if request.form.get('is_flash_sale') else False
+
+        # 🍲 Unlimited Stock Check
+        is_unlimited = True if request.form.get('is_unlimited_stock') else False
+        stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
 
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
 
-        # 🛑 RULE: Every feature MUST have at least 2 choices/values (e.g. 3000, 5000)
         for a_name, a_vals in zip(attr_names, attr_values):
             clean_name = a_name.strip()
             if clean_name and a_vals.strip():
@@ -212,6 +220,7 @@ def new_product(kiosk_slug):
             original_price=original_price,
             discount_price=float(discount_price) if discount_price else None,
             is_flash_sale=is_flash_sale,
+            is_unlimited_stock=is_unlimited,
             stock=stock,
             image=image_name,
             attributes_json=json.dumps(attributes_dict)
@@ -224,27 +233,7 @@ def new_product(kiosk_slug):
 
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
-# In app/routes/dashboard.py:
 
-@dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
-@login_required
-def update_order_status(kiosk_slug, order_id):
-    """Updates order status from Pending to Paid, Shipped, or Completed."""
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    if request.method == 'POST':
-        order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
-        new_status = request.form.get('status', 'pending').strip().lower()
-
-        if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
-            order.status = new_status
-            db.session.commit()
-            flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
-
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
-    
 @dashboard_bp.route('/<kiosk_slug>/product/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_product(kiosk_slug, id):
@@ -262,7 +251,10 @@ def edit_product(kiosk_slug, id):
         disc = request.form.get('discount_price', '').strip()
         product.discount_price = float(disc) if disc else None
         
-        product.stock = int(request.form.get('stock', 1) or 1)
+        is_unlimited = True if request.form.get('is_unlimited_stock') else False
+        product.is_unlimited_stock = is_unlimited
+        product.stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
+        
         product.is_flash_sale = True if request.form.get('is_flash_sale') else False
 
         attr_names = request.form.getlist('attr_name[]')
@@ -293,32 +285,34 @@ def edit_product(kiosk_slug, id):
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
 
 
-#delete products
 @dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_product(kiosk_slug, id):
-    """Safely deletes product by unlinking past order history so receipts never break."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
     product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-
-    # 1. Unlink from past orders so PostgreSQL foreign key doesn't block deletion
-    from app.models import OrderItem
     OrderItem.query.filter_by(product_id=product.id).update({'product_id': None})
-
-    # 2. Clean up media from Cloudinary
     delete_image(product.image, 'products')
 
-    # 3. Safely delete the product
     db.session.delete(product)
     db.session.commit()
-    flash(f'Product "{product.name}" deleted and past order receipts safely preserved.', 'info')
+    flash(f'Product "{product.name}" deleted and past receipts preserved.', 'info')
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#inventory')
 
 
-# Settings, Branding & Sectional Activation
+@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/flyer')
+@login_required
+def product_flyer(kiosk_slug, id):
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
+    return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
+
+
 @dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
 @login_required
 def update_kiosk_settings(kiosk_slug):
@@ -368,7 +362,6 @@ def update_kiosk_settings(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Manage 3 Ad Slots
 @dashboard_bp.route('/<kiosk_slug>/ads', methods=['POST'])
 @login_required
 def update_kiosk_ads(kiosk_slug):
@@ -394,40 +387,27 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Delete kiosk
-
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
-    """Safely deletes an entire kiosk, cleaning up all Cloudinary media and PostgreSQL relations."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
     name = kiosk.name
-
-    # 1. 🛡️ Unlink all product references in OrderItems to prevent PostgreSQL foreign key errors
-    from app.models import OrderItem
     product_ids = [p.id for p in kiosk.products.all()]
     if product_ids:
         OrderItem.query.filter(OrderItem.product_id.in_(product_ids)).update({'product_id': None}, synchronize_session=False)
 
-    # 2. 🧹 Clean up all Cloudinary images for this kiosk
     delete_image(kiosk.logo, 'logos')
     delete_image(kiosk.hero_image, 'heroes')
     delete_image(kiosk.background_image, 'backgrounds')
-    
-    # Clean up product images
     for p in kiosk.products.all():
         delete_image(p.image, 'products')
-
-    # Clean up sponsor ad banners
     for ad in kiosk.ads.all():
         delete_image(ad.banner_image, 'ads')
 
-    # 3. Safely delete the kiosk (cascades orders, products, ads, and carts cleanly)
     db.session.delete(kiosk)
     db.session.commit()
-    
-    flash(f'Kiosk "{name}" and all associated media were deleted permanently.', 'info')
+    flash(f'Kiosk "{name}" and media deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
