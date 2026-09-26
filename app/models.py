@@ -92,7 +92,6 @@ class Product(db.Model):
     discount_price = db.Column(db.Float, nullable=True)
     is_flash_sale = db.Column(db.Boolean, default=False)
     
-    # 🍲 UNLIMITED STOCK TOGGLE (For food, digital code, made-to-order)
     is_unlimited_stock = db.Column(db.Boolean, default=False)
     stock = db.Column(db.Integer, default=1)
     
@@ -112,7 +111,6 @@ class Product(db.Model):
 
     @property
     def is_available(self):
-        """Returns True if unlimited or if stock is greater than 0"""
         return self.is_unlimited_stock or self.stock > 0
 
     def get_attributes(self):
@@ -192,3 +190,17 @@ class AuditLog(db.Model):
             "reason": self.reason,
             "timestamp": self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         }
+
+
+# 🎫 PASSWORD RESET TICKET MODEL
+class PasswordResetTicket(db.Model):
+    __tablename__ = 'password_reset_tickets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_ref = db.Column(db.String(32), unique=True, nullable=False, index=True)  # e.g. "REQ-94A1"
+    email = db.Column(db.String(120), nullable=False)
+    submitted_details = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'rejected'
+    temp_password = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    resolved_at = db.Column(db.DateTime, nullable=True)
