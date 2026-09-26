@@ -287,7 +287,7 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
         '   - Use rich layered surfaces with deep contrast (e.g. obsidian #09090b, deep charcoal #12131a, midnight navy, warm espresso, or vibrant boutique tones).\n'
         '   - Add glow shadows to buttons (e.g. shadow-lg shadow-amber-400/20 or shadow-cyan-500/20).\n'
         '   - Add subtle border glows on cards with hover states.\n'
-        '   -A dark and light mode toggle button. \n\n
+        '   -A dark and light mode toggle button. \n\n'
         '3. THE "GHOST WATERMARK" HERO SECTION:\n'
         '   - Build a dramatic hero container with rounded-3xl corners.\n'
         '   - Include a pre-headline badge pill (e.g. "⚡ LIMITED RUN // EXCLUSIVE APPAREL" or "⚡ AUDITED CODE // INSTANT INTAKE").\n'
