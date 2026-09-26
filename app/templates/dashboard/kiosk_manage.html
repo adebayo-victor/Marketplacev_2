@@ -16,7 +16,7 @@
         body { background: var(--bg); font-family: 'Georgia', serif; margin: 0; color: var(--dark); display: flex; flex-direction: row; }
         .sidebar { width: 280px; position: fixed; height: 100vh; background: white; border-right: 1px solid #eee; padding: 50px 30px; z-index: 100; overflow-y: auto; }
         .sidebar h3 { font-family: 'Montserrat'; color: var(--brand); text-transform: lowercase; font-size: 1.5rem; margin: 0; }
-        .sidebar nav { margin-top: 40px; font-family: 'Montserrat'; font-size: 0.8rem; line-height: 3; }
+        .sidebar nav { margin-top: 40px; font-family: 'Montserrat'; font-size: 0.8rem; line-height: 2.5; }
         .sidebar nav a { text-decoration: none; color: var(--dark); display: block; transition: 0.3s; }
         .sidebar nav a:hover { color: var(--brand); }
         .sidebar .back-btn { color: var(--gray); margin-bottom: 20px; font-size: 0.7rem; text-decoration: none; display: block; }
@@ -31,6 +31,11 @@
         .btn-add { background: var(--brand); color: white; padding: 14px 24px; text-decoration: none; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; float: right; border: none; cursor: pointer; }
         .btn-save { background: var(--dark); color: white; padding: 12px 20px; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; border: none; cursor: pointer; }
         .link-button { background: none; border: none; padding: 0; margin: 0; color: inherit; cursor: pointer; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; text-decoration: none; }
+        .btn-sidebar-copy {
+            background: #fff9f5; border: 1px solid var(--brand); color: var(--brand);
+            padding: 8px 12px; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 700;
+            cursor: pointer; width: 100%; margin-top: 15px; text-align: center; display: block;
+        }
         @media (max-width: 900px) {
             body { flex-direction: column; }
             .sidebar { width: 100%; height: auto; position: relative; border-right: none; border-bottom: 1px solid #eee; }
@@ -52,7 +57,12 @@
             <a href="#branding">• Branding, Layout & Receipts</a>
             <a href="/{{ kiosk.slug }}" target="_blank" style="margin-top: 20px; color: var(--brand); font-weight: 600;">View Public Kiosk &nearr;</a>
         </nav>
-        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee;">
+
+        <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)" class="btn-sidebar-copy">
+            📋 Copy Public Link
+        </button>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
             <form action="/{{ kiosk.slug }}/delete" method="post" onsubmit="return confirm('EXTREME DANGER: This will delete the kiosk, all products, and customer records. There is no undo. Proceed?');">
                 <button type="submit" class="link-button" style="color: #e74c3c; font-size: 0.7rem;">× PERMANENTLY DELETE KIOSK</button>
             </form>
@@ -72,7 +82,6 @@
             {% endif %}
         {% endwith %}
         
-        <!-- Stats Row -->
         <div class="stats-grid">
             <div class="section-box" style="margin-bottom: 0; padding: 25px;">
                 <p style="font-size: 0.7rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; margin: 0;">Total Visits</p>
@@ -159,7 +168,7 @@
             </table>
         </div>
 
-        <!-- Section 3: Branding, Settings, Section Toggles & Receipts -->
+        <!-- Section 3: Branding, Settings & Receipts -->
         <div class="section-box" id="branding">
             <h2>Branding, Layout & Receipts</h2>
             <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 20px; max-width: 650px;">
@@ -178,7 +187,7 @@
                     <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ kiosk.bio }}</textarea>
                 </div>
 
-                <!-- 🎛️ SECTIONAL ACTIVATION TOGGLES -->
+                <!-- Section Activation -->
                 <div style="background: #fafafa; border: 1px solid #eee; padding: 20px;">
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
                         Website Section Activation
@@ -205,11 +214,7 @@
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
                         Select Your Signature Receipt Style
                     </label>
-                    <p style="font-size: 0.7rem; color: var(--gray); margin-top: 0; margin-bottom: 15px;">
-                        All customer invoice links and downloadable PDFs will permanently use this chosen design.
-                    </p>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
                         <label style="border: 2px solid {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             <input type="radio" name="receipt_theme" value="classic" {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}checked{% endif %}>
                             <div>
@@ -217,7 +222,6 @@
                                 <span style="font-size: 0.65rem; color: var(--gray);">Artisanal cream & clay</span>
                             </div>
                         </label>
-
                         <label style="border: 2px solid {% if kiosk.receipt_theme == 'cyber' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             <input type="radio" name="receipt_theme" value="cyber" {% if kiosk.receipt_theme == 'cyber' %}checked{% endif %}>
                             <div>
@@ -225,26 +229,10 @@
                                 <span style="font-size: 0.65rem; color: var(--gray);">Dark terminal & neon</span>
                             </div>
                         </label>
-
-                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'thermal' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            <input type="radio" name="receipt_theme" value="thermal" {% if kiosk.receipt_theme == 'thermal' %}checked{% endif %}>
-                            <div>
-                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Retail Thermal</strong>
-                                <span style="font-size: 0.65rem; color: var(--gray);">Monochrome register slip</span>
-                            </div>
-                        </label>
-
-                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'luxury' %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            <input type="radio" name="receipt_theme" value="luxury" {% if kiosk.receipt_theme == 'luxury' %}checked{% endif %}>
-                            <div>
-                                <strong style="font-family: 'Montserrat'; font-size: 0.75rem; display: block;">Luxury Slate</strong>
-                                <span style="font-size: 0.65rem; color: var(--gray);">Deep navy & gold</span>
-                            </div>
-                        </label>
                     </div>
                 </div>
 
-                <!-- Social Proof Toggle -->
+                <!-- Social Proof -->
                 <div style="background: white; border: 1px solid #eee; padding: 15px;">
                     <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
                         <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} style="margin-right: 8px;">
@@ -273,18 +261,14 @@
             </form>
         </div>
 
-        <!-- Section 4: Monetization (The 3 Ad Slots) -->
+        <!-- Section 4: Monetization -->
         <div class="section-box" id="ads">
             <h2>Monetization (3 Ad Slots)</h2>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                 {% for ad in ads %}
                 <div style="border: 1px solid #eee; padding: 20px; background: #fafafa;">
-                    <h4 style="font-family: 'Montserrat'; font-size: 0.85rem; margin: 0 0 10px 0;">
-                        Slot #{{ ad.slot_number }}: 
-                        {% if ad.slot_number == 1 %}Header{% elif ad.slot_number == 2 %}Mid-Catalog{% else %}Footer{% endif %}
-                    </h4>
+                    <h4 style="font-family: 'Montserrat'; font-size: 0.85rem; margin: 0 0 10px 0;">Slot #{{ ad.slot_number }}</h4>
                     <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--brand); margin-bottom: 15px;">Clicks: {{ ad.clicks_count }}</p>
-
                     <form action="/{{ kiosk.slug }}/ads" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 10px;">
                         <input type="hidden" name="slot_number" value="{{ ad.slot_number }}">
                         <input type="url" name="target_link" value="{{ ad.target_link or '' }}" placeholder="Sponsor URL / WhatsApp" style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: 'Montserrat'; font-size: 0.7rem;">
@@ -309,6 +293,15 @@
                 const text = rows[i].innerText.toLowerCase();
                 rows[i].style.display = text.includes(filter) ? "" : "none";
             }
+        }
+
+        function copyKioskLink(slug, btn) {
+            const fullUrl = window.location.origin + '/' + slug;
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                const orig = btn.innerText;
+                btn.innerText = 'COPIED! ✅';
+                setTimeout(() => { btn.innerText = orig; }, 2000);
+            }).catch(() => { prompt('Copy link:', fullUrl); });
         }
     </script>
 </body>
