@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ store.name }} // Marketplace</title>
 
-    <!-- Dynamic WhatsApp Preview Meta Tags -->
     <meta property="og:title" content="{{ store.name }}">
     <meta property="og:description" content="{% if store.show_public_stats %}Over {{ '{:,}'.format(store.views_count) }} visits • Verified Merchant • Shop our official catalog.{% else %}{{ store.bio }}{% endif %}">
     <meta property="og:image" content="{{ url_for('static', filename='uploads/logos/' + store.logo, _external=True) if not store.logo.startswith('http') else store.logo }}">
@@ -27,10 +26,15 @@
             color: var(--dark-oak);
             font-family: 'Georgia', serif;
             margin: 0;
+
+            /* 🎨 SMART BACKGROUND DIMMER (Ensures text is 100% readable even over busy doodle patterns) */
             {% if store.background_image %}
-            background-image: url('{{ store.background_image if store.background_image.startswith("http") else url_for("static", filename="uploads/backgrounds/" + store.background_image) }}');
+            background-image: 
+                linear-gradient(rgba(249, 245, 240, 0.88), rgba(249, 245, 240, 0.88)),
+                url('{{ store.background_image if store.background_image.startswith("http") else url_for("static", filename="uploads/backgrounds/" + store.background_image) }}');
             background-size: cover;
             background-attachment: fixed;
+            background-position: center;
             {% endif %}
         }
         .font-ui { font-family: 'Montserrat', sans-serif; }
@@ -49,6 +53,21 @@
         }
         .btn-clay:hover { opacity: 0.9; }
     </style>
+
+    <!-- SAFE GLOBAL PRODUCT LOOKUP -->
+    <script>
+        window.KIOSK_PRODUCTS = {
+            {% for p in regular_products + flash_sales %}
+            "{{ p.id }}": {
+                "id": {{ p.id }},
+                "name": {{ p.name|tojson }},
+                "price": {{ p.current_price }},
+                "description": {{ p.description|tojson }},
+                "attributes": {{ p.get_attributes()|tojson }}
+            },
+            {% endfor %}
+        };
+    </script>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
@@ -65,7 +84,7 @@
                 </div>
             </div>
             
-            <button onclick="toggleCart()" class="btn-clay flex items-center gap-2">
+            <button onclick="toggleCart()" class="btn-clay flex items-center gap-2 cursor-pointer">
                 <span>BAG</span>
                 <span id="cartCountBadge" class="bg-white text-clay px-2 py-0.5 rounded-full font-bold text-[0.65rem]">0</span>
             </button>
@@ -74,7 +93,7 @@
 
     <main class="max-w-6xl mx-auto px-6 py-10 w-full flex-grow">
 
-        <!-- 📢 AD SLOT #1 (HEADER BANNER) -->
+        <!-- AD SLOT #1 (HEADER BANNER) -->
         {% if store.is_section_active('ads') and 1 in ad_slots %}
         <div class="mb-10">
             <a href="/ad/click/{{ ad_slots[1].id }}" target="_blank">
@@ -84,7 +103,7 @@
         </div>
         {% endif %}
 
-        <!-- 🖼️ HERO SHOWCASE BANNER -->
+        <!-- HERO SHOWCASE BANNER -->
         {% if store.is_section_active('hero') and store.hero_image %}
         <div class="mb-12">
             <img src="{{ store.hero_image if store.hero_image.startswith('http') else url_for('static', filename='uploads/heroes/' + store.hero_image) }}" 
@@ -92,7 +111,7 @@
         </div>
         {% endif %}
 
-        <!-- 🔥 FLASH SALES SECTION -->
+        <!-- FLASH SALES SECTION -->
         {% if store.is_section_active('flash_sales') and flash_sales %}
         <section class="mb-14">
             <div class="flex items-center gap-3 mb-6">
@@ -117,7 +136,7 @@
                             <span class="line-through text-stone-400 font-ui text-xs">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
                             <span class="font-ui font-bold text-lg text-[#b33a3a] ml-2">{{ store.currency }}{{ "{:,.2f}".format(p.current_price) }}</span>
                         </div>
-                        <button onclick='openProductModal({{ p.id }}, {{ p.name|tojson }}, {{ p.current_price }}, {{ p.get_attributes()|tojson }}, {{ p.description|tojson }})' class="btn-clay w-full text-center">
+                        <button type="button" onclick="openProductModal({{ p.id }})" class="btn-clay w-full text-center cursor-pointer">
                             SELECT & ORDER
                         </button>
                     </div>
@@ -127,7 +146,7 @@
         </section>
         {% endif %}
 
-        <!-- 📢 AD SLOT #2 (MID-CATALOG BANNER) -->
+        <!-- AD SLOT #2 (MID-CATALOG BANNER) -->
         {% if store.is_section_active('ads') and 2 in ad_slots %}
         <div class="my-10">
             <a href="/ad/click/{{ ad_slots[2].id }}" target="_blank">
@@ -137,7 +156,7 @@
         </div>
         {% endif %}
 
-        <!-- 🛍️ REGULAR PRODUCTS GRID -->
+        <!-- REGULAR PRODUCTS GRID -->
         <section class="mb-14">
             <h3 class="font-ui text-xl font-normal lowercase tracking-tight mb-8">kiosk catalog</h3>
 
@@ -160,11 +179,17 @@
                             {% else %}
                                 <span class="font-bold text-base text-dark-oak">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
                             {% endif %}
-                            <span class="text-[0.65rem] text-stone-400 block mt-0.5">{{ p.stock }} units left</span>
+                            
+                            <!-- 🍲 Dynamic Stock Indicator -->
+                            {% if p.is_unlimited_stock %}
+                                <span class="text-[0.65rem] text-emerald-600 font-bold block mt-0.5">● Freshly Made / In Stock</span>
+                            {% else %}
+                                <span class="text-[0.65rem] text-stone-400 block mt-0.5">{{ p.stock }} units left</span>
+                            {% endif %}
                         </div>
 
-                        {% if p.stock > 0 %}
-                            <button onclick='openProductModal({{ p.id }}, {{ p.name|tojson }}, {{ p.current_price }}, {{ p.get_attributes()|tojson }}, {{ p.description|tojson }})' class="btn-oak w-full text-center">
+                        {% if p.is_available %}
+                            <button type="button" onclick="openProductModal({{ p.id }})" class="btn-oak w-full text-center cursor-pointer">
                                 VIEW & ORDER
                             </button>
                         {% else %}
@@ -180,7 +205,7 @@
             </div>
         </section>
 
-        <!-- 📢 AD SLOT #3 (FOOTER BANNER) -->
+        <!-- AD SLOT #3 (FOOTER BANNER) -->
         {% if store.is_section_active('ads') and 3 in ad_slots %}
         <div class="mt-10">
             <a href="/ad/click/{{ ad_slots[3].id }}" target="_blank">
@@ -195,14 +220,14 @@
     <!-- Product Selection Modal -->
     <div id="productModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white p-8 max-w-md w-full border-t-[5px] border-clay shadow-2xl relative">
-            <button onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-400 font-bold text-xl">&times;</button>
+            <button onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-400 font-bold text-xl cursor-pointer">&times;</button>
             <h3 id="modalProductName" class="font-ui text-xl font-bold mb-1 text-dark-oak"></h3>
             <p id="modalProductDesc" class="font-serif text-xs text-stone-500 mb-2"></p>
             <p id="modalProductPrice" class="font-ui text-clay font-bold text-lg mb-6"></p>
 
             <div id="modalVariantsContainer" class="space-y-4 mb-6"></div>
 
-            <button onclick="confirmAddToCart()" class="btn-clay w-full text-center">
+            <button type="button" onclick="confirmAddToCart()" class="btn-clay w-full text-center cursor-pointer">
                 ADD TO SHOPPING BAG &rarr;
             </button>
         </div>
@@ -210,11 +235,11 @@
 
     <!-- Slide-Out Shopping Bag Drawer -->
     <div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/30 z-40 hidden"></div>
-    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col justify-between p-6 translate-x-full transition-transform duration-300">
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl p-6 flex flex-col justify-between translate-x-full transition-transform duration-300">
         <div>
             <div class="flex items-center justify-between pb-5 border-b border-[#eee] mb-5">
                 <h3 class="font-ui text-lg font-bold uppercase tracking-wider text-dark-oak m-0">Shopping Bag</h3>
-                <button onclick="toggleCart()" class="font-ui text-xs font-bold text-stone-400 hover:text-dark-oak">CLOSE &times;</button>
+                <button onclick="toggleCart()" class="font-ui text-xs font-bold text-stone-400 hover:text-dark-oak cursor-pointer">CLOSE &times;</button>
             </div>
             <div id="cartItemsList" class="space-y-4 max-h-[40vh] overflow-y-auto mb-6"></div>
         </div>
@@ -228,9 +253,9 @@
             <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
                 <input type="text" id="custName" required placeholder="Your Full Name" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
                 <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay">
-                <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay"></textarea>
+                <textarea id="custAddress" required placeholder="Delivery Address / Landmark" rows="2" class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs outline-none focus:border-clay"></textarea>
                 
-                <button type="submit" id="checkoutBtn" class="btn-oak w-full text-center block py-4">
+                <button type="submit" id="checkoutBtn" class="btn-oak w-full text-center block py-4 cursor-pointer">
                     CHECKOUT ON WHATSAPP &rarr;
                 </button>
             </form>
@@ -253,16 +278,20 @@
             document.getElementById('cartOverlay').classList.toggle('hidden');
         }
 
-        function openProductModal(id, name, price, attributes, desc) {
-            currentModalProduct = { id, name, price, attributes };
-            document.getElementById('modalProductName').innerText = name;
-            document.getElementById('modalProductDesc').innerText = desc || '';
-            document.getElementById('modalProductPrice').innerText = `${storeCurrency}${price.toLocaleString()}`;
+        function openProductModal(productId) {
+            const product = window.KIOSK_PRODUCTS[productId];
+            if (!product) return;
+
+            currentModalProduct = product;
+            document.getElementById('modalProductName').innerText = product.name;
+            document.getElementById('modalProductDesc').innerText = product.description || '';
+            document.getElementById('modalProductPrice').innerText = `${storeCurrency}${product.price.toLocaleString()}`;
 
             const container = document.getElementById('modalVariantsContainer');
             container.innerHTML = '';
 
-            for (const [attrName, options] of Object.entries(attributes)) {
+            const attrs = product.attributes || {};
+            for (const [attrName, options] of Object.entries(attrs)) {
                 const group = document.createElement('div');
                 group.innerHTML = `
                     <label class="block font-ui text-[0.65rem] font-semibold uppercase text-clay mb-1">${attrName}</label>
@@ -321,7 +350,7 @@
                         ${item.variants ? `<p class="text-[0.65rem] text-stone-400 m-0">${item.variants}</p>` : ''}
                         <span class="text-clay font-semibold">${storeCurrency}${item.price.toLocaleString()}</span>
                     </div>
-                    <button onclick="cart.splice(${index}, 1); updateCartUI();" class="text-rose-500 font-bold ml-4">&times;</button>
+                    <button type="button" onclick="cart.splice(${index}, 1); updateCartUI();" class="text-rose-500 font-bold ml-4 cursor-pointer">&times;</button>
                 `;
                 list.appendChild(div);
             });
