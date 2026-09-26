@@ -1,6 +1,6 @@
 import uuid
 import json
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash
 from flask_login import current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order, OrderItem
@@ -10,15 +10,18 @@ storefront_bp = Blueprint('storefront', __name__)
 
 @storefront_bp.route('/')
 def landing():
-    """Main directory displaying all active kiosks."""
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
 
 @storefront_bp.route('/<store_slug>')
 def store_catalog(store_slug):
-    """Dynamic public storefront for a merchant."""
     store = Store.query.filter_by(slug=store_slug).first_or_404()
+
+    # ⏳ IF STILL ASSEMBLING IN BACKGROUND: CANNOT BE OPENED
+    if store.build_status == 'building':
+        flash(f'⏳ Hold on! Kiosk "{store.name}" is still being assembled by the AI engine. You cannot open it until creation is finished.', 'warning')
+        return redirect(url_for('dashboard.overview'))
 
     # 🔒 PREVIEW MODE / LOCKED CHECK
     is_preview = False
@@ -29,7 +32,6 @@ def store_catalog(store_slug):
         else:
             is_preview = True
 
-    # Track view count
     store.views_count += 1
     db.session.commit()
 
@@ -41,7 +43,6 @@ def store_catalog(store_slug):
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
-    # Custom HTML rendering
     if store.custom_html and store.custom_html.strip():
         from flask import render_template_string
         rendered = render_template_string(
@@ -114,7 +115,6 @@ def checkout(store_slug):
 
         product = Product.query.filter_by(id=product_id, store_id=store.id).first()
         
-        # Check availability (Respects unlimited stock!)
         if not product or not product.is_available:
             db.session.rollback()
             return jsonify({"status": "error", "message": f"Sorry, '{product.name if product else 'Item'}' is out of stock."}), 400
@@ -123,7 +123,6 @@ def checkout(store_slug):
         subtotal = unit_price * qty
         total_amount += subtotal
 
-        # Deduct stock only if not unlimited
         if not product.is_unlimited_stock:
             product.stock -= qty
 
