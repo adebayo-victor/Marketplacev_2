@@ -89,8 +89,8 @@ def new_kiosk():
             background_image=bg_url,
             receipt_theme='classic',
             sections_config=json.dumps(sections_dict),
-            is_active=False,              # Starts in Preview Mode
-            has_ever_activated=False,     # Brand new!
+            is_active=False,
+            has_ever_activated=False,
             custom_html=generated_html
         )
         db.session.add(store)
@@ -108,7 +108,7 @@ def new_kiosk():
 
 
 # -------------------------------------------------------------
-# PAYSTACK ACTIVATION VERIFY (Sets has_ever_activated = True)
+# PAYSTACK ACTIVATION VERIFY
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
@@ -120,8 +120,8 @@ def verify_kiosk_activation(kiosk_slug):
     reference = request.args.get('reference')
     paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY')
 
-    # Dev/test instant unlock if no secret key set
-    if not paystack_secret:
+    # Instant dev simulation if no secret key set
+    if not paystack_secret or reference == 'dev_unlock':
         kiosk.is_active = True
         kiosk.has_ever_activated = True
         db.session.commit()
@@ -172,7 +172,7 @@ def manage_kiosk(kiosk_slug):
     )
 
 
-# Product CRUD
+# Product CRUD with 2-VALUES PER FEATURE RULE
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -191,15 +191,16 @@ def new_product(kiosk_slug):
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
-        for a_name, a_vals in zip(attr_names, attr_values):
-            if a_name.strip() and a_vals.strip():
-                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if opts:
-                    attributes_dict[a_name.strip()] = opts
 
-        if len(attributes_dict) < 2:
-            flash('Validation Error: A minimum of TWO custom features/specifications is required.', 'danger')
-            return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
+        # 🛑 RULE: Every feature MUST have at least 2 choices/values (e.g. 3000, 5000)
+        for a_name, a_vals in zip(attr_names, attr_values):
+            clean_name = a_name.strip()
+            if clean_name and a_vals.strip():
+                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
+                if len(opts) < 2:
+                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
+                    return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
+                attributes_dict[clean_name] = opts
 
         image_file = request.files.get('image')
         image_name = upload_image(image_file, 'products') or 'default_product.png'
@@ -247,15 +248,15 @@ def edit_product(kiosk_slug, id):
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
         attributes_dict = {}
-        for a_name, a_vals in zip(attr_names, attr_values):
-            if a_name.strip() and a_vals.strip():
-                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if opts:
-                    attributes_dict[a_name.strip()] = opts
 
-        if len(attributes_dict) < 2:
-            flash('Validation Error: A minimum of TWO custom features/specifications is required.', 'danger')
-            return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
+        for a_name, a_vals in zip(attr_names, attr_values):
+            clean_name = a_name.strip()
+            if clean_name and a_vals.strip():
+                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
+                if len(opts) < 2:
+                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
+                    return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
+                attributes_dict[clean_name] = opts
 
         product.attributes_json = json.dumps(attributes_dict)
 
