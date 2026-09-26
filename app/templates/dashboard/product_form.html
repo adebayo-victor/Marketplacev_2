@@ -13,7 +13,7 @@
             </h1>
         </div>
 
-        <form method="POST" enctype="multipart/form-data" id="productForm" class="space-y-5">
+        <form method="POST" enctype="multipart/form-data" id="productForm" class="space-y-5" data-loading-text="Uploading product and stocking it on your shelf...">
             <div>
                 <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Product Name</label>
                 <input type="text" name="name" required value="{{ product.name if product else '' }}" 
