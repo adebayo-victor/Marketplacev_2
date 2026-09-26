@@ -17,12 +17,10 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     oauth.init_app(app)
 
-    # Register Google OAuth Client
     oauth.register(
         name='google',
         client_id=app.config.get('GOOGLE_CLIENT_ID') or os.environ.get('GOOGLE_CLIENT_ID'),
@@ -31,22 +29,18 @@ def create_app(config_class=Config):
         client_kwargs={'scope': 'openid email profile'}
     )
 
-    # Ensure upload directory exists (Safely handled for Vercel's read-only filesystem)
     try:
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
         for sub in ['products', 'ads', 'logos', 'heroes', 'backgrounds']:
             os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], sub), exist_ok=True)
     except OSError:
-        # On Vercel serverless, uploads route straight to Cloudinary CDN
         pass
 
-    # User loader for Flask-Login
     from app.models import User
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register Blueprints
     from app.routes.auth import auth_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.storefront import storefront_bp
@@ -61,11 +55,16 @@ def create_app(config_class=Config):
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(admin_bp, url_prefix='/admin')
 
-    # Create tables automatically in Aiven PostgreSQL
     with app.app_context():
         db.create_all()
+        # 🛡️ Seamless PostgreSQL Migration (Never wipe DB for this column!)
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_unlimited_stock BOOLEAN DEFAULT FALSE"))
+                conn.commit()
+        except Exception:
+            pass
 
-    # Tell Flask it is behind a cloud reverse proxy (Vercel / Render)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     return app
