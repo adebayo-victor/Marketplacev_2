@@ -3,14 +3,22 @@
 {% block title %}Vitals // Master Command{% endblock %}
 
 {% block admin_content %}
-<div class="mb-10">
-    <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">
-        platform vitals.
-    </h1>
-    <p class="font-serif italic text-stone-500 mt-1">Cross-platform ecosystem metrics and merchant kiosk oversight.</p>
+<div class="mb-10 flex flex-wrap justify-between items-center gap-4">
+    <div>
+        <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">
+            platform vitals.
+        </h1>
+        <p class="font-serif italic text-stone-500 mt-1">Cross-platform ecosystem metrics and merchant oversight.</p>
+    </div>
+
+    {% if pending_resets_count > 0 %}
+        <a href="{{ url_for('admin.reset_tickets') }}" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl shadow transition">
+            ⚠️ {{ pending_resets_count }} Pending Password Ticket(s)
+        </a>
+    {% endif %}
 </div>
 
-<!-- Platform Vitals Grid -->
+<!-- Vitals Grid -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-10">
     <div class="section-box mb-0 p-6">
         <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Merchants</p>
@@ -43,21 +51,75 @@
     </div>
 </div>
 
-<!-- Kiosks Registry Table -->
-<div class="section-box">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">registered storefronts</h2>
-        <span class="font-ui text-xs font-semibold text-stone-400 uppercase tracking-wider">{{ kiosks|length }} Kiosks Active</span>
+<!-- 👤 MERCHANTS REGISTRY (WITH 1-CLICK IMPERSONATION) -->
+<div class="section-box mb-10">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">merchant accounts</h2>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Click "Impersonate" to enter any merchant's account directly.</p>
+        </div>
+        <input type="text" id="merchantSearch" onkeyup="filterTable('merchantsTable', this.value)" 
+               placeholder="Search merchants by email or username..." 
+               class="p-2.5 border border-stone-200 text-xs font-ui outline-none w-72 rounded-lg bg-stone-50 focus:bg-white focus:border-clay">
     </div>
 
-    <table class="w-full text-left font-ui text-xs border-collapse">
+    <table id="merchantsTable" class="w-full text-left font-ui text-xs border-collapse">
+        <thead>
+            <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
+                <th class="py-3">Merchant</th>
+                <th class="py-3">Email</th>
+                <th class="py-3">Kiosks Owned</th>
+                <th class="py-3">Joined Date</th>
+                <th class="py-3 text-right">Master Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in merchants %}
+            <tr class="border-b border-stone-100">
+                <td class="py-4">
+                    <strong class="text-dark-oak">{{ m.username }}</strong>
+                    {% if m.is_admin %}<span class="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">ADMIN</span>{% endif %}
+                </td>
+                <td class="py-4 font-mono text-stone-600">{{ m.email }}</td>
+                <td class="py-4 text-stone-600 font-bold">{{ m.stores.count() }} kiosk(s)</td>
+                <td class="py-4 text-stone-400">{{ m.created_at.strftime('%d %b %Y') }}</td>
+                <td class="py-4 text-right">
+                    {% if m.id != current_user.id %}
+                    <a href="{{ url_for('admin.impersonate', user_id=m.id) }}" 
+                       onclick="return confirm('Switch into {{ m.username }} account? You will have full access as this merchant.');"
+                       class="bg-dark-oak text-white hover:bg-black font-ui font-bold text-[0.65rem] px-3.5 py-2 rounded-lg no-underline transition">
+                        IMPERSONATE 👤
+                    </a>
+                    {% else %}
+                        <span class="text-stone-400 text-[10px] font-mono italic">Current Account</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 🏪 KIOSKS REGISTRY TABLE -->
+<div class="section-box">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">registered storefronts</h2>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Inspect, review or rewrite template markup for any kiosk.</p>
+        </div>
+        <input type="text" id="kioskSearch" onkeyup="filterTable('kiosksTable', this.value)" 
+               placeholder="Search kiosks by name or slug..." 
+               class="p-2.5 border border-stone-200 text-xs font-ui outline-none w-72 rounded-lg bg-stone-50 focus:bg-white focus:border-clay">
+    </div>
+
+    <table id="kiosksTable" class="w-full text-left font-ui text-xs border-collapse">
         <thead>
             <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
                 <th class="py-3">Store Name & Slug</th>
                 <th class="py-3">Merchant Owner</th>
                 <th class="py-3">Visits</th>
                 <th class="py-3">Products</th>
-                <th class="py-3">Custom HTML</th>
+                <th class="py-3">Status</th>
                 <th class="py-3 text-right">Actions</th>
             </tr>
         </thead>
@@ -69,21 +131,24 @@
                     <a href="/{{ k.slug }}" target="_blank" class="text-clay text-xs hover:underline">/{{ k.slug }} &nearr;</a>
                 </td>
                 <td class="py-4 text-stone-600">
-                    {{ k.owner.email }}<br>
-                    <span class="text-[0.65rem] text-stone-400">WA: {{ k.whatsapp_number }}</span>
+                    {{ k.owner.username }}<br>
+                    <span class="text-[0.65rem] text-stone-400 font-mono">WA: {{ k.whatsapp_number }}</span>
                 </td>
                 <td class="py-4 font-semibold text-dark-oak">{{ "{:,}".format(k.views_count) }}</td>
                 <td class="py-4 text-stone-600">{{ k.products.count() }} items</td>
                 <td class="py-4">
-                    {% if k.custom_html %}
-                        <span class="bg-[#ebfeef] text-[#16a34a] font-bold text-[0.6rem] px-2 py-1 rounded">OVERRIDDEN</span>
+                    {% if k.is_active %}
+                        <span class="bg-[#ebfeef] text-[#16a34a] font-bold text-[0.6rem] px-2 py-1 rounded">LIVE</span>
                     {% else %}
-                        <span class="text-stone-400 text-[0.65rem]">Standard Theme</span>
+                        <span class="bg-[#ffebeb] text-[#b33a3a] font-bold text-[0.6rem] px-2 py-1 rounded">LOCKED</span>
                     {% endif %}
                 </td>
                 <td class="py-4 text-right">
-                    <a href="{{ url_for('admin.edit_template', store_id=k.id) }}" class="btn-clay text-[0.65rem] py-2 px-3">
-                        EDIT TEMPLATE 🛠️
+                    <a href="/{{ k.slug }}/manage" class="btn-oak text-[0.65rem] py-1.5 px-3 mr-2 no-underline">
+                        MANAGE ⚙️
+                    </a>
+                    <a href="{{ url_for('admin.edit_template', store_id=k.id) }}" class="btn-clay text-[0.65rem] py-1.5 px-3 no-underline">
+                        TEMPLATE 🛠️
                     </a>
                 </td>
             </tr>
@@ -95,4 +160,15 @@
         </tbody>
     </table>
 </div>
+
+<script>
+function filterTable(tableId, query) {
+    const table = document.getElementById(tableId);
+    const rows = table.getElementsByTagName('tr');
+    const filter = query.toLowerCase();
+    for (let i = 1; i < rows.length; i++) {
+        rows[i].style.display = rows[i].innerText.toLowerCase().includes(filter) ? '' : 'none';
+    }
+}
+</script>
 {% endblock %}
