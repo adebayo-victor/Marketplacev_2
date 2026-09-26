@@ -10,7 +10,7 @@ storefront_bp = Blueprint('storefront', __name__)
 
 @storefront_bp.route('/')
 def landing():
-    """Main marketplace discovery page showing active merchant storefronts."""
+    """Main directory displaying all active kiosks."""
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
@@ -20,14 +20,18 @@ def store_catalog(store_slug):
     """Dynamic public storefront for a merchant."""
     store = Store.query.filter_by(slug=store_slug).first_or_404()
 
-    # 🔒 PREVIEW / LOCKED KIOSK CHECK
+    # 🔒 PREVIEW MODE / LOCKED CHECK
+    is_preview = False
     if not store.is_active:
         is_owner = current_user.is_authenticated and (current_user.id == store.user_id or current_user.is_admin)
         if not is_owner:
-            # If has_ever_activated is True: Landlord locked it! If False: Brand new shop
+            # Outside visitor sees the Landlord / Coming Soon notice
             return render_template('store/locked.html', store=store, is_owing=store.has_ever_activated)
+        else:
+            # Store owner gets in, but with an unmistakable PREVIEW banner!
+            is_preview = True
 
-    # Track view count (Live analytics)
+    # Track view count
     store.views_count += 1
     db.session.commit()
 
@@ -39,23 +43,31 @@ def store_catalog(store_slug):
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
-    # If Master Admin or AI created custom HTML:
+    # Render Custom HTML (from AI or Admin)
     if store.custom_html and store.custom_html.strip():
         from flask import render_template_string
-        return render_template_string(
+        rendered = render_template_string(
             store.custom_html,
             store=store,
             flash_sales=flash_sales,
             regular_products=regular_products,
             ad_slots=ad_slots
         )
+        if is_preview:
+            banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
+                <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦10,000)]</a>
+            </div>'''
+            rendered = banner + rendered
+        return rendered
 
     return render_template(
         'store/catalog.html',
         store=store,
         flash_sales=flash_sales,
         regular_products=regular_products,
-        ad_slots=ad_slots
+        ad_slots=ad_slots,
+        is_preview=is_preview
     )
 
 
