@@ -79,25 +79,14 @@
             border: none; cursor: pointer; transition: 0.3s;
         }
 
-        /* 💬 FLOATING MERCHANT SUPPORT WIDGET (08136390030) */
+        /* 💬 FLOATING MERCHANT SUPPORT BADGE */
         .floating-support-btn {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            background: #16a34a;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 50px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.4);
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            background: #16a34a; color: white; padding: 12px 18px; border-radius: 50px;
+            font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 700;
+            display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.4); text-decoration: none;
             transition: all 0.3s ease;
-            text-decoration: none;
         }
         .floating-support-btn:hover {
             transform: translateY(-3px);
@@ -151,13 +140,21 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- 💬 FLOATING MERCHANT SUPPORT BUTTON (08136390030) -->
+    <!-- ⏳ GLOBAL ANTI-DOUBLE-CLICK MODAL -->
+    <div id="globalLoadingModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[999999] flex items-center justify-center p-6 hidden">
+        <div class="bg-white p-10 max-w-sm w-full text-center border-t-[6px] border-clay shadow-2xl rounded-2xl">
+            <div class="inline-block animate-spin w-12 h-12 border-4 border-clay border-t-transparent rounded-full mb-5"></div>
+            <h3 class="font-ui text-base font-bold text-dark-oak mb-2">Processing Request...</h3>
+            <p id="globalLoadingText" class="font-serif italic text-xs text-stone-500 leading-relaxed m-0">
+                Saving changes to the cloud...
+            </p>
+        </div>
+    </div>
+
+    <!-- 💬 MERCHANT SUPPORT BUTTON (08136390030) -->
     <a href="https://wa.me/2348136390030?text=Hello%20Marketplace%20Support,%20I%20am%20a%20merchant%20and%20need%20assistance%20with%20my%20storefront." 
-       target="_blank" 
-       class="floating-support-btn">
-        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
-            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
-        </svg>
+       target="_blank" class="floating-support-btn">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
         <span>Merchant Support</span>
     </a>
 
@@ -172,6 +169,28 @@
             document.body.classList.add('dark-mode');
             document.getElementById('themeIcon').innerText = '☀️';
         }
+
+        // Form Submit Interceptor: Disables buttons & prevents double-submits
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.6';
+                    }
+
+                    const modal = document.getElementById('globalLoadingModal');
+                    const textEl = document.getElementById('globalLoadingText');
+                    const customText = form.getAttribute('data-loading-text');
+
+                    if (modal) {
+                        if (textEl && customText) textEl.innerText = customText;
+                        modal.classList.remove('hidden');
+                    }
+                });
+            });
+        });
     </script>
 </body>
 </html>
