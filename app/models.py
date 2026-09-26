@@ -32,6 +32,10 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
+    # ⏳ Background Build Status: 'building' or 'ready'
+    build_status = db.Column(db.String(20), default='ready')
+    
+    # 🔒 Go-Live Status (Paystack)
     is_active = db.Column(db.Boolean, default=False)
     has_ever_activated = db.Column(db.Boolean, default=False)
     
@@ -192,15 +196,14 @@ class AuditLog(db.Model):
         }
 
 
-# 🎫 PASSWORD RESET TICKET MODEL
 class PasswordResetTicket(db.Model):
     __tablename__ = 'password_reset_tickets'
 
     id = db.Column(db.Integer, primary_key=True)
-    ticket_ref = db.Column(db.String(32), unique=True, nullable=False, index=True)  # e.g. "REQ-94A1"
+    ticket_ref = db.Column(db.String(32), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), nullable=False)
     submitted_details = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'rejected'
+    status = db.Column(db.String(20), default='pending')
     temp_password = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     resolved_at = db.Column(db.DateTime, nullable=True)
