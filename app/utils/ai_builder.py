@@ -1,418 +1,309 @@
 import os
-import json
 import re
+import json
 import urllib.request
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
-from flask_login import login_required, current_user
-from app import db
-from app.models import Store, Product, StoreAd, Order
-from app.utils.media import upload_image, delete_image
-from app.utils.whatsapp import clean_phone_number
-from app.utils.ai_builder import generate_kiosk_template
+import urllib.error
 
-dashboard_bp = Blueprint('dashboard', __name__)
+# 🛡️ THE BULLETPROOF INTERACTIVE ENGINE (INJECTED INTO AI-GENERATED PAGES)
+GUARANTEED_CART_ENGINE = """
+<!-- ========================================== -->
+<!-- BULLETPROOF SHOPPING BAG & CHECKOUT ENGINE -->
+<!-- ========================================== -->
+<script>
+    window.KIOSK_PRODUCTS = {
+        {% for p in regular_products + flash_sales %}
+        "{{ p.id }}": {
+            "id": {{ p.id }},
+            "name": {{ p.name|tojson }},
+            "price": {{ p.current_price }},
+            "description": {{ p.description|tojson }},
+            "attributes": {{ p.get_attributes()|tojson }}
+        },
+        {% endfor %}
+    };
+</script>
 
-def slugify(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    return re.sub(r'[-\s]+', '-', text)
+<!-- Product Specs & Options Modal -->
+<div id="productModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 hidden">
+    <div class="bg-white p-6 max-w-sm w-full rounded-2xl shadow-2xl relative text-stone-900">
+        <button type="button" onclick="closeProductModal()" class="absolute top-3 right-3 text-stone-400 hover:text-black font-bold text-xl cursor-pointer">&times;</button>
+        <h3 id="modalProductName" class="font-bold text-base mb-1 text-stone-900"></h3>
+        <p id="modalProductDesc" class="text-xs text-stone-500 mb-3 leading-relaxed"></p>
+        <p id="modalProductPrice" class="text-emerald-600 font-bold text-base mb-4"></p>
+        <div id="modalVariantsContainer" class="space-y-3 mb-5"></div>
+        <button type="button" id="modalAddBtn" onclick="confirmAddToCart()" class="w-full bg-stone-900 hover:bg-black text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition">
+            ADD TO BAG &rarr;
+        </button>
+    </div>
+</div>
 
+<!-- Slide-Out Shopping Bag Drawer -->
+<div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998] hidden"></div>
+<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white z-[99999] shadow-2xl p-6 flex flex-col justify-between translate-x-full transition-transform duration-300 text-stone-900">
+    <div>
+        <div class="flex justify-between items-center pb-4 border-b border-stone-100 mb-4">
+            <div>
+                <h3 class="font-bold text-sm uppercase tracking-wider text-stone-900 m-0">Your Bag</h3>
+                <span class="text-[10px] text-stone-400 font-mono">WhatsApp Checkout</span>
+            </div>
+            <button type="button" onclick="toggleCart()" class="text-xs font-bold text-stone-400 hover:text-black cursor-pointer">&times; CLOSE</button>
+        </div>
+        <div id="cartItemsList" class="space-y-3 max-h-[45vh] overflow-y-auto"></div>
+    </div>
 
-# -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (/dashboard)
-# -------------------------------------------------------------
-@dashboard_bp.route('/dashboard')
-@login_required
-def overview():
-    kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
-    return render_template('dashboard/overview.html', kiosks=kiosks)
+    <div class="pt-4 border-t border-stone-100">
+        <div class="flex justify-between items-center mb-4 font-mono">
+            <span class="text-xs uppercase text-stone-400 font-bold">Total:</span>
+            <span id="cartTotalPrice" class="font-bold text-xl text-emerald-600">{{ store.currency }}0.00</span>
+        </div>
+        <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
+            <input type="text" id="custName" required placeholder="Your Full Name" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-900">
+            <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900">
+            <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900"></textarea>
+            <button type="submit" id="checkoutBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition shadow-lg shadow-emerald-600/20">
+                CHECKOUT ON WHATSAPP &rarr;
+            </button>
+        </form>
+    </div>
+</aside>
 
+<script>
+    const storeSlug = {{ store.slug|tojson }};
+    const storeCurrency = {{ store.currency|tojson }};
+    let cart = [];
+    let currentModalProduct = null;
 
-# -------------------------------------------------------------
-# OPEN A NEW KIOSK
-# -------------------------------------------------------------
-@dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
-@login_required
-def new_kiosk():
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        custom_slug = request.form.get('slug', '').strip()
-        whatsapp = request.form.get('whatsapp_number', '').strip()
-        bio = request.form.get('bio', 'Welcome to our official store!').strip()
-        ai_prompt = request.form.get('ai_prompt', '').strip()
+    function toggleCart() {
+        const drawer = document.getElementById('cartDrawer');
+        const overlay = document.getElementById('cartOverlay');
+        if (drawer) drawer.classList.toggle('translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
+    }
 
-        section_hero = True if request.form.get('section_hero') else False
-        section_flash = True if request.form.get('section_flash') else False
-        section_ads = True if request.form.get('section_ads') else False
-        sections_dict = {
-            "hero": section_hero,
-            "flash_sales": section_flash,
-            "ads": section_ads
+    function openProductModal(productId) {
+        const product = window.KIOSK_PRODUCTS[productId];
+        if (!product) return;
+
+        currentModalProduct = product;
+        document.getElementById('modalProductName').innerText = product.name;
+        document.getElementById('modalProductDesc').innerText = product.description || '';
+        document.getElementById('modalProductPrice').innerText = `${storeCurrency}${product.price.toLocaleString()}`;
+
+        const container = document.getElementById('modalVariantsContainer');
+        container.innerHTML = '';
+
+        const attrs = product.attributes || {};
+        for (const [attr, opts] of Object.entries(attrs)) {
+            const group = document.createElement('div');
+            group.innerHTML = `
+                <label class='text-[10px] font-bold text-stone-500 uppercase block mb-1'>${attr}</label>
+                <select class='variant-select w-full p-2.5 border border-stone-200 rounded-lg text-xs outline-none bg-stone-50' data-attr='${attr}'>
+                    ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+                </select>
+            `;
+            container.appendChild(group);
         }
 
-        if not name or not whatsapp:
-            flash('Store name and WhatsApp number are required.', 'danger')
-            return render_template('dashboard/kiosk_new.html')
+        document.getElementById('productModal').classList.remove('hidden');
+    }
 
-        slug = slugify(custom_slug) if custom_slug else slugify(name)
-        if Store.query.filter_by(slug=slug).first():
-            flash(f'The link "/{slug}" is already taken. Please choose another.', 'warning')
-            return render_template('dashboard/kiosk_new.html')
+    function closeProductModal() {
+        document.getElementById('productModal').classList.add('hidden');
+        currentModalProduct = null;
+    }
 
-        logo_file = request.files.get('logo')
-        hero_file = request.files.get('hero_image')
-        bg_file = request.files.get('background_image')
+    function confirmAddToCart() {
+        if (!currentModalProduct) return;
 
-        logo_url = upload_image(logo_file, 'logos') or ''
-        hero_url = upload_image(hero_file, 'heroes') or ''
-        bg_url = upload_image(bg_file, 'backgrounds') or ''
+        const selected = [];
+        document.querySelectorAll('.variant-select').forEach(s => {
+            selected.push(`${s.getAttribute('data-attr')}: ${s.value}`);
+        });
 
-        generated_html = generate_kiosk_template(
-            kiosk_name=name,
-            bio=bio,
-            prompt=ai_prompt or f"A clean, modern storefront for {name}",
-            logo_url=logo_url,
-            hero_url=hero_url,
-            bg_url=bg_url,
-            currency='₦'
-        )
+        cart.push({
+            product_id: currentModalProduct.id,
+            name: currentModalProduct.name,
+            price: currentModalProduct.price,
+            variants: selected.join(' | '),
+            quantity: 1
+        });
 
-        clean_phone = clean_phone_number(whatsapp)
-        store = Store(
-            user_id=current_user.id,
-            name=name,
-            slug=slug,
-            whatsapp_number=clean_phone,
-            bio=bio,
-            logo=logo_url or 'default_logo.png',
-            hero_image=hero_url,
-            background_image=bg_url,
-            receipt_theme='classic',
-            sections_config=json.dumps(sections_dict),
-            is_active=False,
-            has_ever_activated=False,
-            custom_html=generated_html
-        )
-        db.session.add(store)
-        db.session.flush()
+        updateCartUI();
+        closeProductModal();
+        toggleCart();
+    }
 
-        for slot_num in [1, 2, 3]:
-            ad = StoreAd(store_id=store.id, slot_number=slot_num, is_active=False)
-            db.session.add(ad)
+    function updateCartUI() {
+        const list = document.getElementById('cartItemsList');
+        const badge = document.getElementById('cartCountBadge');
+        const totalEl = document.getElementById('cartTotalPrice');
 
-        db.session.commit()
-        flash(f'Kiosk "{name}" created in Preview Mode! Pay activation to go live.', 'success')
-        return redirect(url_for('dashboard.overview'))
+        if (badge) badge.innerText = cart.length;
+        if (!list) return;
 
-    return render_template('dashboard/kiosk_new.html')
+        list.innerHTML = '';
+        let total = 0;
+
+        cart.forEach((item, idx) => {
+            total += item.price * item.quantity;
+            const d = document.createElement('div');
+            d.className = 'flex justify-between items-center text-xs pb-3 border-b border-stone-100';
+            d.innerHTML = `
+                <div>
+                    <strong class="text-stone-900 block">${item.name}</strong>
+                    ${item.variants ? `<p class="text-[10px] text-stone-400 m-0">${item.variants}</p>` : ''}
+                    <span class="text-emerald-600 font-bold">${storeCurrency}${item.price.toLocaleString()}</span>
+                </div>
+                <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-500 font-bold text-base px-2 cursor-pointer">&times;</button>
+            `;
+            list.appendChild(d);
+        });
+
+        if (totalEl) totalEl.innerText = `${storeCurrency}${total.toLocaleString()}`;
+    }
+
+    async function handleCheckout(e) {
+        e.preventDefault();
+        if (cart.length === 0) {
+            alert('Your shopping bag is empty. Please select an item first.');
+            return;
+        }
+
+        const btn = document.getElementById('checkoutBtn');
+        btn.innerText = 'ROUTING TO WHATSAPP...';
+        btn.disabled = true;
+
+        const payload = {
+            customer_name: document.getElementById('custName').value,
+            customer_phone: document.getElementById('custPhone').value,
+            delivery_address: document.getElementById('custAddress').value,
+            cart: cart
+        };
+
+        try {
+            const res = await fetch(`/${storeSlug}/checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                cart = [];
+                updateCartUI();
+                window.location.href = data.whatsapp_url;
+            } else {
+                alert(data.message || 'Error processing checkout.');
+                btn.innerText = 'CHECKOUT ON WHATSAPP →';
+                btn.disabled = false;
+            }
+        } catch (err) {
+            alert('Connection error. Please try again.');
+            btn.innerText = 'CHECKOUT ON WHATSAPP →';
+            btn.disabled = false;
+        }
+    }
+</script>
+"""
+
+def clean_html_fences(raw_text: str) -> str:
+    raw_text = re.sub(r'^```html\s*', '', raw_text.strip())
+    raw_text = re.sub(r'```$', '', raw_text).strip()
+    return raw_text
 
 
-# -------------------------------------------------------------
-# PAYSTACK ACTIVATION VERIFY
-# -------------------------------------------------------------
-@dashboard_bp.route('/<kiosk_slug>/activate/verify')
-@login_required
-def verify_kiosk_activation(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
+def inject_bulletproof_chassis(html_content: str) -> str:
+    """Strips AI-attempted broken modals and cleanly injects our tested cart engine."""
+    html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL)
+    html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL)
 
-    reference = request.args.get('reference')
-    paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY')
+    if '</body>' in html_content:
+        return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>')
+    return html_content + '\n' + GUARANTEED_CART_ENGINE
 
-    if not paystack_secret or reference == 'dev_unlock':
-        kiosk.is_active = True
-        kiosk.has_ever_activated = True
-        db.session.commit()
-        flash(f'🎉 Kiosk "{kiosk.name}" is now officially LIVE to the public!', 'success')
-        return redirect(url_for('dashboard.overview'))
+
+def query_openrouter(prompt_instruction: str, api_key: str) -> str:
+    """Queries OpenRouter using high-speed models that respond in ~2-3 seconds."""
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": "Bearer " + api_key.strip(),
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://marketplace-beryl-delta.vercel.app",
+        "X-Title": "Marketplace Kiosk Engine"
+    }
+
+    model_name = os.environ.get('OPENROUTER_MODEL') or 'google/gemini-2.0-flash-001'
+
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "user", "content": prompt_instruction}
+        ]
+    }
 
     try:
-        url = f"https://api.paystack.co/transaction/verify/{reference}"
-        req = urllib.request.Request(url, headers={
-            "Authorization": f"Bearer {paystack_secret}",
-            "Content-Type": "application/json"
-        })
-        with urllib.request.urlopen(req, timeout=15) as res:
-            res_data = json.loads(res.read().decode('utf-8'))
-            if res_data.get('status') and res_data['data']['status'] == 'success':
-                kiosk.is_active = True
-                kiosk.has_ever_activated = True
-                db.session.commit()
-                flash(f'🎉 Payment verified! Kiosk "{kiosk.name}" is now officially LIVE!', 'success')
-            else:
-                flash('Payment verification failed.', 'danger')
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res_data = json.loads(response.read().decode('utf-8'))
+            return res_data['choices'][0]['message']['content']
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode('utf-8')
+        print(f"OpenRouter HTTP {e.code} Error Details: {error_msg}")
+        return None
     except Exception as e:
-        flash(f'Verification error: {e}', 'danger')
+        print(f"OpenRouter Connection Error: {e}")
+        return None
 
-    return redirect(url_for('dashboard.overview'))
 
-
-# -------------------------------------------------------------
-# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (/<kiosk_slug>/manage)
-# -------------------------------------------------------------
-@dashboard_bp.route('/<kiosk_slug>/manage')
-@login_required
-def manage_kiosk(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    products = kiosk.products.order_by(Product.created_at.desc()).all()
-    leads = kiosk.orders.order_by(Order.created_at.desc()).all()
-    ads = kiosk.ads.order_by(StoreAd.slot_number.asc()).all()
-
-    return render_template(
-        'dashboard/kiosk_manage.html',
-        kiosk=kiosk,
-        products=products,
-        leads=leads,
-        ads=ads
+def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
+    """
+    AI Visual Generator:
+    - Queries Gemini / OpenRouter to design unique storefronts.
+    - If AI succeeds, injects the bulletproof interactive cart engine.
+    - If AI fails or times out, returns "" so Flask automatically renders templates/store/catalog.html!
+    """
+    system_instruction = (
+        'You are an elite web designer creating a custom storefront website for a brand named "' + kiosk_name + '".\n'
+        'Merchant Design Instructions: "' + prompt + '"\n'
+        'Merchant Bio: "' + bio + '"\n\n'
+        'Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", Currency="' + currency + '".\n'
+        'Write a COMPLETE, BEAUTIFUL, MOBILE-FIRST HTML5 page using Tailwind CSS via CDN and Google Fonts.\n'
+        'CRITICAL CONTRACT:\n'
+        '1. In the header, include a BAG button that calls: onclick="toggleCart()"\n'
+        '   with an element <span id="cartCountBadge">0</span>.\n'
+        '2. Products Loop: Iterate using:\n'
+        '   {% for p in regular_products %} ... display image {{ p.image if p.image.startswith("http") else url_for("static", filename="uploads/products/" + p.image) }}, title {{ p.name }}, price {{ store.currency }}{{ p.current_price }} ...\n'
+        '   Every product card MUST have an order button calling: onclick="openProductModal({{ p.id }})"\n'
+        '   {% endfor %}\n'
+        '3. Flash Sales: Include {% if flash_sales %} ... {% for p in flash_sales %} ... {% endfor %} {% endif %}\n'
+        'Do NOT write the modal or cart drawer HTML yourself—it will be automatically injected. Just build the storefront, header, and product cards!\n'
+        'Output ONLY pure HTML.'
     )
 
+    # 1. Primary: Google Gemini
+    gemini_key = (os.environ.get('AI_API_KEY') or '').strip()
+    if gemini_key:
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(system_instruction)
+            raw_html = clean_html_fences(response.text)
+            if raw_html:
+                print("Generated custom kiosk via Primary: Gemini! Injecting bulletproof engine...")
+                return inject_bulletproof_chassis(raw_html)
+        except Exception as e:
+            print(f"Gemini API error: {e}")
 
-# -------------------------------------------------------------
-# 🔄 UPDATE ORDER STATUS (PENDING -> PAID -> SHIPPED -> COMPLETED)
-# -------------------------------------------------------------
-@dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['POST'])
-@login_required
-def update_order_status(kiosk_slug, order_id):
-    """Updates order status from Pending to Paid, Shipped, or Completed."""
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
+    # 2. Fast Backup: OpenRouter
+    openrouter_key = (os.environ.get('OPENROUTER_API_KEY') or '').strip()
+    if openrouter_key:
+        raw_response = query_openrouter(system_instruction, openrouter_key)
+        if raw_response:
+            raw_html = clean_html_fences(raw_response)
+            if raw_html:
+                print("Generated custom kiosk via Backup: OpenRouter! Injecting bulletproof engine...")
+                return inject_bulletproof_chassis(raw_html)
 
-    order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
-    new_status = request.form.get('status', 'pending').strip().lower()
-
-    if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
-        order.status = new_status
-        db.session.commit()
-        flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
-
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
-
-
-# Product CRUD
-@dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
-@login_required
-def new_product(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        description = request.form.get('description', '').strip()
-        original_price = float(request.form.get('original_price', 0) or 0)
-        discount_price = request.form.get('discount_price', '').strip()
-        stock = int(request.form.get('stock', 1) or 1)
-        is_flash_sale = True if request.form.get('is_flash_sale') else False
-
-        attr_names = request.form.getlist('attr_name[]')
-        attr_values = request.form.getlist('attr_values[]')
-        attributes_dict = {}
-
-        for a_name, a_vals in zip(attr_names, attr_values):
-            clean_name = a_name.strip()
-            if clean_name and a_vals.strip():
-                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if len(opts) < 2:
-                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
-                    return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
-                attributes_dict[clean_name] = opts
-
-        image_file = request.files.get('image')
-        image_name = upload_image(image_file, 'products') or 'default_product.png'
-
-        product = Product(
-            store_id=kiosk.id,
-            name=name,
-            description=description,
-            original_price=original_price,
-            discount_price=float(discount_price) if discount_price else None,
-            is_flash_sale=is_flash_sale,
-            stock=stock,
-            image=image_name,
-            attributes_json=json.dumps(attributes_dict)
-        )
-        db.session.add(product)
-        db.session.commit()
-
-        flash(f'Product "{name}" added to {kiosk.name}!', 'success')
-        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-    return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
-
-
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/edit', methods=['GET', 'POST'])
-@login_required
-def edit_product(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-
-    if request.method == 'POST':
-        product.name = request.form.get('name', '').strip()
-        product.description = request.form.get('description', '').strip()
-        product.original_price = float(request.form.get('original_price', 0) or 0)
-        
-        disc = request.form.get('discount_price', '').strip()
-        product.discount_price = float(disc) if disc else None
-        
-        product.stock = int(request.form.get('stock', 1) or 1)
-        product.is_flash_sale = True if request.form.get('is_flash_sale') else False
-
-        attr_names = request.form.getlist('attr_name[]')
-        attr_values = request.form.getlist('attr_values[]')
-        attributes_dict = {}
-
-        for a_name, a_vals in zip(attr_names, attr_values):
-            clean_name = a_name.strip()
-            if clean_name and a_vals.strip():
-                opts = [v.strip() for v in a_vals.split(',') if v.strip()]
-                if len(opts) < 2:
-                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
-                    return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
-                attributes_dict[clean_name] = opts
-
-        product.attributes_json = json.dumps(attributes_dict)
-
-        image_file = request.files.get('image')
-        new_img = upload_image(image_file, 'products')
-        if new_img:
-            delete_image(product.image, 'products')
-            product.image = new_img
-
-        db.session.commit()
-        flash('Product updated successfully!', 'success')
-        return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-    return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
-
-
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/delete', methods=['POST'])
-@login_required
-def delete_product(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-    delete_image(product.image, 'products')
-
-    db.session.delete(product)
-    db.session.commit()
-    flash('Product removed and storage cleaned up.', 'info')
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
-# The Social Flyer Studio
-@dashboard_bp.route('/<kiosk_slug>/product/<int:id>/flyer')
-@login_required
-def product_flyer(kiosk_slug, id):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    product = Product.query.filter_by(id=id, store_id=kiosk.id).first_or_404()
-    return render_template('dashboard/product_flyer.html', kiosk=kiosk, product=product)
-
-
-# Settings, Branding & Sectional Activation
-@dashboard_bp.route('/<kiosk_slug>/settings', methods=['POST'])
-@login_required
-def update_kiosk_settings(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    kiosk.name = request.form.get('name', kiosk.name).strip()
-    kiosk.bio = request.form.get('bio', kiosk.bio).strip()
-    kiosk.currency = request.form.get('currency', '₦').strip()
-    kiosk.show_public_stats = True if request.form.get('show_public_stats') else False
-    kiosk.receipt_theme = request.form.get('receipt_theme', 'classic').strip()
-
-    section_hero = True if request.form.get('section_hero') else False
-    section_flash = True if request.form.get('section_flash') else False
-    section_ads = True if request.form.get('section_ads') else False
-    kiosk.sections_config = json.dumps({
-        "hero": section_hero,
-        "flash_sales": section_flash,
-        "ads": section_ads
-    })
-    
-    phone = request.form.get('whatsapp_number', '').strip()
-    if phone:
-        kiosk.whatsapp_number = clean_phone_number(phone)
-
-    logo_file = request.files.get('logo')
-    hero_file = request.files.get('hero_image')
-    bg_file = request.files.get('background_image')
-
-    new_logo = upload_image(logo_file, 'logos')
-    new_hero = upload_image(hero_file, 'heroes')
-    new_bg = upload_image(bg_file, 'backgrounds')
-
-    if new_logo:
-        delete_image(kiosk.logo, 'logos')
-        kiosk.logo = new_logo
-    if new_hero:
-        delete_image(kiosk.hero_image, 'heroes')
-        kiosk.hero_image = new_hero
-    if new_bg:
-        delete_image(kiosk.background_image, 'backgrounds')
-        kiosk.background_image = new_bg
-
-    db.session.commit()
-    flash(f'Settings & Layout for "{kiosk.name}" updated successfully!', 'success')
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
-# Manage 3 Ad Slots
-@dashboard_bp.route('/<kiosk_slug>/ads', methods=['POST'])
-@login_required
-def update_kiosk_ads(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    slot_num = int(request.form.get('slot_number'))
-    ad = StoreAd.query.filter_by(store_id=kiosk.id, slot_number=slot_num).first()
-    if ad:
-        ad.target_link = request.form.get('target_link', '').strip()
-        ad.is_active = True if request.form.get('is_active') else False
-        
-        banner_file = request.files.get('banner_image')
-        new_banner = upload_image(banner_file, 'ads')
-        if new_banner:
-            delete_image(ad.banner_image, 'ads')
-            ad.banner_image = new_banner
-
-        db.session.commit()
-        flash(f'Ad Slot #{slot_num} updated!', 'success')
-
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
-
-
-# Delete kiosk
-@dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
-@login_required
-def delete_kiosk(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
-    if kiosk.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-
-    name = kiosk.name
-    delete_image(kiosk.logo, 'logos')
-    delete_image(kiosk.hero_image, 'heroes')
-    delete_image(kiosk.background_image, 'backgrounds')
-    for p in kiosk.products.all():
-        delete_image(p.image, 'products')
-
-    db.session.delete(kiosk)
-    db.session.commit()
-    flash(f'Kiosk "{name}" deleted permanently.', 'info')
-    return redirect(url_for('dashboard.overview'))
+    # 3. Clean Native Fallback: Returns empty string so Flask seamlessly renders app/templates/store/catalog.html!
+    print("AI generation skipped or failed. Falling back to default catalog.html template.")
+    return ""
