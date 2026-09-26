@@ -58,8 +58,8 @@ GUARANTEED_CART_ENGINE = """
         </div>
         <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
             <input type="text" id="custName" required placeholder="Your Full Name" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-900">
-            <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-900">
-            <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-900"></textarea>
+            <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900">
+            <textarea id="custAddress" required placeholder="Delivery Address / Notes" rows="2" class="w-full p-3 border border-stone-200 rounded-lg text-xs outline-none focus:border-stone-900"></textarea>
             <button type="submit" id="checkoutBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-wider cursor-pointer transition shadow-lg shadow-emerald-600/20">
                 CHECKOUT ON WHATSAPP &rarr;
             </button>
@@ -213,17 +213,13 @@ def clean_html_fences(raw_text: str) -> str:
 
 
 def inject_bulletproof_chassis(html_content: str) -> str:
-    """
-    Strips out any broken modal/drawer the AI tried to write,
-    and cleanly injects our tested, guaranteed working cart & modal engine right before </body>.
-    """
-    # Remove AI's partial attempts at modals or drawers if present
+    """Strips AI-attempted broken modals and injects our tested cart engine."""
     html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL)
     html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL)
 
     if '</body>' in html_content:
-        return html_content.replace('</body>', f"{GUARANTEED_CART_ENGINE}\n</body>")
-    return html_content + f"\n{GUARANTEED_CART_ENGINE}"
+        return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>')
+    return html_content + '\n' + GUARANTEED_CART_ENGINE
 
 
 def query_openrouter(prompt_instruction: str, api_key: str) -> str:
@@ -260,11 +256,6 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
 
 
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
-    """
-    AI Visual Generator + Injected Bulletproof Cart:
-    The AI designs the look, theme, hero, and cards.
-    Our backend injects the working modal, bag, and WhatsApp router.
-    """
     system_instruction = (
         f'You are an elite web designer creating a custom storefront website for a brand named "{kiosk_name}".\n'
         f'Merchant Design Instructions: "{prompt}"\n'
@@ -308,29 +299,29 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
                 print("Generated custom kiosk via OpenRouter! Injecting bulletproof engine...")
                 return inject_bulletproof_chassis(raw_html)
 
-    # 3. Fallback Template
+    # 3. Pure Literal Fallback Template (NO f-string, zero syntax errors!)
     bg_style = f"background-image: url('{bg_url}'); background-size: cover; background-attachment: fixed;" if bg_url else "background-color: #fdfcfb;"
     logo_img = f"<img src='{logo_url}' class='h-10 w-10 object-contain rounded-full'>" if logo_url else ""
     hero_div = f"<div class='max-w-6xl mx-auto px-6 mt-6 w-full'><img src='{hero_url}' class='w-full h-48 md:h-64 object-cover rounded-2xl shadow-sm'></div>" if hero_url else ""
 
-    fallback_html = f"""<!DOCTYPE html>
+    fallback_html = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{{{ store.name }}}} // Official Store</title>
+    <title>{{ store.name }} // Official Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body {{ font-family: 'Montserrat', sans-serif; {bg_style} }}</style>
+    <style>body { font-family: 'Montserrat', sans-serif; __BG_STYLE__ }</style>
 </head>
 <body class="min-h-screen text-stone-900 flex flex-col justify-between">
     <header class="bg-white/95 backdrop-blur border-b border-stone-200 py-4 px-6 sticky top-0 z-40">
         <div class="max-w-6xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
-                {logo_img}
+                __LOGO_IMG__
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight text-stone-900 m-0">{{{{ store.name }}}}</h1>
-                    <p class="text-xs text-stone-500 m-0">{{{{ store.bio }}}}</p>
+                    <h1 class="text-lg font-bold tracking-tight text-stone-900 m-0">{{ store.name }}</h1>
+                    <p class="text-xs text-stone-500 m-0">{{ store.bio }}</p>
                 </div>
             </div>
             <button onclick="toggleCart()" class="bg-stone-900 hover:bg-black text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 cursor-pointer">
@@ -340,58 +331,58 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
         </div>
     </header>
 
-    {hero_div}
+    __HERO_DIV__
 
     <main class="max-w-6xl mx-auto px-6 py-10 w-full flex-grow">
-        {{% if flash_sales %}}
+        {% if flash_sales %}
         <div class="mb-10">
             <h2 class="text-sm font-bold uppercase tracking-wider text-rose-600 mb-4">🔥 Flash Deals</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {{% for p in flash_sales %}}
+                {% for p in flash_sales %}
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
                     <div>
-                        <img src="{{{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}}}" class="h-44 w-full object-cover rounded-xl mb-3">
-                        <h3 class="font-bold text-sm">{{{{ p.name }}}}</h3>
-                        <p class="text-xs text-stone-400 mb-2">{{{{ p.description }}}}</p>
+                        <img src="{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}" class="h-44 w-full object-cover rounded-xl mb-3">
+                        <h3 class="font-bold text-sm">{{ p.name }}</h3>
+                        <p class="text-xs text-stone-400 mb-2">{{ p.description }}</p>
                     </div>
                     <div>
                         <div class="mb-3">
-                            <span class="line-through text-stone-400 text-xs">{{{{ store.currency }}}}{{{{ "{:,.2f}".format(p.original_price) }}}}</span>
-                            <span class="font-bold text-rose-600 text-base ml-1">{{{{ store.currency }}}}{{{{ "{:,.2f}".format(p.current_price) }}}}</span>
+                            <span class="line-through text-stone-400 text-xs">{{ store.currency }}{{ "{:,.2f}".format(p.original_price) }}</span>
+                            <span class="font-bold text-rose-600 text-base ml-1">{{ store.currency }}{{ "{:,.2f}".format(p.current_price) }}</span>
                         </div>
-                        <button type="button" onclick="openProductModal({{{{ p.id }}}})" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase cursor-pointer">
+                        <button type="button" onclick="openProductModal({{ p.id }})" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl text-xs uppercase cursor-pointer">
                             SELECT & ORDER
                         </button>
                     </div>
                 </div>
-                {{% endfor %}}
+                {% endfor %}
             </div>
         </div>
-        {{% endif %}}
+        {% endif %}
 
         <h2 class="text-lg font-bold text-stone-800 mb-6">Catalog</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {{% for p in regular_products %}}
+            {% for p in regular_products %}
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 flex flex-col justify-between">
                 <div>
-                    <img src="{{{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}}}" class="h-44 w-full object-cover rounded-xl mb-3">
-                    <h3 class="font-bold text-sm text-stone-900">{{{{ p.name }}}}</h3>
-                    <p class="text-xs text-stone-400 mb-3">{{{{ p.description }}}}</p>
+                    <img src="{{ p.image if p.image.startswith('http') else url_for('static', filename='uploads/products/' + p.image) }}" class="h-44 w-full object-cover rounded-xl mb-3">
+                    <h3 class="font-bold text-sm text-stone-900">{{ p.name }}</h3>
+                    <p class="text-xs text-stone-400 mb-3">{{ p.description }}</p>
                 </div>
                 <div>
-                    <div class="font-bold text-stone-900 text-sm mb-3">{{{{ store.currency }}}}{{{{ "{:,.2f}".format(p.current_price) }}}}</div>
-                    {{% if p.stock > 0 %}}
-                    <button type="button" onclick="openProductModal({{{{ p.id }}}})" class="w-full bg-stone-900 hover:bg-black text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer">
+                    <div class="font-bold text-stone-900 text-sm mb-3">{{ store.currency }}{{ "{:,.2f}".format(p.current_price) }}</div>
+                    {% if p.stock > 0 %}
+                    <button type="button" onclick="openProductModal({{ p.id }})" class="w-full bg-stone-900 hover:bg-black text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider cursor-pointer">
                         VIEW SPECS & ORDER
                     </button>
-                    {{% else %}}
+                    {% else %}
                     <button disabled class="w-full bg-stone-100 text-stone-400 py-2.5 rounded-xl text-xs uppercase">Sold Out</button>
-                    {{% endif %}}
+                    {% endif %}
                 </div>
             </div>
-            {{% else %}}
+            {% else %}
             <p class="text-xs italic text-stone-400 col-span-3">No products available in this kiosk yet.</p>
-            {{% endfor %}}
+            {% endfor %}
         </div>
     </main>
 
@@ -400,5 +391,8 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
     </footer>
 </body>
 </html>"""
+
+    # Replace markers safely without Python f-string bracket interference
+    fallback_html = fallback_html.replace("__BG_STYLE__", bg_style).replace("__LOGO_IMG__", logo_img).replace("__HERO_DIV__", hero_div)
 
     return inject_bulletproof_chassis(fallback_html)
