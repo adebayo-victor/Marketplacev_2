@@ -395,21 +395,39 @@ def update_kiosk_ads(kiosk_slug):
 
 
 # Delete kiosk
-@dashboard_bp.route('/<kiosk_slug>/delete', methods=['POST'])
+
+@dashboard_bp.route('/<kiosk_slug>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
+    """Safely deletes an entire kiosk, cleaning up all Cloudinary media and PostgreSQL relations."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
     name = kiosk.name
+
+    # 1. 🛡️ Unlink all product references in OrderItems to prevent PostgreSQL foreign key errors
+    from app.models import OrderItem
+    product_ids = [p.id for p in kiosk.products.all()]
+    if product_ids:
+        OrderItem.query.filter(OrderItem.product_id.in_(product_ids)).update({'product_id': None}, synchronize_session=False)
+
+    # 2. 🧹 Clean up all Cloudinary images for this kiosk
     delete_image(kiosk.logo, 'logos')
     delete_image(kiosk.hero_image, 'heroes')
     delete_image(kiosk.background_image, 'backgrounds')
+    
+    # Clean up product images
     for p in kiosk.products.all():
         delete_image(p.image, 'products')
 
+    # Clean up sponsor ad banners
+    for ad in kiosk.ads.all():
+        delete_image(ad.banner_image, 'ads')
+
+    # 3. Safely delete the kiosk (cascades orders, products, ads, and carts cleanly)
     db.session.delete(kiosk)
     db.session.commit()
-    flash(f'Kiosk "{name}" deleted permanently.', 'info')
+    
+    flash(f'Kiosk "{name}" and all associated media were deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
