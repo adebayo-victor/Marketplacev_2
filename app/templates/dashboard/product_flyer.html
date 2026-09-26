@@ -7,7 +7,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -17,25 +17,25 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
         .theme-cyber { 
-            background: linear-gradient(135deg, #09090b 0%, #18181b 100%); 
-            color: #f4f4f5; 
-            border: 2px solid #06b6d4; 
+            background: linear-gradient(135deg, #09090b 0%, #18181b 100%) !important; 
+            color: #f4f4f5 !important; 
+            border: 2px solid #06b6d4 !important; 
         }
         .theme-clay { 
-            background: linear-gradient(135deg, #f9f5f0 0%, #ede5dc 100%); 
-            color: #2d1e14; 
-            border: 2px solid #8d5b3e; 
+            background: linear-gradient(135deg, #f9f5f0 0%, #ede5dc 100%) !important; 
+            color: #2d1e14 !important; 
+            border: 2px solid #8d5b3e !important; 
         }
         .theme-emerald { 
-            background: linear-gradient(135deg, #022c22 0%, #064e3b 100%); 
-            color: #ecfdf5; 
-            border: 2px solid #10b981; 
+            background: linear-gradient(135deg, #022c22 0%, #064e3b 100%) !important; 
+            color: #ecfdf5 !important; 
+            border: 2px solid #10b981 !important; 
         }
 
-        /* 📱 CALIBRATED 9:16 WHATSAPP STATUS CANVAS (ZERO CROPPING) */
-        #flyerCard {
-            width: 380px;
-            height: 675px; /* Exact 9:16 proportion */
+        /* Responsive on-screen preview card */
+        .flyer-preview-box {
+            width: 100%;
+            max-width: 400px;
             box-sizing: border-box;
         }
     </style>
@@ -44,7 +44,7 @@
 
     <div class="max-w-md w-full flex justify-between items-center mb-4">
         <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white">&larr; Back to Inventory</a>
-        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">WhatsApp Status Flyer (9:16)</span>
+        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">Social Flyer Studio (9:16)</span>
     </div>
 
     <!-- Controls Bar -->
@@ -52,30 +52,30 @@
         <div>
             <label class="block text-[10px] font-mono uppercase text-stone-400 mb-1">Theme</label>
             <div class="flex gap-2">
-                <button onclick="setTheme('theme-cyber')" class="px-3 py-1.5 rounded-lg bg-black text-cyan-400 border border-cyan-500/50 text-xs font-mono cursor-pointer">Cyber</button>
-                <button onclick="setTheme('theme-clay')" class="px-3 py-1.5 rounded-lg bg-[#f9f5f0] text-[#2d1e14] border border-[#8d5b3e] text-xs font-mono font-bold cursor-pointer">Clay</button>
-                <button onclick="setTheme('theme-emerald')" class="px-3 py-1.5 rounded-lg bg-[#064e3b] text-emerald-300 border border-emerald-500/50 text-xs font-mono cursor-pointer">Emerald</button>
+                <button type="button" onclick="setTheme('theme-cyber')" class="px-3 py-1.5 rounded-lg bg-black text-cyan-400 border border-cyan-500/50 text-xs font-mono cursor-pointer">Cyber</button>
+                <button type="button" onclick="setTheme('theme-clay')" class="px-3 py-1.5 rounded-lg bg-[#f9f5f0] text-[#2d1e14] border border-[#8d5b3e] text-xs font-mono font-bold cursor-pointer">Clay</button>
+                <button type="button" onclick="setTheme('theme-emerald')" class="px-3 py-1.5 rounded-lg bg-[#064e3b] text-emerald-300 border border-emerald-500/50 text-xs font-mono cursor-pointer">Emerald</button>
             </div>
         </div>
 
         <div class="flex gap-2">
-            <button onclick="downloadFlyerPNG()" id="pngBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+            <button type="button" onclick="downloadFlyerPNG()" id="pngBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
                 PNG 📸
             </button>
-            <button onclick="downloadFlyerPDF()" id="pdfBtn" class="bg-stone-700 hover:bg-stone-600 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
+            <button type="button" onclick="downloadFlyerPDF()" id="pdfBtn" class="bg-stone-700 hover:bg-stone-600 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer">
                 PDF 🖨️
             </button>
         </div>
     </div>
 
-    <!-- 📸 THE FLYER CANVAS (LOCKED 9:16 RATIO — NEVER CLIPS BOTTOM) -->
-    <div id="flyerCard" class="theme-cyber p-7 rounded-[32px] shadow-2xl flex flex-col justify-between relative overflow-hidden">
+    <!-- 📸 THE FLYER CANVAS CONTAINER -->
+    <div id="flyerCard" class="theme-cyber flyer-preview-box p-8 rounded-[36px] shadow-2xl flex flex-col justify-between border-2">
         
-        <!-- Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <!-- 1. Header Block -->
+        <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
             <div>
                 <span class="text-[9px] font-mono uppercase tracking-widest text-amber-400 block font-bold">OFFICIAL RELEASE</span>
-                <h3 class="font-black text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
+                <h3 class="font-extrabold text-base tracking-tight m-0 text-white">{{ kiosk.name }}</h3>
             </div>
             {% if product.is_flash_sale %}
                 <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2.5 py-1 rounded-full shadow">🔥 FLASH SALE</span>
@@ -84,9 +84,9 @@
             {% endif %}
         </div>
 
-        <!-- Product Image Showcase (Calibrated Height) -->
-        <div class="my-3">
-            <div class="h-56 w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center">
+        <!-- 2. Product Image Container -->
+        <div class="my-2">
+            <div class="h-60 w-full bg-black/40 rounded-2xl overflow-hidden border border-white/10 shadow-inner flex items-center justify-center">
                 <img src="{{ product.image if product.image.startswith('http') else url_for('static', filename='uploads/products/' + product.image) }}" 
                      crossorigin="anonymous"
                      alt="{{ product.name }}" 
@@ -94,54 +94,57 @@
             </div>
         </div>
 
-        <!-- Details & Features -->
-        <div>
-            <h2 class="text-lg font-black tracking-tight mb-1 leading-snug line-clamp-2">{{ product.name }}</h2>
-            <p class="text-[11px] opacity-75 mb-3 line-clamp-2 leading-relaxed">{{ product.description }}</p>
+        <!-- 3. Details & Specs -->
+        <div class="my-2">
+            <h2 class="text-xl font-black tracking-tight mb-1 leading-snug text-white">{{ product.name }}</h2>
+            <p class="text-xs opacity-75 mb-3 leading-relaxed text-stone-300">{{ product.description }}</p>
 
-            <!-- Custom Attributes Pills -->
+            <!-- Custom Attributes Badges -->
             {% if product.get_attributes() %}
             <div class="flex flex-wrap gap-1.5 mb-3">
                 {% for a_name, a_vals in product.get_attributes().items() %}
-                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2 py-0.5 rounded-md">
+                    <span class="text-[9px] font-mono font-semibold bg-white/10 border border-white/15 px-2 py-0.5 rounded-md text-stone-200">
                         {{ a_name }}: {{ a_vals|join(', ') }}
                     </span>
                 {% endfor %}
             </div>
             {% endif %}
 
-            <!-- Price & WhatsApp Order Block (Protected with Generous Bottom Spacing) -->
+            <!-- Price & WhatsApp Order Box -->
             <div class="pt-3 border-t border-white/10 flex items-center justify-between">
                 <div>
                     <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
                     {% if product.has_discount %}
                         <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
-                        <div class="text-xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                        <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
                     {% else %}
-                        <div class="text-xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                        <div class="text-2xl font-black font-mono text-emerald-400">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
                     {% endif %}
                 </div>
 
                 <div class="text-right">
                     <span class="text-[8px] font-mono text-emerald-400 font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                    <span class="bg-emerald-600 text-white font-mono font-bold text-[11px] px-3 py-1.5 rounded-lg shadow-md inline-block">
+                    <span class="bg-emerald-600 text-white font-mono font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg inline-block">
                         💬 {{ kiosk.whatsapp_number }}
                     </span>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Watermark -->
-        <div class="text-center pt-2 border-t border-white/5">
-            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">
+        <!-- 4. Footer Watermark -->
+        <div class="text-center pt-3 mt-2 border-t border-white/10">
+            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest text-stone-400">
                 marketplace.com/{{ kiosk.slug }} • Powered by Techlite
             </span>
         </div>
     </div>
 
-    <!-- Client-Side Snapshot Engine with Scroll Offset Protection -->
+    <!-- 🎯 ZERO-CLIPPING SNAPSHOT ENGINE -->
     <script>
+        let currentTheme = 'theme-cyber';
+
         function setTheme(themeClass) {
+            currentTheme = themeClass;
             const card = document.getElementById('flyerCard');
             card.classList.remove('theme-cyber', 'theme-clay', 'theme-emerald');
             card.classList.add(themeClass);
@@ -149,29 +152,48 @@
 
         function downloadFlyerPNG() {
             const btn = document.getElementById('pngBtn');
-            btn.innerText = 'GENERATING...';
+            btn.innerText = 'CAPTURING...';
             btn.disabled = true;
 
-            const card = document.getElementById('flyerCard');
+            const originalCard = document.getElementById('flyerCard');
 
-            // 🎯 SCROLL OFFSET & ASPECT RATIO PROTECTION
-            html2canvas(card, {
-                scale: 2.84,      // Exactly outputs standard 1080 x 1920 high-res
+            // 1. CLONE CARD INTO ISOLATED ZERO-OFFSET CONTAINER
+            const clone = originalCard.cloneNode(true);
+            clone.id = 'flyerClone';
+            clone.style.position = 'fixed';
+            clone.style.top = '0px';
+            clone.style.left = '0px';
+            clone.style.zIndex = '-99999';
+            clone.style.width = '420px';
+            clone.style.height = 'auto';
+            clone.style.margin = '0';
+            clone.style.transform = 'none';
+
+            document.body.appendChild(clone);
+
+            // 2. CAPTURE FROM ORIGIN (0, 0) - ELIMINATES MOBILE SCROLL SHIFT!
+            html2canvas(clone, {
+                scale: 2.6,        // Produces crisp ~1080 x 1920 Instagram/WhatsApp Status
                 useCORS: true,
                 allowTaint: false,
-                scrollY: 0,        // Eliminates mobile scroll cropping!
+                scrollY: 0,
                 scrollX: 0,
-                width: 380,
-                height: 675,
                 backgroundColor: null
             }).then(canvas => {
+                document.body.removeChild(clone);
+
                 const link = document.createElement('a');
                 link.download = `Status_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+
                 btn.innerText = 'PNG 📸';
                 btn.disabled = false;
             }).catch(err => {
+                console.error(err);
+                if (document.getElementById('flyerClone')) {
+                    document.body.removeChild(document.getElementById('flyerClone'));
+                }
                 downloadFlyerPDF();
                 btn.innerText = 'PNG 📸';
                 btn.disabled = false;
@@ -181,11 +203,11 @@
         function downloadFlyerPDF() {
             const card = document.getElementById('flyerCard');
             const opt = {
-                margin: 0,
+                margin: 5,
                 filename: `Flyer_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-                jsPDF: { unit: 'mm', format: [100, 178], orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: [110, 195], orientation: 'portrait' }
             };
             html2pdf().set(opt).from(card).save();
         }
