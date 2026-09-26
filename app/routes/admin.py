@@ -3,8 +3,8 @@ import random
 import string
 from functools import wraps
 from datetime import datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, session
+from flask_login import login_required, current_user, login_user
 from app import db
 from app.models import User, Store, PasswordResetTicket
 
@@ -14,7 +14,7 @@ def admin_required(f):
     @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
-        if not current_user.is_admin:
+        if not current_user.is_admin and not session.get('is_master_admin'):
             admin_count = User.query.filter_by(is_admin=True).count()
             if admin_count == 0:
                 flash('No Master Admin exists yet. You can claim Master access below.', 'warning')
@@ -35,8 +35,8 @@ def overview():
     avg_kiosks = round(total_kiosks / total_merchants, 2) if total_merchants > 0 else 0.0
     total_views = db.session.query(db.func.sum(Store.views_count)).scalar() or 0
     kiosks = Store.query.order_by(Store.created_at.desc()).all()
+    merchants = User.query.order_by(User.created_at.desc()).all()
 
-    # Count pending password reset requests
     pending_resets_count = PasswordResetTicket.query.filter_by(status='pending').count()
 
     return render_template(
@@ -47,8 +47,25 @@ def overview():
         total_views=total_views,
         total_orders=total_orders,
         kiosks=kiosks,
+        merchants=merchants,
         pending_resets_count=pending_resets_count
     )
+
+
+# -------------------------------------------------------------
+# 👤 1-CLICK MERCHANT IMPERSONATION (ENTER ANY MERCHANT ACCOUNT)
+# -------------------------------------------------------------
+@admin_bp.route('/impersonate/<int:user_id>')
+@admin_required
+def impersonate(user_id):
+    """Allows Master Admin to switch into any merchant's account with one click."""
+    target_user = User.query.get_or_404(user_id)
+    session['admin_override_id'] = current_user.id
+    session['is_master_admin'] = True
+
+    login_user(target_user)
+    flash(f'👤 Impersonating Merchant "{target_user.username}". You have full access to their kiosks and settings.', 'info')
+    return redirect(url_for('dashboard.overview'))
 
 
 # -------------------------------------------------------------
@@ -57,9 +74,7 @@ def overview():
 @admin_bp.route('/resets')
 @admin_required
 def reset_tickets():
-    """List of all password reset requests with user data cross-referencing."""
     tickets = PasswordResetTicket.query.order_by(PasswordResetTicket.created_at.desc()).all()
-    
     ticket_cards = []
     for t in tickets:
         user = User.query.filter_by(email=t.email).first()
@@ -69,14 +84,12 @@ def reset_tickets():
             "user": user,
             "stores": stores
         })
-
     return render_template('admin/resets.html', ticket_cards=ticket_cards)
 
 
 @admin_bp.route('/resets/<int:ticket_id>/approve', methods=['POST'])
 @admin_required
 def approve_reset(ticket_id):
-    """Generates a temporary password, updates user account, and marks ticket approved."""
     ticket = PasswordResetTicket.query.get_or_404(ticket_id)
     user = User.query.filter_by(email=ticket.email).first()
 
@@ -84,7 +97,6 @@ def approve_reset(ticket_id):
         flash(f'Cannot approve: No user found with email {ticket.email}.', 'danger')
         return redirect(url_for('admin.reset_tickets'))
 
-    # Generate random temporary password
     temp_pass = 'Market_' + ''.join(random.choices(string.digits, k=4)) + '!'
     user.set_password(temp_pass)
 
@@ -93,7 +105,7 @@ def approve_reset(ticket_id):
     ticket.resolved_at = datetime.utcnow()
 
     db.session.commit()
-    flash(f'Approved ticket #{ticket.ticket_ref}! Temporary password set to: {temp_pass}', 'success')
+    flash(f'Approved ticket #{ticket.ticket_ref}! Temporary password: {temp_pass}', 'success')
     return redirect(url_for('admin.reset_tickets'))
 
 
@@ -108,6 +120,9 @@ def reject_reset(ticket_id):
     return redirect(url_for('admin.reset_tickets'))
 
 
+# -------------------------------------------------------------
+# 🛠️ TEMPLATE EDITOR & SECRETS MANAGER
+# -------------------------------------------------------------
 @admin_bp.route('/kiosk/<int:store_id>/template', methods=['GET', 'POST'])
 @admin_required
 def edit_template(store_id):
@@ -126,8 +141,8 @@ def env_manager():
     env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
     target_keys = [
         'SECRET_KEY', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET',
-        'AI_API_KEY', 'OPENROUTER_API_KEY', 'PAYSTACK_PUBLIC_KEY', 'PAYSTACK_SECRET_KEY',
-        'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'
+        'AI_API_KEY', 'OPENROUTER_API_KEY', 'OPENROUTER_MODEL', 'PAYSTACK_PUBLIC_KEY', 
+        'PAYSTACK_SECRET_KEY', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'
     ]
 
     if request.method == 'POST':
