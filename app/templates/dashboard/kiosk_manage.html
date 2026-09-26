@@ -37,17 +37,10 @@
             cursor: pointer; width: 100%; margin-top: 15px; text-align: center; display: block;
         }
 
-        /* Order Status Dropdown Styling */
         .status-select {
-            padding: 6px 10px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-radius: 4px;
-            outline: none;
-            cursor: pointer;
-            border: 1px solid #ddd;
+            padding: 6px 10px; font-family: 'Montserrat', sans-serif; font-size: 0.65rem;
+            font-weight: 700; text-transform: uppercase; border-radius: 4px;
+            outline: none; cursor: pointer; border: 1px solid #ddd;
         }
         .status-pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
         .status-paid { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
@@ -147,7 +140,13 @@
                                 {{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}
                             {% endif %}
                         </td>
-                        <td>{{ p.stock }} units</td>
+                        <td>
+                            {% if p.is_unlimited_stock %}
+                                <span style="color: #16a34a; font-weight: bold; font-size: 0.75rem;">Unlimited</span>
+                            {% else %}
+                                {{ p.stock }} units
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" style="color: #06b6d4; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 12px; font-family: 'Montserrat';">FLYER 📸</a>
                             <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 12px; font-family: 'Montserrat';">EDIT</a>
@@ -163,12 +162,12 @@
             </table>
         </div>
 
-        <!-- Section 2: Customer Leads & Orders (With Interactive Status Changer!) -->
+        <!-- Section 2: Customer Leads & Orders -->
         <div class="section-box" id="leads">
             <h2>Customer Leads & Orders</h2>
             <table id="leadsTable">
                 <thead>
-                    <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status (Click to Change)</th><th>Receipt</th></tr>
+                    <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th><th>Documents</th></tr>
                 </thead>
                 <tbody>
                     {% for l in leads %}
@@ -178,7 +177,6 @@
                         <td><a href="https://wa.me/{{ l.customer_phone }}" target="_blank" style="color: var(--brand); font-family: 'Montserrat'; font-size: 0.8rem;">{{ l.customer_phone }} &nearr;</a></td>
                         <td style="font-family: 'Montserrat'; font-weight: 600;">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
                         <td>
-                            <!-- 🔄 AUTO-SUBMITTING STATUS SELECTOR -->
                             <form action="/{{ kiosk.slug }}/order/{{ l.id }}/status" method="POST" style="margin: 0;">
                                 <select name="status" onchange="this.form.submit()" class="status-select status-{{ l.status }}">
                                     <option value="pending" {% if l.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
@@ -189,7 +187,10 @@
                                 </select>
                             </form>
                         </td>
-                        <td><a href="/receipt/{{ l.order_ref }}" target="_blank" style="color: var(--dark); font-weight: bold; font-size: 0.75rem;">View &darr;</a></td>
+                        <td style="white-space: nowrap;">
+                            <a href="/receipt/{{ l.order_ref }}?doc=invoice" target="_blank" style="color: var(--brand); font-weight: 600; font-size: 0.7rem; text-decoration: underline; margin-right: 8px;">Invoice 📄</a>
+                            <a href="/receipt/{{ l.order_ref }}?doc=receipt" target="_blank" style="color: #16a34a; font-weight: 600; font-size: 0.7rem; text-decoration: underline;">Receipt 🧾</a>
+                        </td>
                     </tr>
                     {% else %}
                     <tr><td colspan="6" style="text-align: center; color: var(--gray); font-style: italic;">No orders captured yet.</td></tr>
@@ -242,7 +243,7 @@
                 <!-- Receipt Signature Style Picker -->
                 <div style="background: #fff9f5; border-left: 4px solid var(--brand); padding: 20px;">
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
-                        Select Your Signature Receipt Style
+                        Select Your Signature Invoice / Receipt Style
                     </label>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
                         <label style="border: 2px solid {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}var(--brand){% else %}#eee{% endif %}; padding: 12px; background: white; cursor: pointer; display: flex; align-items: center; gap: 8px;">
