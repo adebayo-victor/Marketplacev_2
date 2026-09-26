@@ -1,14 +1,7 @@
 {
-  "version": 2,
   "functions": {
     "run.py": {
       "maxDuration": 60
     }
-  },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "run.py"
-    }
-  ]
+  }
 }
