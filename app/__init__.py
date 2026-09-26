@@ -57,13 +57,14 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
-        # 🛡️ Seamless PostgreSQL Migration (Never wipe DB for this column!)
+        # 🛡️ Seamless PostgreSQL Migration (Zero DB wipe required!)
         try:
             with db.engine.connect() as conn:
                 conn.execute(db.text("ALTER TABLE products ADD COLUMN IF NOT EXISTS is_unlimited_stock BOOLEAN DEFAULT FALSE"))
+                conn.execute(db.text("ALTER TABLE stores ADD COLUMN IF NOT EXISTS build_status VARCHAR(20) DEFAULT 'ready'"))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Auto-migration notice: {e}")
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
