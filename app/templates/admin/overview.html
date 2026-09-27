@@ -100,12 +100,12 @@
     </table>
 </div>
 
-<!-- 🏪 KIOSKS REGISTRY TABLE -->
+<!-- 🏪 KIOSKS REGISTRY TABLE (WITH 1-CLICK UNLOCK BUTTON!) -->
 <div class="section-box">
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div>
             <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">registered storefronts</h2>
-            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Inspect, review or rewrite template markup for any kiosk.</p>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Inspect, manage, or manually unlock any merchant kiosk.</p>
         </div>
         <input type="text" id="kioskSearch" onkeyup="filterTable('kiosksTable', this.value)" 
                placeholder="Search kiosks by name or slug..." 
@@ -120,7 +120,7 @@
                 <th class="py-3">Visits</th>
                 <th class="py-3">Products</th>
                 <th class="py-3">Status</th>
-                <th class="py-3 text-right">Actions</th>
+                <th class="py-3 text-right">Master Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -144,7 +144,16 @@
                     {% endif %}
                 </td>
                 <td class="py-4 text-right">
-                    <a href="/{{ k.slug }}/manage" class="btn-oak text-[0.65rem] py-1.5 px-3 mr-2 no-underline">
+                    <!-- 🔓 MASTER UNLOCK BUTTON -->
+                    {% if not k.is_active %}
+                    <form action="{{ url_for('admin.manual_unlock_kiosk', store_id=k.id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Unlock {{ k.name }} to the public for free?');">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-ui font-bold text-[0.65rem] px-3 py-1.5 rounded mr-1.5 cursor-pointer">
+                            UNLOCK 🔓
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    <a href="/{{ k.slug }}/manage" class="btn-oak text-[0.65rem] py-1.5 px-3 mr-1.5 no-underline">
                         MANAGE ⚙️
                     </a>
                     <a href="{{ url_for('admin.edit_template', store_id=k.id) }}" class="btn-clay text-[0.65rem] py-1.5 px-3 no-underline">
