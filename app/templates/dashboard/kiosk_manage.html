@@ -118,7 +118,7 @@
         <div class="section-box" id="inventory">
             <a href="/{{ kiosk.slug }}/product/new" class="btn-add">+ ADD PRODUCT</a>
             <h2>Inventory</h2>
-            <input type="text" class="search-input" onkeyup="searchTable('inventoryTable', this.value)" placeholder="Search products...">
+            <input type="text" class="search-input" onkeyup="searchTable('inventoryTable', this.value)" placeholder="Search products by name...">
             <table id="inventoryTable">
                 <thead>
                     <tr><th>Product Name</th><th>Price</th><th>Stock</th><th>Action</th></tr>
@@ -162,9 +162,11 @@
             </table>
         </div>
 
-        <!-- Section 2: Customer Leads & Orders -->
+        <!-- Section 2: Customer Leads & Orders (WITH LIVE LEADS SEARCH BAR!) -->
         <div class="section-box" id="leads">
             <h2>Customer Leads & Orders</h2>
+            <!-- 🔍 SEARCH ORDERS/LEADS INPUT -->
+            <input type="text" class="search-input" onkeyup="searchTable('leadsTable', this.value)" placeholder="Search orders by customer name, phone, or order ref (#)..." style="margin-bottom: 10px;">
             <table id="leadsTable">
                 <thead>
                     <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th><th>Documents</th></tr>
@@ -218,13 +220,11 @@
                     <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ kiosk.bio }}</textarea>
                 </div>
 
-                <!-- Section Activation -->
                 <div style="background: #fafafa; border: 1px solid #eee; padding: 20px;">
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
                         Website Section Activation
                     </label>
-                    <p style="font-size: 0.7rem; color: var(--gray); margin-top: 0; margin-bottom: 12px;">Toggle which sections display on your public storefront:</p>
-                    <div style="display: flex; gap: 20px; font-family: 'Montserrat'; font-size: 0.75rem;">
+                    <div style="display: flex; gap: 20px; font-family: 'Montserrat'; font-size: 0.75rem; margin-top: 10px;">
                         <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
                             <input type="checkbox" name="section_hero" {% if kiosk.is_section_active('hero') %}checked{% endif %} style="accent-color: var(--brand);">
                             Hero Banner
@@ -240,7 +240,6 @@
                     </div>
                 </div>
 
-                <!-- Receipt Signature Style Picker -->
                 <div style="background: #fff9f5; border-left: 4px solid var(--brand); padding: 20px;">
                     <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 5px;">
                         Select Your Signature Invoice / Receipt Style
@@ -263,7 +262,6 @@
                     </div>
                 </div>
 
-                <!-- Social Proof -->
                 <div style="background: white; border: 1px solid #eee; padding: 15px;">
                     <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
                         <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} style="margin-right: 8px;">
@@ -271,7 +269,6 @@
                     </label>
                 </div>
 
-                <!-- Image Uploads -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div>
                         <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">Store Logo</label>
