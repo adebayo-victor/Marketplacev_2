@@ -53,12 +53,26 @@ def overview():
 
 
 # -------------------------------------------------------------
-# 👤 1-CLICK MERCHANT IMPERSONATION (ENTER ANY MERCHANT ACCOUNT)
+# 🔓 MASTER ADMIN MANUAL KIOSK UNLOCK (1-MONTH / LIFETIME OVERRIDE)
+# -------------------------------------------------------------
+@admin_bp.route('/kiosk/<int:store_id>/unlock', methods=['POST'])
+@admin_required
+def manual_unlock_kiosk(store_id):
+    """Allows Master Admin to manually activate any kiosk without payment."""
+    kiosk = Store.query.get_or_404(store_id)
+    kiosk.is_active = True
+    kiosk.has_ever_activated = True
+    db.session.commit()
+    flash(f'🎉 Kiosk "{kiosk.name}" has been manually UNLOCKED by Admin!', 'success')
+    return redirect(url_for('admin.overview'))
+
+
+# -------------------------------------------------------------
+# 👤 1-CLICK MERCHANT IMPERSONATION
 # -------------------------------------------------------------
 @admin_bp.route('/impersonate/<int:user_id>')
 @admin_required
 def impersonate(user_id):
-    """Allows Master Admin to switch into any merchant's account with one click."""
     target_user = User.query.get_or_404(user_id)
     session['admin_override_id'] = current_user.id
     session['is_master_admin'] = True
@@ -68,9 +82,6 @@ def impersonate(user_id):
     return redirect(url_for('dashboard.overview'))
 
 
-# -------------------------------------------------------------
-# 🎫 PASSWORD RESET HELPDESK QUEUE
-# -------------------------------------------------------------
 @admin_bp.route('/resets')
 @admin_required
 def reset_tickets():
@@ -120,9 +131,6 @@ def reject_reset(ticket_id):
     return redirect(url_for('admin.reset_tickets'))
 
 
-# -------------------------------------------------------------
-# 🛠️ TEMPLATE EDITOR & SECRETS MANAGER
-# -------------------------------------------------------------
 @admin_bp.route('/kiosk/<int:store_id>/template', methods=['GET', 'POST'])
 @admin_required
 def edit_template(store_id):
