@@ -4,11 +4,64 @@ import json
 import urllib.request
 import urllib.error
 
-# 🛡️ THE BULLETPROOF INTERACTIVE ENGINE (INJECTED INTO EVERY GENERATED KIOSK)
+# 🛡️ THE BULLETPROOF INTERACTIVE ENGINE (WITH PURE CSS FAILSAFES - CAN NEVER LEAK ON SCREEN)
 GUARANTEED_CART_ENGINE = """
 <!-- ========================================== -->
 <!-- BULLETPROOF SHOPPING BAG & CHECKOUT ENGINE -->
 <!-- ========================================== -->
+<style>
+    /* Strict Failsafe CSS: Modal & Drawer can NEVER appear at the bottom of the page */
+    #productModal {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+        backdrop-filter: blur(6px) !important;
+        z-index: 999999 !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 16px !important;
+        box-sizing: border-box !important;
+    }
+    #productModal.active {
+        display: flex !important;
+    }
+    #cartOverlay {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        background: rgba(0, 0, 0, 0.6) !important;
+        backdrop-filter: blur(4px) !important;
+        z-index: 999998 !important;
+    }
+    #cartOverlay.active {
+        display: block !important;
+    }
+    #cartDrawer {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        max-width: 420px !important;
+        background: #111218 !important;
+        color: #f4f4f5 !important;
+        border-left: 1px solid #27272a !important;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.6) !important;
+        z-index: 999999 !important;
+        transform: translateX(100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        padding: 24px !important;
+        box-sizing: border-box !important;
+    }
+    #cartDrawer.open {
+        transform: translateX(0%) !important;
+    }
+</style>
+
 <script>
     window.KIOSK_PRODUCTS = {
         {% for p in regular_products + flash_sales %}
@@ -24,30 +77,30 @@ GUARANTEED_CART_ENGINE = """
 </script>
 
 <!-- Product Specs & Options Modal -->
-<div id="productModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 hidden">
-    <div class="bg-[#14161f] border border-blue-500/40 p-8 max-w-sm w-full rounded-3xl shadow-2xl relative text-white">
+<div id="productModal">
+    <div class="bg-[#14161f] border border-stone-800 p-6 md:p-8 max-w-sm w-full rounded-3xl shadow-2xl relative text-white">
         <button type="button" onclick="closeProductModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white font-bold text-xl cursor-pointer">&times;</button>
-        <span class="text-[10px] font-mono text-amber-400 uppercase tracking-widest block mb-1">Select Options & Specs</span>
-        <h3 id="modalProductName" class="font-black text-lg text-white mb-2 uppercase"></h3>
+        <span class="text-[10px] font-mono text-amber-400 uppercase tracking-widest block mb-1">Select Specifications</span>
+        <h3 id="modalProductName" class="font-bold text-lg text-white mb-2 uppercase"></h3>
         <p id="modalProductDesc" class="text-xs text-stone-400 mb-4 leading-relaxed"></p>
         <p id="modalProductPrice" class="font-mono text-2xl font-black text-amber-400 mb-6"></p>
 
         <div id="modalVariantsContainer" class="space-y-4 mb-6"></div>
 
         <button type="button" onclick="confirmAddToCart()" 
-                class="w-full bg-amber-400 hover:bg-amber-300 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg shadow-amber-400/20">
+                class="w-full bg-amber-400 hover:bg-amber-300 text-black font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg">
             ADD TO BAG &rarr;
         </button>
     </div>
 </div>
 
 <!-- Slide-Out Shopping Bag Drawer -->
-<div id="cartOverlay" onclick="toggleCart()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998] hidden"></div>
-<aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#111218] border-l border-stone-800 z-[99999] p-6 flex flex-col justify-between translate-x-full transition-transform duration-300 text-white">
+<div id="cartOverlay" onclick="toggleCart()"></div>
+<aside id="cartDrawer">
     <div>
         <div class="flex justify-between items-center pb-4 border-b border-stone-800 mb-6">
             <div>
-                <h3 class="font-black text-base uppercase tracking-wider text-white m-0">Your Shopping Bag</h3>
+                <h3 class="font-bold text-base uppercase tracking-wider text-white m-0">Your Shopping Bag</h3>
                 <span class="text-[10px] text-stone-400 font-mono">Direct WhatsApp Intake</span>
             </div>
             <button type="button" onclick="toggleCart()" class="text-xs font-mono font-bold text-stone-400 hover:text-white cursor-pointer">&times; CLOSE</button>
@@ -63,14 +116,14 @@ GUARANTEED_CART_ENGINE = """
 
         <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
             <input type="text" id="custName" required placeholder="Your Full Name" 
-                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500">
+                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-amber-400">
             <input type="text" id="custPhone" required placeholder="WhatsApp Number (e.g. 08012345678)" 
-                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500">
+                   class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-amber-400">
             <textarea id="custAddress" required placeholder="Delivery Address / City / Notes" rows="2" 
-                      class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-blue-500"></textarea>
+                      class="w-full p-3 bg-[#181a24] border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-amber-400"></textarea>
 
             <button type="submit" id="checkoutBtn" 
-                    class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg shadow-green-600/20">
+                    class="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-black py-4 rounded-xl text-xs uppercase tracking-wider transition cursor-pointer shadow-lg">
                 COMPLETE ORDER ON WHATSAPP &rarr;
             </button>
         </form>
@@ -86,8 +139,8 @@ GUARANTEED_CART_ENGINE = """
     function toggleCart() {
         const drawer = document.getElementById('cartDrawer');
         const overlay = document.getElementById('cartOverlay');
-        if (drawer) drawer.classList.toggle('translate-x-full');
-        if (overlay) overlay.classList.toggle('hidden');
+        if (drawer) drawer.classList.toggle('open');
+        if (overlay) overlay.classList.toggle('active');
     }
 
     function openProductModal(productId) {
@@ -114,11 +167,13 @@ GUARANTEED_CART_ENGINE = """
             container.appendChild(group);
         }
 
-        document.getElementById('productModal').classList.remove('hidden');
+        const modal = document.getElementById('productModal');
+        if (modal) modal.classList.add('active');
     }
 
     function closeProductModal() {
-        document.getElementById('productModal').classList.add('hidden');
+        const modal = document.getElementById('productModal');
+        if (modal) modal.classList.remove('active');
         currentModalProduct = null;
     }
 
@@ -162,7 +217,7 @@ GUARANTEED_CART_ENGINE = """
                 <div>
                     <strong class="text-white block font-bold">${item.name}</strong>
                     ${item.variants ? `<span class="text-[10px] text-amber-400 block">${item.variants}</span>` : ''}
-                    <span class="text-blue-400 font-bold mt-1 block">${storeCurrency}${item.price.toLocaleString()}</span>
+                    <span class="text-emerald-400 font-bold mt-1 block">${storeCurrency}${item.price.toLocaleString()}</span>
                 </div>
                 <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-400 hover:text-rose-300 font-bold ml-3 text-base cursor-pointer">&times;</button>
             `;
@@ -222,17 +277,30 @@ def clean_html_fences(raw_text: str) -> str:
 
 
 def inject_bulletproof_chassis(html_content: str) -> str:
-    """Strips AI-attempted broken modals and cleanly injects our tested cart engine."""
+    """
+    1. Ensures Tailwind CSS CDN is in <head>.
+    2. Strips broken/empty <img> tags so broken icon boxes never display.
+    3. Injects the guaranteed pure-CSS-hidden cart & modal engine.
+    """
+    # 1. Guarantee Tailwind CDN in <head>
+    if 'cdn.tailwindcss.com' not in html_content and '<head>' in html_content:
+        html_content = html_content.replace('<head>', '<head>\n<script src="https://cdn.tailwindcss.com"></script>')
+
+    # 2. Strip any broken/empty image tags where src is empty or missing
+    html_content = re.sub(r'<img[^>]+src=["\']\s*["\'][^>]*>', '', html_content)
+    html_content = re.sub(r'<img[^>]+src=["\']None["\'][^>]*>', '', html_content)
+
+    # 3. Strip any broken modals the AI tried to write
     html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL)
     html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL)
 
+    # 4. Inject guaranteed engine
     if '</body>' in html_content:
         return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>')
     return html_content + '\n' + GUARANTEED_CART_ENGINE
 
 
 def query_openrouter(prompt_instruction: str, api_key: str) -> str:
-    """Queries OpenRouter using high-speed models that respond in ~2-3 seconds."""
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Authorization": "Bearer " + api_key.strip(),
@@ -267,45 +335,28 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
     MASTER DESIGN AGENCY PROMPT:
-    Forces the AI to generate high-end, bespoke boutique storefronts
-    with custom typography, ghost backdrops, layered depth, and micro-tags.
+    Enforces niche-appropriate badges and strictly forbids empty <img> tags.
     """
     system_instruction = (
-        'You are an award-winning creative art director and lead web architect. You design bespoke, $10,000 storefronts for high-end boutique brands.\n'
-        'You NEVER build generic, pale, plain, or cookie-cutter templates. Every site you create looks like an editorial showcase from Awwwards or Dribbble.\n\n'
+        'You are an elite creative director designing a custom storefront website for a brand named "' + kiosk_name + '".\n'
+        'You NEVER build generic, plain, or cookie-cutter templates.\n\n'
         'CLIENT BRIEF:\n'
         '- Brand Name: "' + kiosk_name + '"\n'
-        '- Creative Design Request: "' + prompt + '"\n'
+        '- Design Instructions & Category: "' + prompt + '"\n'
         '- Brand Bio: "' + bio + '"\n'
         '- Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", Currency="' + currency + '"\n\n'
-        'EXECUTIVE DESIGN SPECIFICATIONS (FOLLOW EXACTLY):\n\n'
-        '1. TYPOGRAPHY PAIRINGS:\n'
-        '   - Import TWO contrasting Google Fonts in the <head>:\n'
-        '     • Display/Headline Font: One of ["Syne", "Space Grotesk", "Clash Display", "Cinzel", "Outfit", "Playfair Display"].\n'
-        '     • Body/UI Font: One of ["Space Grotesk", "Plus Jakarta Sans", "JetBrains Mono", "Inter"].\n\n'
-        '2. COLOR HARMONY & DEPTH:\n'
-        '   - Use rich layered surfaces with deep contrast (e.g. obsidian #09090b, deep charcoal #12131a, midnight navy, warm espresso, or vibrant boutique tones).\n'
-        '   - Add glow shadows to buttons (e.g. shadow-lg shadow-amber-400/20 or shadow-cyan-500/20).\n'
-        '   - Add subtle border glows on cards with hover states.\n'
-        '   -A dark and light mode toggle button. \n\n'
-        '3. THE "GHOST WATERMARK" HERO SECTION:\n'
-        '   - Build a dramatic hero container with rounded-3xl corners.\n'
-        '   - Include a pre-headline badge pill (e.g. "⚡ LIMITED RUN // EXCLUSIVE APPAREL" or "⚡ AUDITED CODE // INSTANT INTAKE").\n'
-        '   - Headline: Massive, bold, characterful typography (text-3xl md:text-5xl font-black uppercase tracking-tight).\n'
-        '   - In the background of the hero container, embed an OVERSIZED semi-transparent ghost word from the brand name (e.g. class="absolute -right-8 -bottom-12 opacity-5 text-8xl md:text-9xl font-black uppercase select-none pointer-events-none") for depth.\n\n'
-        '4. PRODUCT CATALOG CARDS:\n'
-        '   - Iterate using: {% for p in regular_products %} ... {% endfor %}\n'
-        '   - Image container: Clean aspect ratio with dark/contrast backdrop.\n'
-        '   - Above product title: Include an editorial micro-tag (e.g. <span class="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block mb-1">[VERIFIED // DROP]</span>).\n'
-        '   - Title ({{ p.name }}), Description ({{ p.description }}), Stock units remaining.\n'
-        '   - Price block: If p.has_discount, show strikethrough original and bold colored current price.\n'
-        '   - Action Button: Prominent, high-contrast, uppercase button that calls: onclick="openProductModal({{ p.id }})"\n\n'
-        '5. FLASH SALES SECTION:\n'
-        '   - Include: {% if flash_sales %} ... with 🔥 FLASH DROP badge and urgent action buttons ... {% endif %}\n\n'
-        '6. HEADER & FOOTER:\n'
-        '   - Sticky glassmorphism header with logo/avatar, brand title with VERIFIED badge, and a BAG button with onclick="toggleCart()" containing <span id="cartCountBadge">0</span>.\n'
-        '   - Footer with "Powered by Marketplace • ' + kiosk_name + '".\n\n'
-        'IMPORTANT: Do NOT write the modal or cart drawer HTML yourself. It is automatically injected. Just deliver the complete, stunning visual page from <!DOCTYPE html> to </html>!\n'
+        'CRITICAL RULES:\n'
+        '1. In <head>, YOU MUST INCLUDE: <script src="https://cdn.tailwindcss.com"></script> and link Google Fonts matching the niche.\n'
+        '2. HERO SECTION:\n'
+        '   - Pre-headline pill badge MUST MATCH THE NICHE (e.g. for perfume use "✨ ARTISANAL EXTRAIT // RARE SCENTS", for food use "🔥 FLAME GRILLED // FRESH ORDER", for tech use "⚡ VERIFIED SCRIPT"). NEVER put apparel badges on perfume or food!\n'
+        '   - HERO IMAGE: Only render an <img> tag for the hero if hero_url is provided. If hero_url is empty, DO NOT render an empty <img> tag!\n'
+        '   - Background ghost word: In the hero container background, embed an oversized subtle ghost word of the brand name with opacity-5.\n'
+        '3. HEADER: In the top bar, include a prominent BAG button that calls onclick="toggleCart()" with an element <span id="cartCountBadge">0</span>.\n'
+        '4. PRODUCTS LOOP: Iterate using:\n'
+        '   {% for p in regular_products %} ...\n'
+        '   Every product card MUST have an order button calling: onclick="openProductModal({{ p.id }})"\n'
+        '   {% endfor %}\n'
+        '5. DO NOT write the modal or cart drawer yourself. It is automatically injected.\n'
         'Output ONLY pure HTML. No markdown code blocks.'
     )
 
