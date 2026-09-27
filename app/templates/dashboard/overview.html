@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Merchant Hub // Marketplace</title>
-    
-    <!-- Real Paystack SDK -->
     <script src="https://js.paystack.co/v1/inline.js"></script>
 
     <style>
@@ -31,7 +29,7 @@
             border-bottom: 1px solid #eee;
         }
         .container { padding: 60px 5%; max-width: 1200px; margin: 0 auto; }
-        .welcome-header { margin-bottom: 50px; }
+        .welcome-header { margin-bottom: 30px; }
         .welcome-header h1 { 
             font-family: 'Montserrat'; font-size: 2.5rem; text-transform: lowercase; 
             margin: 0; letter-spacing: -1px; 
@@ -91,6 +89,7 @@
             background: #16a34a; color: white; padding: 8px 14px; 
             border: none; cursor: pointer; font-family: 'Montserrat'; 
             font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; 
+            transition: all 0.2s ease;
         }
         .btn-pay-small:hover { background: #15803d; }
         
@@ -141,19 +140,25 @@
             {% endif %}
         {% endwith %}
 
-        <div class="welcome-header">
-            <h1>welcome, {{ current_user.username }}.</h1>
-            <p style="font-style: italic; opacity: 0.6;">Your collection of active storefronts.</p>
+        <div class="welcome-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px;">
+            <div>
+                <h1>welcome, {{ current_user.username }}.</h1>
+                <p style="font-style: italic; opacity: 0.6; margin: 5px 0 0 0;">Your collection of active storefronts.</p>
+            </div>
+            
+            <!-- 🔍 SEARCH KIOSKS INPUT -->
+            <input type="text" id="kioskSearchHub" onkeyup="filterKiosksHub(this.value)" 
+                   placeholder="Search your storefronts..." 
+                   style="padding: 12px 18px; border: 1px solid #ddd; background: white; font-family: 'Montserrat'; font-size: 0.75rem; width: 280px; outline: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
         </div>
 
-        <div class="kiosk-grid">
+        <div class="kiosk-grid" id="kiosksGrid">
             {% for kiosk in kiosks %}
-            <div class="kiosk-card" id="card-{{ kiosk.slug }}" data-status="{{ kiosk.build_status }}">
+            <div class="kiosk-card" id="card-{{ kiosk.slug }}" data-name="{{ kiosk.name|lower }}" data-status="{{ kiosk.build_status }}">
                 <div>
                     <div class="kiosk-card-header">
                         <h3>{{ kiosk.name }}</h3>
                         
-                        <!-- 🏷️ STATUS BADGES (Building vs Live vs Preview) -->
                         {% if kiosk.build_status == 'building' %}
                             <span class="building-badge animate-pulse">⏳ BUILDING IN BACKGROUND</span>
                         {% elif kiosk.is_active %}
@@ -188,10 +193,9 @@
                         </div>
                     </div>
 
-                    <!-- 🔘 ACTION BUTTONS: LOCKED/DISABLED IF STILL BUILDING -->
                     <div class="actions">
                         {% if kiosk.build_status == 'building' %}
-                            <button type="button" class="btn btn-disabled" title="Cannot open yet — AI is assembling this kiosk">LOCKED ⏳</button>
+                            <button type="button" class="btn btn-disabled">LOCKED ⏳</button>
                             <button type="button" class="btn btn-disabled">PREVIEW ⏳</button>
                             <button type="button" class="btn btn-disabled">COPY LINK</button>
                             <button type="button" class="btn btn-disabled">WAITING ON AI...</button>
@@ -203,12 +207,12 @@
                         {% endif %}
                     </div>
 
-                    <!-- 💳 PAYSTACK ACTIVATION (ONLY ONCE READY & IF LOCKED) -->
+                    <!-- 💳 REAL PAYSTACK ACTIVATION (₦5,000) -->
                     {% if kiosk.build_status != 'building' and not kiosk.is_active %}
                     <div class="pay-ribbon">
                         <span class="pay-ribbon-text">Hidden from customers</span>
                         <button onclick="payToActivateReal('{{ kiosk.slug }}', '{{ kiosk.name }}')" class="btn-pay-small">
-                            Go Live (₦10,000) &rarr;
+                            Go Live (₦5,000) &rarr;
                         </button>
                     </div>
                     {% endif %}
@@ -224,7 +228,6 @@
         <a href="/kiosk/new" class="btn-add-kiosk">+ OPEN A NEW KIOSK</a>
     </div>
 
-    <!-- Phone Preview Modal -->
     <div id="previewModal" class="preview-modal">
         <div class="phone-frame">
             <button onclick="closePhonePreview()" class="phone-close">&times;</button>
@@ -235,6 +238,14 @@
     </div>
 
     <script>
+        function filterKiosksHub(query) {
+            const filter = query.toLowerCase();
+            document.querySelectorAll('.kiosk-card').forEach(card => {
+                const name = card.getAttribute('data-name') || '';
+                card.style.display = name.includes(filter) ? '' : 'none';
+            });
+        }
+
         function openPhonePreview(slug) {
             document.getElementById('phoneIframe').src = '/' + slug;
             document.getElementById('previewModal').style.display = 'flex';
@@ -253,7 +264,6 @@
             }).catch(() => { prompt('Copy link:', fullUrl); });
         }
 
-        // 💳 REAL PAYSTACK CHECKOUT (ZERO SIMULATION)
         function payToActivateReal(kioskSlug, kioskName) {
             const paystackPubKey = "{{ config.PAYSTACK_PUBLIC_KEY or '' }}";
             const userEmail = "{{ current_user.email }}";
@@ -266,7 +276,7 @@
             const handler = PaystackPop.setup({
                 key: paystackPubKey,
                 email: userEmail,
-                amount: 1000000, // ₦10,000 in kobo
+                amount: 500000,
                 currency: "NGN",
                 ref: 'ACT_' + Math.floor((Math.random() * 1000000000) + 1),
                 metadata: {
@@ -285,7 +295,6 @@
             handler.openIframe();
         }
 
-        // 🔄 SILENT BACKGROUND STATUS POLLER: Auto-unlocks card as soon as AI finishes!
         document.addEventListener('DOMContentLoaded', function() {
             const buildingCards = document.querySelectorAll('.kiosk-card[data-status="building"]');
             if (buildingCards.length > 0) {
@@ -298,7 +307,7 @@
                             const data = await res.json();
                             if (data.build_status === 'ready') {
                                 clearInterval(poller);
-                                window.location.reload(); // Auto-unlock with full access!
+                                window.location.reload();
                                 return;
                             } else {
                                 allFinished = false;
@@ -308,7 +317,7 @@
                         }
                     }
                     if (allFinished) clearInterval(poller);
-                }, 3000); // Checks every 3 seconds
+                }, 3000);
             }
         });
     </script>
