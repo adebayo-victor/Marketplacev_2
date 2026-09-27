@@ -20,7 +20,6 @@ def slugify(text: str) -> str:
 
 
 def async_ai_kiosk_builder(app, store_id, name, bio, full_prompt, logo_url, hero_url, bg_url):
-    """Independent background worker that builds the AI storefront safely without being cancelled."""
     with app.app_context():
         try:
             print(f"[BACKGROUND AI] Building storefront for Store #{store_id} ({name})...")
@@ -36,7 +35,7 @@ def async_ai_kiosk_builder(app, store_id, name, bio, full_prompt, logo_url, hero
             store = Store.query.get(store_id)
             if store:
                 store.custom_html = generated_html or ""
-                store.build_status = 'ready'  # ✅ Unlocks the kiosk!
+                store.build_status = 'ready'
                 db.session.commit()
                 print(f"[BACKGROUND AI] ✅ Store #{store_id} ({name}) is READY and UNLOCKED!")
         except Exception as e:
@@ -47,9 +46,6 @@ def async_ai_kiosk_builder(app, store_id, name, bio, full_prompt, logo_url, hero
                 db.session.commit()
 
 
-# -------------------------------------------------------------
-# LEVEL 1: THE MERCHANT HUB (/dashboard)
-# -------------------------------------------------------------
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
@@ -57,9 +53,6 @@ def overview():
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
-# -------------------------------------------------------------
-# OPEN A NEW KIOSK (BACKGROUND CREATION: HUB VISIBLE FIRST)
-# -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -99,7 +92,6 @@ def new_kiosk():
 
         clean_phone = clean_phone_number(whatsapp)
 
-        # 1. Register Kiosk with build_status = 'building' (Locked until AI completes)
         store = Store(
             user_id=current_user.id,
             name=name,
@@ -113,7 +105,7 @@ def new_kiosk():
             sections_config=json.dumps(sections_dict),
             is_active=False,
             has_ever_activated=False,
-            build_status='building',  # ⏳ Locked until AI worker finishes!
+            build_status='building',
             custom_html=""
         )
         db.session.add(store)
@@ -125,7 +117,6 @@ def new_kiosk():
 
         db.session.commit()
 
-        # 2. ⚡ Launch Autonomous Background Thread (Protected from user navigation)
         full_design_prompt = f"Category: {category}. Client Style Notes: {ai_prompt or 'Bespoke modern storefront'}"
         app_instance = current_app._get_current_object()
         thread = threading.Thread(
@@ -135,16 +126,12 @@ def new_kiosk():
         thread.daemon = True
         thread.start()
 
-        # 3. 🚀 User goes straight to Hub; they see the building card immediately!
         flash(f'⏳ Kiosk "{name}" is being assembled by AI in the background! You can see it in your hub below.', 'info')
         return redirect(url_for('dashboard.overview'))
 
     return render_template('dashboard/kiosk_new.html')
 
 
-# -------------------------------------------------------------
-# 📡 LIVE BUILD STATUS POLLING (Auto-unlocks Hub cards)
-# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/status')
 @login_required
 def check_build_status(kiosk_slug):
@@ -157,11 +144,12 @@ def check_build_status(kiosk_slug):
 
 
 # -------------------------------------------------------------
-# 💳 REAL PAYSTACK ACTIVATION (STRICT ₦10,000 VERIFICATION)
+# 💳 REAL PAYSTACK ACTIVATION (FIXED 403 USER-AGENT & ₦5,000)
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
 def verify_kiosk_activation(kiosk_slug):
+    """Verifies real Paystack transaction via Paystack REST API."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
@@ -177,12 +165,13 @@ def verify_kiosk_activation(kiosk_slug):
         flash('Paystack is not configured. Please add PAYSTACK_SECRET_KEY in Master Command (/admin/system/env).', 'danger')
         return redirect(url_for('dashboard.overview'))
 
-    # Strict Real Paystack Verification
+    # Real Paystack Verification with Custom User-Agent (Fixes 403 Forbidden!)
     try:
         url = f"https://api.paystack.co/transaction/verify/{reference}"
         req = urllib.request.Request(url, headers={
             "Authorization": f"Bearer {paystack_secret}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "Marketplace/2.0 (Mozilla/5.0)"  # <-- Bypasses Cloudflare 403 block!
         })
         with urllib.request.urlopen(req, timeout=20) as res:
             res_data = json.loads(res.read().decode('utf-8'))
@@ -190,26 +179,26 @@ def verify_kiosk_activation(kiosk_slug):
             if res_data.get('status') and res_data.get('data', {}).get('status') == 'success':
                 paid_amount = res_data['data']['amount']
                 
-                # Must be at least ₦10,000 (1,000,000 kobo)
-                if paid_amount >= 1000000:
+                # Check for minimum ₦5,000 (500,000 kobo)
+                if paid_amount >= 500000:
                     kiosk.is_active = True
                     kiosk.has_ever_activated = True
                     db.session.commit()
                     flash(f'🎉 Real Paystack payment of ₦{paid_amount/100:,.2f} verified! Kiosk "{kiosk.name}" is now officially LIVE!', 'success')
                 else:
-                    flash(f'Payment rejected: Underpaid amount ({paid_amount/100} NGN). Required ₦10,000.', 'danger')
+                    flash(f'Payment rejected: Underpaid amount ({paid_amount/100} NGN). Required ₦5,000.', 'danger')
             else:
                 gateway_msg = res_data.get('data', {}).get('gateway_response', 'Transaction was declined.')
                 flash(f'Paystack Payment Failed: {gateway_msg}', 'danger')
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        flash(f'Paystack Verification Error: HTTP {e.code} - {error_body}', 'danger')
     except Exception as e:
         flash(f'Paystack Verification Error: {e}', 'danger')
 
     return redirect(url_for('dashboard.overview'))
 
 
-# -------------------------------------------------------------
-# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (PROTECTED FROM ACCESS)
-# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
 def manage_kiosk(kiosk_slug):
@@ -217,7 +206,6 @@ def manage_kiosk(kiosk_slug):
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
-    # 🛑 If still building, prevent access!
     if kiosk.build_status == 'building':
         flash(f'⏳ Hold on! Kiosk "{kiosk.name}" is still being assembled by the AI engine. You cannot open it until creation is finished.', 'warning')
         return redirect(url_for('dashboard.overview'))
@@ -235,7 +223,6 @@ def manage_kiosk(kiosk_slug):
     )
 
 
-# Update Order Status
 @dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
 @login_required
 def update_order_status(kiosk_slug, order_id):
@@ -466,7 +453,7 @@ def update_kiosk_ads(kiosk_slug):
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
-# Delete kiosk
+# Delete kiosk safely
 @dashboard_bp.route('/<kiosk_slug>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_kiosk(kiosk_slug):
