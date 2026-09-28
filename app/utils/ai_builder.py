@@ -64,14 +64,13 @@ GUARANTEED_CART_ENGINE = """
 
 <script>
     window.KIOSK_PRODUCTS = {
-        {% for p in (regular_products or []) + (flash_sales or []) %}
+        {% for p in regular_products + flash_sales %}
         "{{ p.id }}": {
             "id": {{ p.id }},
             "name": {{ p.name|tojson }},
-            "price": {{ (p.current_price if p.current_price is defined else (p.original_price if p.original_price is defined else 0)) }},
-            "image": {{ (p.image or "")|tojson }},
-            "description": {{ (p.description or "")|tojson }},
-            "attributes": {{ (p.get_attributes() if p.get_attributes is defined and callable(p.get_attributes) else {})|tojson }}
+            "price": {{ p.current_price }},
+            "description": {{ p.description|tojson }},
+            "attributes": {{ p.get_attributes()|tojson }}
         },
         {% endfor %}
     };
@@ -112,7 +111,7 @@ GUARANTEED_CART_ENGINE = """
     <div class="pt-6 border-t border-stone-800">
         <div class="flex justify-between items-center mb-6 font-mono">
             <span class="text-xs uppercase text-stone-400">Total:</span>
-            <span id="cartTotalPrice" class="font-black text-2xl text-amber-400">{{ (store.currency if store is defined and store.currency else '₦') }}0.00</span>
+            <span id="cartTotalPrice" class="font-black text-2xl text-amber-400">{{ store.currency }}0.00</span>
         </div>
 
         <form id="checkoutForm" onsubmit="handleCheckout(event)" class="space-y-3">
@@ -132,8 +131,8 @@ GUARANTEED_CART_ENGINE = """
 </aside>
 
 <script>
-    const storeSlug = {{ (store.slug if store is defined else '')|tojson }};
-    const storeCurrency = {{ (store.currency if store is defined and store.currency else '₦')|tojson }};
+    const storeSlug = {{ store.slug|tojson }};
+    const storeCurrency = {{ store.currency|tojson }};
     let cart = [];
     let currentModalProduct = null;
 
@@ -144,19 +143,6 @@ GUARANTEED_CART_ENGINE = """
         if (overlay) overlay.classList.toggle('active');
     }
 
-    function filterProducts(query) {
-        const q = (query || '').toLowerCase().trim();
-        const cards = document.querySelectorAll('.product-card');
-        cards.forEach(card => {
-            const name = card.getAttribute('data-name') || card.innerText || '';
-            if (name.toLowerCase().includes(q)) {
-                card.style.display = '';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
     function openProductModal(productId) {
         const product = window.KIOSK_PRODUCTS[productId];
         if (!product) return;
@@ -164,26 +150,21 @@ GUARANTEED_CART_ENGINE = """
         currentModalProduct = product;
         document.getElementById('modalProductName').innerText = product.name;
         document.getElementById('modalProductDesc').innerText = product.description || '';
-        document.getElementById('modalProductPrice').innerText = `${storeCurrency}${Number(product.price).toLocaleString()}`;
+        document.getElementById('modalProductPrice').innerText = `${storeCurrency}${product.price.toLocaleString()}`;
 
         const container = document.getElementById('modalVariantsContainer');
         container.innerHTML = '';
 
         const attrs = product.attributes || {};
-        const attrKeys = Object.keys(attrs);
-
-        if (attrKeys.length > 0) {
-            for (const [attr, opts] of Object.entries(attrs)) {
-                if (!Array.isArray(opts) || opts.length === 0) continue;
-                const group = document.createElement('div');
-                group.innerHTML = `
-                    <label class='block font-mono text-[10px] uppercase text-amber-400 mb-1 font-bold'>${attr}</label>
-                    <select class='variant-select w-full p-2.5 bg-[#181a24] border border-stone-800 text-white font-mono text-xs rounded-xl outline-none focus:border-amber-400' data-attr='${attr}'>
-                        ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
-                    </select>
-                `;
-                container.appendChild(group);
-            }
+        for (const [attr, opts] of Object.entries(attrs)) {
+            const group = document.createElement('div');
+            group.innerHTML = `
+                <label class='block font-mono text-[10px] uppercase text-amber-400 mb-1 font-bold'>${attr}</label>
+                <select class='variant-select w-full p-2.5 bg-[#181a24] border border-stone-800 text-white font-mono text-xs rounded-xl outline-none focus:border-amber-400' data-attr='${attr}'>
+                    ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+                </select>
+            `;
+            container.appendChild(group);
         }
 
         const modal = document.getElementById('productModal');
@@ -236,7 +217,7 @@ GUARANTEED_CART_ENGINE = """
                 <div>
                     <strong class="text-white block font-bold">${item.name}</strong>
                     ${item.variants ? `<span class="text-[10px] text-amber-400 block">${item.variants}</span>` : ''}
-                    <span class="text-emerald-400 font-bold mt-1 block">${storeCurrency}${Number(item.price).toLocaleString()}</span>
+                    <span class="text-emerald-400 font-bold mt-1 block">${storeCurrency}${item.price.toLocaleString()}</span>
                 </div>
                 <button type="button" onclick="cart.splice(${idx}, 1); updateCartUI();" class="text-rose-400 hover:text-rose-300 font-bold ml-3 text-base cursor-pointer">&times;</button>
             `;
@@ -292,9 +273,8 @@ GUARANTEED_CART_ENGINE = """
 
 def clean_html_fences(raw_text: str) -> str:
     raw_text = re.sub(r'^```html\s*', '', raw_text.strip(), flags=re.IGNORECASE)
-    raw_text = re.sub(r'^```\s*', '', raw_text.strip())
     raw_text = re.sub(r'```$', '', raw_text.strip())
-    return raw_text.strip()
+    return raw_text
 
 
 def inject_bulletproof_chassis(html_content: str, kiosk_name: str = '', bio: str = '', meta_img: str = '') -> str:
@@ -305,49 +285,47 @@ def inject_bulletproof_chassis(html_content: str, kiosk_name: str = '', bio: str
     4. Strips duplicated/broken AI-written modals.
     5. Injects the guaranteed pure-CSS-hidden cart & modal engine.
     """
+    # Build dynamic Open Graph / Meta tags
     safe_title = kiosk_name.strip() if kiosk_name else "{{ store.name }}"
-    safe_desc = bio.strip().replace('"', '&quot;') if bio else "{{ store.bio or 'Explore our catalog on Marketplace' }}"
-    safe_img = meta_img.strip() if meta_img else "{{ store.logo or store.hero_image or '' }}"
+    safe_desc = bio.strip().replace('"', '&quot;') if bio else "{{ store.tagline or 'Explore our catalog on Marketplace' }}"
+    safe_img = meta_img.strip() if meta_img else "{{ store.image_url or '' }}"
 
-    meta_tags = (
-        '    <meta charset="UTF-8">\n'
-        '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
-        f'    <title>{safe_title}</title>\n'
-        f'    <meta name="description" content="{safe_desc}">\n'
-        '    <meta property="og:type" content="website">\n'
-        '    <meta property="og:site_name" content="Marketplace">\n'
-        f'    <meta property="og:title" content="{safe_title}">\n'
-        f'    <meta property="og:description" content="{safe_desc}">\n'
-        f'    <meta property="og:image" content="{safe_img}">\n'
-        '    <meta name="twitter:card" content="summary_large_image">\n'
-        f'    <meta name="twitter:title" content="{safe_title}">\n'
-        f'    <meta name="twitter:description" content="{safe_desc}">\n'
-        f'    <meta name="twitter:image" content="{safe_img}">'
-    )
+    meta_tags = f"""
+    <!-- Dynamic Social & SEO Meta Tags -->
+    <title>{safe_title}</title>
+    <meta name="description" content="{safe_desc}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{safe_title}">
+    <meta property="og:description" content="{safe_desc}">
+    <meta property="og:image" content="{safe_img}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{safe_title}">
+    <meta name="twitter:description" content="{safe_desc}">
+    <meta name="twitter:image" content="{safe_img}">
+    """
 
     # 1. Guarantee Meta Tags and Tailwind CDN in <head>
-    if re.search(r'<head[^>]*>', html_content, re.IGNORECASE):
-        html_content = re.sub(r'<title>.*?</title>', '', html_content, flags=re.IGNORECASE | re.DOTALL)
+    if '<head>' in html_content:
+        # Strip existing meta og tags if AI duplicated them
         html_content = re.sub(r'<meta\s+property=["\']og:[^>]+>', '', html_content, flags=re.IGNORECASE)
         html_content = re.sub(r'<meta\s+name=["\']twitter:[^>]+>', '', html_content, flags=re.IGNORECASE)
-        html_content = re.sub(r'<meta\s+name=["\']description["\'][^>]+>', '', html_content, flags=re.IGNORECASE)
         
         injection = f"<head>\n{meta_tags}"
         if 'cdn.tailwindcss.com' not in html_content:
-            injection += '\n    <script src="https://cdn.tailwindcss.com"></script>'
-        html_content = re.sub(r'<head[^>]*>', injection, html_content, count=1, flags=re.IGNORECASE)
+            injection += '\n<script src="https://cdn.tailwindcss.com"></script>'
+        html_content = html_content.replace('<head>', injection, 1)
 
-    # 2. Strip any broken/empty image tags
-    html_content = re.sub(r'<img[^>]+src=["\']\s*["\'][^>]*>', '', html_content, flags=re.IGNORECASE)
-    html_content = re.sub(r'<img[^>]+src=["\'](None|null|undefined)["\'][^>]*>', '', html_content, flags=re.IGNORECASE)
+    # 2. Strip any broken/empty image tags where src is empty or missing
+    html_content = re.sub(r'<img[^>]+src=["\']\s*["\'][^>]*>', '', html_content)
+    html_content = re.sub(r'<img[^>]+src=["\']None["\'][^>]*>', '', html_content)
 
     # 3. Strip any broken modals the AI tried to write
-    html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
-    html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+    html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL)
+    html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL)
 
     # 4. Inject guaranteed interactive cart engine
-    if re.search(r'</body>', html_content, re.IGNORECASE):
-        return re.sub(r'</body>', GUARANTEED_CART_ENGINE + '\n</body>', html_content, count=1, flags=re.IGNORECASE)
+    if '</body>' in html_content:
+        return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>', 1)
     return html_content + '\n' + GUARANTEED_CART_ENGINE
 
 
@@ -371,7 +349,7 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
 
     try:
         req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
-        with urllib.request.urlopen(req, timeout=15) as response:
+        with urllib.request.urlopen(req, timeout=12) as response:
             res_data = json.loads(response.read().decode('utf-8'))
             return res_data['choices'][0]['message']['content']
     except urllib.error.HTTPError as e:
@@ -386,44 +364,34 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
     MASTER DESIGN AGENCY PROMPT:
-    Strictly aligns with Product(image, current_price, name, description)
-    and Store(logo, hero_image, bio, name) models.
+    Enforces dynamic OpenGraph/Twitter meta tags, niche-appropriate badges, and strictly forbids empty <img> tags.
     """
-    # Priority for meta previews: Brand Logo -> Hero Banner -> Background
-    primary_meta_img = logo_url or hero_url or bg_url or ''
+    # Pick the best available image for metadata card previews
+    primary_meta_img = hero_url or logo_url or bg_url or ''
 
     system_instruction = (
-        f'You are an elite creative director designing a bespoke storefront website for "{kiosk_name}".\n'
+        'You are an elite creative director designing a custom storefront website for a brand named "' + kiosk_name + '".\n'
         'You NEVER build generic, plain, or cookie-cutter templates.\n\n'
-        'CLIENT BRIEF & ASSETS:\n'
-        f'- Brand Name: "{kiosk_name}"\n'
-        f'- Design Instructions: "{prompt}"\n'
-        f'- Brand Bio / Slogan: "{bio}"\n'
-        f'- Brand Assets: Logo="{logo_url}", Hero="{hero_url}", Background="{bg_url}", Currency="{currency}"\n\n'
-        'CRITICAL RULES & DATA SCHEMA:\n'
-        '1. IN <head>:\n'
-        '   - Include Google Fonts matching the niche and <script src="https://cdn.tailwindcss.com"></script>.\n'
+        'CLIENT BRIEF:\n'
+        '- Brand Name: "' + kiosk_name + '"\n'
+        '- Design Instructions & Category: "' + prompt + '"\n'
+        '- Brand Bio / Tagline: "' + bio + '"\n'
+        '- Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", MetaImage="' + primary_meta_img + '", Currency="' + currency + '"\n\n'
+        'CRITICAL RULES:\n'
+        '1. In <head>, YOU MUST INCLUDE:\n'
+        '   - <script src="https://cdn.tailwindcss.com"></script> and link Google Fonts matching the niche.\n'
+        '   - Full OpenGraph & Twitter preview tags using the brand name, tagline, and MetaImage: "' + primary_meta_img + '".\n'
         '2. HERO SECTION:\n'
-        '   - Pre-headline pill badge MUST MATCH THE NICHE (e.g. Perfume: "✨ ARTISANAL EXTRAIT // RARE SCENTS", Food: "🔥 FRESH FLAME GRILLED", Tech: "⚡ VERIFIED GEAR").\n'
-        '   - Ensure high contrast: If a hero image is rendered, wrap text in a dark glassmorphic card (e.g. bg-stone-900/85 backdrop-blur-md) so text is ALWAYS easily readable!\n'
-        '   - Only render hero <img> if Hero asset is non-empty.\n'
-        '3. HEADER & SEARCH:\n'
-        '   - Top bar: Brand logo ("' + logo_url + '") and Name, an optional search input calling oninput="filterProducts(this.value)", and a BAG button with onclick="toggleCart()" containing <span id="cartCountBadge">0</span>.\n'
-        '4. PRODUCTS LOOP (DATABASE MODEL ALIGNED):\n'
-        '   Iterate products using:\n'
-        '   {% for p in regular_products %}\n'
-        '   <div class="product-card" data-name="{{ p.name }}">\n'
-        '       <!-- Product Image: ALWAYS USE p.image -->\n'
-        '       <img src="{{ p.image }}" alt="{{ p.name }}" onerror="this.onerror=null; this.parentElement.innerHTML=\'<div class=\\\'p-8 text-center text-xs font-mono text-stone-500\\\'>NO PREVIEW</div>\';">\n'
-        '       <h3>{{ p.name }}</h3>\n'
-        '       <p>{{ p.description }}</p>\n'
-        '       <span>{{ store.currency }}{{ "{:,.0f}".format(p.current_price) }}</span>\n'
-        '       <!-- Order / Add button: MUST call openProductModal(p.id) -->\n'
-        '       <button onclick="openProductModal({{ p.id }})">ORDER NOW</button>\n'
-        '   </div>\n'
+        '   - Pre-headline pill badge MUST MATCH THE NICHE (e.g. for perfume use "✨ ARTISANAL EXTRAIT // RARE SCENTS", for food use "🔥 FLAME GRILLED // FRESH ORDER", for tech use "⚡ VERIFIED SCRIPT"). NEVER put apparel badges on perfume or food!\n'
+        '   - HERO IMAGE: Only render an <img> tag for the hero if hero_url is provided. If hero_url is empty, DO NOT render an empty <img> tag!\n'
+        '   - Background ghost word: In the hero container background, embed an oversized subtle ghost word of the brand name with opacity-5.\n'
+        '3. HEADER: In the top bar, include a prominent BAG button that calls onclick="toggleCart()" with an element <span id="cartCountBadge">0</span>.\n'
+        '4. PRODUCTS LOOP: Iterate using:\n'
+        '   {% for p in regular_products %} ...\n'
+        '   Every product card MUST have an order button calling: onclick="openProductModal({{ p.id }})"\n'
         '   {% endfor %}\n'
-        '5. DO NOT write your own checkout drawer or modal. The engine is automatically injected.\n'
-        'Output ONLY pure valid HTML. No markdown backticks.'
+        '5. DO NOT write the modal or cart drawer yourself. It is automatically injected.\n'
+        'Output ONLY pure HTML. No markdown code blocks.'
     )
 
     # 1. Primary: Google Gemini
@@ -434,15 +402,7 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
             genai.configure(api_key=gemini_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
             response = model.generate_content(system_instruction)
-            
-            raw_text = ""
-            if response and hasattr(response, 'text'):
-                try:
-                    raw_text = response.text
-                except Exception:
-                    pass
-            
-            raw_html = clean_html_fences(raw_text)
+            raw_html = clean_html_fences(response.text)
             if raw_html:
                 print("Generated bespoke showcase via Primary: Gemini!")
                 return inject_bulletproof_chassis(raw_html, kiosk_name, bio, primary_meta_img)
