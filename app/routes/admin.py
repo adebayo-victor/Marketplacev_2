@@ -53,23 +53,22 @@ def overview():
 
 
 # -------------------------------------------------------------
-# 🔓 MASTER ADMIN MANUAL KIOSK UNLOCK (1-MONTH / LIFETIME OVERRIDE)
+# 🔓 MASTER UNLOCK (RESCUES STUCK KIOSKS INSTANTLY)
 # -------------------------------------------------------------
 @admin_bp.route('/kiosk/<int:store_id>/unlock', methods=['POST'])
 @admin_required
 def manual_unlock_kiosk(store_id):
-    """Allows Master Admin to manually activate any kiosk without payment."""
+    """Rescues any kiosk: sets build_status='ready' and is_active=True."""
     kiosk = Store.query.get_or_404(store_id)
     kiosk.is_active = True
     kiosk.has_ever_activated = True
+    kiosk.build_status = 'ready'  # ✅ Rescues stuck background builds!
     db.session.commit()
-    flash(f'🎉 Kiosk "{kiosk.name}" has been manually UNLOCKED by Admin!', 'success')
+    flash(f'🎉 Kiosk "{kiosk.name}" has been manually UNLOCKED and set to READY!', 'success')
     return redirect(url_for('admin.overview'))
 
 
-# -------------------------------------------------------------
-# 👤 1-CLICK MERCHANT IMPERSONATION
-# -------------------------------------------------------------
+# Impersonation
 @admin_bp.route('/impersonate/<int:user_id>')
 @admin_required
 def impersonate(user_id):
@@ -82,6 +81,7 @@ def impersonate(user_id):
     return redirect(url_for('dashboard.overview'))
 
 
+# Password Reset Tickets
 @admin_bp.route('/resets')
 @admin_required
 def reset_tickets():
@@ -131,18 +131,21 @@ def reject_reset(ticket_id):
     return redirect(url_for('admin.reset_tickets'))
 
 
+# Template Editor
 @admin_bp.route('/kiosk/<int:store_id>/template', methods=['GET', 'POST'])
 @admin_required
 def edit_template(store_id):
     store = Store.query.get_or_404(store_id)
     if request.method == 'POST':
         store.custom_html = request.form.get('custom_html', '')
+        store.build_status = 'ready'
         db.session.commit()
         flash(f'HTML template for "{store.name}" updated successfully!', 'success')
         return redirect(url_for('admin.edit_template', store_id=store.id))
     return render_template('admin/template_editor.html', store=store)
 
 
+# Secrets Manager
 @admin_bp.route('/system/env', methods=['GET', 'POST'])
 @admin_required
 def env_manager():
