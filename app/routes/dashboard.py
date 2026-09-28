@@ -1,7 +1,6 @@
 import os
 import json
 import re
-import threading
 import urllib.request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
 from flask_login import login_required, current_user
@@ -19,33 +18,9 @@ def slugify(text: str) -> str:
     return re.sub(r'[-\s]+', '-', text)
 
 
-def async_ai_kiosk_builder(app, store_id, name, bio, full_prompt, logo_url, hero_url, bg_url):
-    with app.app_context():
-        try:
-            print(f"[BACKGROUND AI] Building storefront for Store #{store_id} ({name})...")
-            generated_html = generate_kiosk_template(
-                kiosk_name=name,
-                bio=bio,
-                prompt=full_prompt,
-                logo_url=logo_url,
-                hero_url=hero_url,
-                bg_url=bg_url,
-                currency='₦'
-            )
-            store = Store.query.get(store_id)
-            if store:
-                store.custom_html = generated_html or ""
-                store.build_status = 'ready'
-                db.session.commit()
-                print(f"[BACKGROUND AI] ✅ Store #{store_id} ({name}) is READY and UNLOCKED!")
-        except Exception as e:
-            print(f"[BACKGROUND AI ERROR] Failed for Store #{store_id}: {e}")
-            store = Store.query.get(store_id)
-            if store:
-                store.build_status = 'ready'
-                db.session.commit()
-
-
+# -------------------------------------------------------------
+# LEVEL 1: THE MERCHANT HUB (/dashboard)
+# -------------------------------------------------------------
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
@@ -53,6 +28,9 @@ def overview():
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
 
+# -------------------------------------------------------------
+# OPEN A NEW KIOSK (INSTANT ARRIVAL IN HUB)
+# -------------------------------------------------------------
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -92,6 +70,15 @@ def new_kiosk():
 
         clean_phone = clean_phone_number(whatsapp)
 
+        # Store the AI instructions inside custom_html as a temporary build descriptor
+        prompt_payload = json.dumps({
+            "category": category,
+            "prompt": ai_prompt or "Bespoke modern storefront",
+            "logo_url": logo_url,
+            "hero_url": hero_url,
+            "bg_url": bg_url
+        })
+
         store = Store(
             user_id=current_user.id,
             name=name,
@@ -105,8 +92,8 @@ def new_kiosk():
             sections_config=json.dumps(sections_dict),
             is_active=False,
             has_ever_activated=False,
-            build_status='building',
-            custom_html=""
+            build_status='building',  # ⏳ Locked until worker completes!
+            custom_html=prompt_payload # Temporary instructions for the worker
         )
         db.session.add(store)
         db.session.flush()
@@ -117,21 +104,59 @@ def new_kiosk():
 
         db.session.commit()
 
-        full_design_prompt = f"Category: {category}. Client Style Notes: {ai_prompt or 'Bespoke modern storefront'}"
-        app_instance = current_app._get_current_object()
-        thread = threading.Thread(
-            target=async_ai_kiosk_builder,
-            args=(app_instance, store.id, name, bio, full_design_prompt, logo_url, hero_url, bg_url)
-        )
-        thread.daemon = True
-        thread.start()
-
-        flash(f'⏳ Kiosk "{name}" is being assembled by AI in the background! You can see it in your hub below.', 'info')
+        flash(f'⏳ Kiosk "{name}" is being built in the background! You can see it in your hub below.', 'info')
         return redirect(url_for('dashboard.overview'))
 
     return render_template('dashboard/kiosk_new.html')
 
 
+# -------------------------------------------------------------
+# ⚡ ACTIVE BUILD WORKER (Runs AI inside active serverless call)
+# -------------------------------------------------------------
+@dashboard_bp.route('/<kiosk_slug>/build-worker', methods=['POST'])
+@login_required
+def execute_build_worker(kiosk_slug):
+    """Active serverless build worker that executes AI generation without getting frozen."""
+    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
+    if kiosk.user_id != current_user.id and not current_user.is_admin:
+        abort(403)
+
+    if kiosk.build_status == 'ready':
+        return jsonify({"status": "already_ready", "slug": kiosk.slug})
+
+    try:
+        # Unpack build descriptor
+        params = {}
+        try:
+            params = json.loads(kiosk.custom_html or '{}')
+        except Exception:
+            pass
+
+        full_prompt = f"Category: {params.get('category', 'General Retail')}. Client Style Notes: {params.get('prompt', 'Bespoke modern storefront')}"
+        
+        generated_html = generate_kiosk_template(
+            kiosk_name=kiosk.name,
+            bio=kiosk.bio,
+            prompt=full_prompt,
+            logo_url=params.get('logo_url', kiosk.logo),
+            hero_url=params.get('hero_url', kiosk.hero_image),
+            bg_url=params.get('bg_url', kiosk.background_image),
+            currency=kiosk.currency or '₦'
+        )
+
+        kiosk.custom_html = generated_html or ""
+        kiosk.build_status = 'ready'  # ✅ Unlocks the kiosk!
+        db.session.commit()
+        return jsonify({"status": "success", "build_status": "ready", "slug": kiosk.slug})
+
+    except Exception as e:
+        print(f"Build worker error: {e}")
+        kiosk.build_status = 'ready'  # Fallback to ready with default template
+        db.session.commit()
+        return jsonify({"status": "fallback_ready", "build_status": "ready", "slug": kiosk.slug})
+
+
+# Status Check
 @dashboard_bp.route('/<kiosk_slug>/status')
 @login_required
 def check_build_status(kiosk_slug):
@@ -144,12 +169,11 @@ def check_build_status(kiosk_slug):
 
 
 # -------------------------------------------------------------
-# 💳 REAL PAYSTACK ACTIVATION (FIXED 403 USER-AGENT & ₦5,000)
+# 💳 REAL PAYSTACK ACTIVATION (₦5,000 / 500,000 KOBO)
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
 def verify_kiosk_activation(kiosk_slug):
-    """Verifies real Paystack transaction via Paystack REST API."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
@@ -165,13 +189,12 @@ def verify_kiosk_activation(kiosk_slug):
         flash('Paystack is not configured. Please add PAYSTACK_SECRET_KEY in Master Command (/admin/system/env).', 'danger')
         return redirect(url_for('dashboard.overview'))
 
-    # Real Paystack Verification with Custom User-Agent (Fixes 403 Forbidden!)
     try:
         url = f"https://api.paystack.co/transaction/verify/{reference}"
         req = urllib.request.Request(url, headers={
             "Authorization": f"Bearer {paystack_secret}",
             "Content-Type": "application/json",
-            "User-Agent": "Marketplace/2.0 (Mozilla/5.0)"  # <-- Bypasses Cloudflare 403 block!
+            "User-Agent": "Marketplace/2.0 (Mozilla/5.0)"
         })
         with urllib.request.urlopen(req, timeout=20) as res:
             res_data = json.loads(res.read().decode('utf-8'))
@@ -179,7 +202,6 @@ def verify_kiosk_activation(kiosk_slug):
             if res_data.get('status') and res_data.get('data', {}).get('status') == 'success':
                 paid_amount = res_data['data']['amount']
                 
-                # Check for minimum ₦5,000 (500,000 kobo)
                 if paid_amount >= 500000:
                     kiosk.is_active = True
                     kiosk.has_ever_activated = True
@@ -199,6 +221,9 @@ def verify_kiosk_activation(kiosk_slug):
     return redirect(url_for('dashboard.overview'))
 
 
+# -------------------------------------------------------------
+# LEVEL 2: SPECIFIC KIOSK CONTROL ROOM (/<kiosk_slug>/manage)
+# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/manage')
 @login_required
 def manage_kiosk(kiosk_slug):
@@ -223,6 +248,7 @@ def manage_kiosk(kiosk_slug):
     )
 
 
+# Update Order Status
 @dashboard_bp.route('/<kiosk_slug>/order/<int:order_id>/status', methods=['GET', 'POST'])
 @login_required
 def update_order_status(kiosk_slug, order_id):
