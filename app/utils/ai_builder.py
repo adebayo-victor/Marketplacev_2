@@ -270,21 +270,50 @@ GUARANTEED_CART_ENGINE = """
 </script>
 """
 
+
 def clean_html_fences(raw_text: str) -> str:
-    raw_text = re.sub(r'^```html\s*', '', raw_text.strip())
+    raw_text = re.sub(r'^```html\s*', '', raw_text.strip(), flags=re.IGNORECASE)
     raw_text = re.sub(r'```$', '', raw_text.strip())
     return raw_text
 
 
-def inject_bulletproof_chassis(html_content: str) -> str:
+def inject_bulletproof_chassis(html_content: str, kiosk_name: str = '', bio: str = '', meta_img: str = '') -> str:
     """
-    1. Ensures Tailwind CSS CDN is in <head>.
-    2. Strips broken/empty <img> tags so broken icon boxes never display.
-    3. Injects the guaranteed pure-CSS-hidden cart & modal engine.
+    1. Guarantees Open Graph, Twitter cards, and SEO meta tags in <head>.
+    2. Guarantees Tailwind CSS CDN in <head>.
+    3. Strips broken/empty <img> tags so broken icon boxes never display.
+    4. Strips duplicated/broken AI-written modals.
+    5. Injects the guaranteed pure-CSS-hidden cart & modal engine.
     """
-    # 1. Guarantee Tailwind CDN in <head>
-    if 'cdn.tailwindcss.com' not in html_content and '<head>' in html_content:
-        html_content = html_content.replace('<head>', '<head>\n<script src="https://cdn.tailwindcss.com"></script>')
+    # Build dynamic Open Graph / Meta tags
+    safe_title = kiosk_name.strip() if kiosk_name else "{{ store.name }}"
+    safe_desc = bio.strip().replace('"', '&quot;') if bio else "{{ store.tagline or 'Explore our catalog on Marketplace' }}"
+    safe_img = meta_img.strip() if meta_img else "{{ store.image_url or '' }}"
+
+    meta_tags = f"""
+    <!-- Dynamic Social & SEO Meta Tags -->
+    <title>{safe_title}</title>
+    <meta name="description" content="{safe_desc}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{safe_title}">
+    <meta property="og:description" content="{safe_desc}">
+    <meta property="og:image" content="{safe_img}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{safe_title}">
+    <meta name="twitter:description" content="{safe_desc}">
+    <meta name="twitter:image" content="{safe_img}">
+    """
+
+    # 1. Guarantee Meta Tags and Tailwind CDN in <head>
+    if '<head>' in html_content:
+        # Strip existing meta og tags if AI duplicated them
+        html_content = re.sub(r'<meta\s+property=["\']og:[^>]+>', '', html_content, flags=re.IGNORECASE)
+        html_content = re.sub(r'<meta\s+name=["\']twitter:[^>]+>', '', html_content, flags=re.IGNORECASE)
+        
+        injection = f"<head>\n{meta_tags}"
+        if 'cdn.tailwindcss.com' not in html_content:
+            injection += '\n<script src="https://cdn.tailwindcss.com"></script>'
+        html_content = html_content.replace('<head>', injection, 1)
 
     # 2. Strip any broken/empty image tags where src is empty or missing
     html_content = re.sub(r'<img[^>]+src=["\']\s*["\'][^>]*>', '', html_content)
@@ -294,9 +323,9 @@ def inject_bulletproof_chassis(html_content: str) -> str:
     html_content = re.sub(r'<div id="productModal".*?</div>\s*</div>', '', html_content, flags=re.DOTALL)
     html_content = re.sub(r'<aside id="cartDrawer".*?</aside>', '', html_content, flags=re.DOTALL)
 
-    # 4. Inject guaranteed engine
+    # 4. Inject guaranteed interactive cart engine
     if '</body>' in html_content:
-        return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>')
+        return html_content.replace('</body>', GUARANTEED_CART_ENGINE + '\n</body>', 1)
     return html_content + '\n' + GUARANTEED_CART_ENGINE
 
 
@@ -335,18 +364,23 @@ def query_openrouter(prompt_instruction: str, api_key: str) -> str:
 def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: str = '', hero_url: str = '', bg_url: str = '', currency: str = '₦') -> str:
     """
     MASTER DESIGN AGENCY PROMPT:
-    Enforces niche-appropriate badges and strictly forbids empty <img> tags.
+    Enforces dynamic OpenGraph/Twitter meta tags, niche-appropriate badges, and strictly forbids empty <img> tags.
     """
+    # Pick the best available image for metadata card previews
+    primary_meta_img = hero_url or logo_url or bg_url or ''
+
     system_instruction = (
         'You are an elite creative director designing a custom storefront website for a brand named "' + kiosk_name + '".\n'
         'You NEVER build generic, plain, or cookie-cutter templates.\n\n'
         'CLIENT BRIEF:\n'
         '- Brand Name: "' + kiosk_name + '"\n'
         '- Design Instructions & Category: "' + prompt + '"\n'
-        '- Brand Bio: "' + bio + '"\n'
-        '- Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", Currency="' + currency + '"\n\n'
+        '- Brand Bio / Tagline: "' + bio + '"\n'
+        '- Brand Assets: Logo="' + logo_url + '", Hero="' + hero_url + '", Background="' + bg_url + '", MetaImage="' + primary_meta_img + '", Currency="' + currency + '"\n\n'
         'CRITICAL RULES:\n'
-        '1. In <head>, YOU MUST INCLUDE: <script src="https://cdn.tailwindcss.com"></script> and link Google Fonts matching the niche.\n'
+        '1. In <head>, YOU MUST INCLUDE:\n'
+        '   - <script src="https://cdn.tailwindcss.com"></script> and link Google Fonts matching the niche.\n'
+        '   - Full OpenGraph & Twitter preview tags using the brand name, tagline, and MetaImage: "' + primary_meta_img + '".\n'
         '2. HERO SECTION:\n'
         '   - Pre-headline pill badge MUST MATCH THE NICHE (e.g. for perfume use "✨ ARTISANAL EXTRAIT // RARE SCENTS", for food use "🔥 FLAME GRILLED // FRESH ORDER", for tech use "⚡ VERIFIED SCRIPT"). NEVER put apparel badges on perfume or food!\n'
         '   - HERO IMAGE: Only render an <img> tag for the hero if hero_url is provided. If hero_url is empty, DO NOT render an empty <img> tag!\n'
@@ -371,7 +405,7 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
             raw_html = clean_html_fences(response.text)
             if raw_html:
                 print("Generated bespoke showcase via Primary: Gemini!")
-                return inject_bulletproof_chassis(raw_html)
+                return inject_bulletproof_chassis(raw_html, kiosk_name, bio, primary_meta_img)
         except Exception as e:
             print("Gemini API notice: " + str(e))
 
@@ -383,7 +417,7 @@ def generate_kiosk_template(kiosk_name: str, bio: str, prompt: str, logo_url: st
             raw_html = clean_html_fences(raw_response)
             if raw_html:
                 print("Generated bespoke showcase via Backup: OpenRouter!")
-                return inject_bulletproof_chassis(raw_html)
+                return inject_bulletproof_chassis(raw_html, kiosk_name, bio, primary_meta_img)
 
     # 3. Clean Native Fallback
     print("AI generation skipped or unavailable. Falling back to default catalog.html template.")
