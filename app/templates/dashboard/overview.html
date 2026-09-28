@@ -146,7 +146,6 @@
                 <p style="font-style: italic; opacity: 0.6; margin: 5px 0 0 0;">Your collection of active storefronts.</p>
             </div>
             
-            <!-- 🔍 SEARCH KIOSKS INPUT -->
             <input type="text" id="kioskSearchHub" onkeyup="filterKiosksHub(this.value)" 
                    placeholder="Search your storefronts..." 
                    style="padding: 12px 18px; border: 1px solid #ddd; background: white; font-family: 'Montserrat'; font-size: 0.75rem; width: 280px; outline: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
@@ -170,7 +169,7 @@
                     
                     <p>
                         {% if kiosk.build_status == 'building' %}
-                            <em style="color: #b45309;">🤖 Our AI is currently assembling this storefront in the background. You cannot open it until creation finishes...</em>
+                            <em style="color: #b45309;">🤖 AI is assembling your storefront in the background. Unlocking automatically...</em>
                         {% else %}
                             {{ kiosk.bio or "No description set." }}
                         {% endif %}
@@ -198,7 +197,7 @@
                             <button type="button" class="btn btn-disabled">LOCKED ⏳</button>
                             <button type="button" class="btn btn-disabled">PREVIEW ⏳</button>
                             <button type="button" class="btn btn-disabled">COPY LINK</button>
-                            <button type="button" class="btn btn-disabled">WAITING ON AI...</button>
+                            <button type="button" class="btn btn-disabled">ASSEMBLING...</button>
                         {% else %}
                             <a href="/{{ kiosk.slug }}/manage" class="btn btn-manage">MANAGE</a>
                             <button type="button" onclick="openPhonePreview('{{ kiosk.slug }}')" class="btn btn-preview">PREVIEW 👁️</button>
@@ -207,7 +206,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- 💳 REAL PAYSTACK ACTIVATION (₦5,000) -->
                     {% if kiosk.build_status != 'building' and not kiosk.is_active %}
                     <div class="pay-ribbon">
                         <span class="pay-ribbon-text">Hidden from customers</span>
@@ -228,6 +226,7 @@
         <a href="/kiosk/new" class="btn-add-kiosk">+ OPEN A NEW KIOSK</a>
     </div>
 
+    <!-- Phone Preview Modal -->
     <div id="previewModal" class="preview-modal">
         <div class="phone-frame">
             <button onclick="closePhonePreview()" class="phone-close">&times;</button>
@@ -264,6 +263,7 @@
             }).catch(() => { prompt('Copy link:', fullUrl); });
         }
 
+        // 💳 REAL PAYSTACK CHECKOUT
         function payToActivateReal(kioskSlug, kioskName) {
             const paystackPubKey = "{{ config.PAYSTACK_PUBLIC_KEY or '' }}";
             const userEmail = "{{ current_user.email }}";
@@ -276,7 +276,7 @@
             const handler = PaystackPop.setup({
                 key: paystackPubKey,
                 email: userEmail,
-                amount: 500000,
+                amount: 500000, // ₦5,000 in kobo
                 currency: "NGN",
                 ref: 'ACT_' + Math.floor((Math.random() * 1000000000) + 1),
                 metadata: {
@@ -295,30 +295,24 @@
             handler.openIframe();
         }
 
+        // ⚡ ACTIVE SERVERLESS BUILD TRIGGER (WAKES UP VERCEL & UNLOCKS CARD!)
         document.addEventListener('DOMContentLoaded', function() {
             const buildingCards = document.querySelectorAll('.kiosk-card[data-status="building"]');
-            if (buildingCards.length > 0) {
-                const poller = setInterval(async () => {
-                    let allFinished = true;
-                    for (let card of buildingCards) {
-                        const slug = card.id.replace('card-', '');
-                        try {
-                            const res = await fetch(`/${slug}/status`);
-                            const data = await res.json();
-                            if (data.build_status === 'ready') {
-                                clearInterval(poller);
-                                window.location.reload();
-                                return;
-                            } else {
-                                allFinished = false;
-                            }
-                        } catch (e) {
-                            allFinished = false;
-                        }
+            
+            buildingCards.forEach(async (card) => {
+                const slug = card.id.replace('card-', '');
+                try {
+                    // Actively calls the serverless worker to execute the build in an active lambda call
+                    const res = await fetch(`/${slug}/build-worker`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.build_status === 'ready') {
+                        // Immediately reload to unlock the card with full access!
+                        window.location.reload();
                     }
-                    if (allFinished) clearInterval(poller);
-                }, 3000);
-            }
+                } catch (e) {
+                    console.error("Auto build trigger error:", e);
+                }
+            });
         });
     </script>
 </body>
