@@ -55,7 +55,7 @@ def store_catalog(store_slug):
         if is_preview:
             banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
                 🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
-                <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦10,000)]</a>
+                <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦5,000)]</a>
             </div>'''
             rendered = banner + rendered
         return rendered
