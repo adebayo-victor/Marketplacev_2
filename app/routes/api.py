@@ -4,6 +4,7 @@ from app import db
 from app.models import Store, AbandonedCart
 from app.utils.whatsapp import clean_phone_number
 from app.utils.backup import perform_db_backup
+import os
 
 api_bp = Blueprint('api', __name__)
 
@@ -55,3 +56,36 @@ def trigger_backup():
 def health_check():
     """System health check."""
     return jsonify({"status": "healthy", "service": "Marketplace Engine v2"})
+
+
+# =============================================================
+# 📥 RENDER WORKER CALLBACK RECEPTOR
+# =============================================================
+@api_bp.route('/internal/kiosk-ready', methods=['POST'])
+def internal_kiosk_ready():
+    """Secure endpoint that receives generated HTML from Render and unlocks the kiosk."""
+    auth_header = request.headers.get('Authorization', '')
+    expected_secret = "marketplace_worker_secret_key_882"
+
+    # 🔒 Verify Authorization Token
+    if not expected_secret or auth_header != f"Bearer {expected_secret}":
+        return jsonify({"status": "unauthorized", "message": "Invalid secret"}), 401
+
+    data = request.get_json() or {}
+    kiosk_id = data.get('kiosk_id')
+    generated_html = data.get('custom_html')
+
+    if not kiosk_id or not generated_html:
+        return jsonify({"status": "error", "message": "Missing kiosk_id or custom_html"}), 400
+
+    store = Store.query.get(kiosk_id)
+    if not store:
+        return jsonify({"status": "error", "message": "Store not found"}), 404
+
+    # 🔓 Save the bespoke template and flip status to ready
+    store.custom_html = generated_html
+    store.build_status = 'ready'
+    db.session.commit()
+
+    print(f"🎉 Store #{store.id} ({store.name}) successfully saved and set to READY!")
+    return jsonify({"status": "success", "message": "Store updated"}), 200
