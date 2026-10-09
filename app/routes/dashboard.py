@@ -9,6 +9,7 @@ from app.models import Store, Product, StoreAd, Order, OrderItem
 from app.utils.media import upload_image, delete_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
+import requests
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -31,6 +32,9 @@ def overview():
 # -------------------------------------------------------------
 # OPEN A NEW KIOSK (INSTANT ARRIVAL IN HUB)
 # -------------------------------------------------------------
+# =============================================================
+# 🛍️ KIOSK CREATION & WORKER DISPATCH
+# =============================================================
 @dashboard_bp.route('/kiosk/new', methods=['GET', 'POST'])
 @login_required
 def new_kiosk():
@@ -70,15 +74,7 @@ def new_kiosk():
 
         clean_phone = clean_phone_number(whatsapp)
 
-        # Store the AI instructions inside custom_html as a temporary build descriptor
-        prompt_payload = json.dumps({
-            "category": category,
-            "prompt": ai_prompt or "Bespoke modern storefront",
-            "logo_url": logo_url,
-            "hero_url": hero_url,
-            "bg_url": bg_url
-        })
-
+        # 1. Create the store row in database (locked as 'building')
         store = Store(
             user_id=current_user.id,
             name=name,
@@ -92,8 +88,8 @@ def new_kiosk():
             sections_config=json.dumps(sections_dict),
             is_active=False,
             has_ever_activated=False,
-            build_status='building',  # ⏳ Locked until worker completes!
-            custom_html=prompt_payload # Temporary instructions for the worker
+            build_status='building',  # ⏳ Locked until Render worker finishes!
+            custom_html=''
         )
         db.session.add(store)
         db.session.flush()
@@ -104,67 +100,52 @@ def new_kiosk():
 
         db.session.commit()
 
-        flash(f'⏳ Kiosk "{name}" is being built in the background! You can see it in your hub below.', 'info')
+        # 2. ⚡ Intercept & Dispatch to Render Worker (Zero Vercel timeout!)
+        worker_url = os.environ.get('RENDER_WORKER_URL', 'https://marketplace-ai-worker.onrender.com/build')
+        builder_secret = os.environ.get('BUILDER_SECRET_KEY', '')
+
+        job_payload = {
+            "kiosk_id": store.id,
+            "kiosk_slug": store.slug,
+            "kiosk_name": store.name,
+            "bio": store.bio,
+            "prompt": f"Category: {category}. Client Style Notes: {ai_prompt or 'Bespoke modern storefront'}",
+            "logo_url": logo_url or 'default_logo.png',
+            "hero_url": hero_url,
+            "bg_url": bg_url,
+            "currency": store.currency or '₦',
+            "callback_url": "marketplace-beryl-delta.vercel.app/api/internal/kiosk-ready",
+            "secret": builder_secret
+        }
+
+        try:
+            # 1-second timeout: Fire-and-forget handoff to Render
+            requests.post(worker_url, json=job_payload, timeout=1.0)
+            print(f"⚡ Handed off job for store #{store.id} to Render worker")
+        except Exception as e:
+            print(f"Notice during worker dispatch (expected async): {e}")
+
+        flash(f'⏳ Kiosk "{name}" is being assembled by AI in the background!', 'info')
         return redirect(url_for('dashboard.overview'))
 
     return render_template('dashboard/kiosk_new.html')
 
 
 # -------------------------------------------------------------
-# ⚡ ACTIVE BUILD WORKER (Runs AI inside active serverless call)
+# ⚡ STATUS CHECKER (Fast non-blocking response for frontend polling)
 # -------------------------------------------------------------
-@dashboard_bp.route('/<kiosk_slug>/build-worker', methods=['POST'])
+@dashboard_bp.route('/<kiosk_slug>/build-worker', methods=['GET', 'POST'])
 @login_required
 def execute_build_worker(kiosk_slug):
-    """Active serverless build worker that executes AI generation without getting frozen."""
+    """Fast status reporter so the dashboard JS doesn't trigger heavy AI on Vercel."""
     kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
-    if kiosk.build_status == 'ready':
-        return jsonify({"status": "already_ready", "slug": kiosk.slug})
-
-    try:
-        # Unpack build descriptor
-        params = {}
-        try:
-            params = json.loads(kiosk.custom_html or '{}')
-        except Exception:
-            pass
-
-        full_prompt = f"Category: {params.get('category', 'General Retail')}. Client Style Notes: {params.get('prompt', 'Bespoke modern storefront')}"
-        
-        generated_html = generate_kiosk_template(
-            kiosk_name=kiosk.name,
-            bio=kiosk.bio,
-            prompt=full_prompt,
-            logo_url=params.get('logo_url', kiosk.logo),
-            hero_url=params.get('hero_url', kiosk.hero_image),
-            bg_url=params.get('bg_url', kiosk.background_image),
-            currency=kiosk.currency or '₦'
-        )
-
-        kiosk.custom_html = generated_html or ""
-        kiosk.build_status = 'ready'  # ✅ Unlocks the kiosk!
-        db.session.commit()
-        return jsonify({"status": "success", "build_status": "ready", "slug": kiosk.slug})
-
-    except Exception as e:
-        print(f"Build worker error: {e}")
-        kiosk.build_status = 'ready'  # Fallback to ready with default template
-        db.session.commit()
-        return jsonify({"status": "fallback_ready", "build_status": "ready", "slug": kiosk.slug})
-
-
-# Status Check
-@dashboard_bp.route('/<kiosk_slug>/status')
-@login_required
-def check_build_status(kiosk_slug):
-    kiosk = Store.query.filter_by(slug=kiosk_slug).first_or_404()
     return jsonify({
-        "slug": kiosk.slug,
+        "status": "ready" if kiosk.build_status == 'ready' else "building",
         "build_status": kiosk.build_status,
-        "is_active": kiosk.is_active
+        "slug": kiosk.slug
     })
 
 
