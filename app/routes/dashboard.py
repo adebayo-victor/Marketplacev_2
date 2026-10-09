@@ -114,7 +114,7 @@ def new_kiosk():
             "hero_url": hero_url,
             "bg_url": bg_url,
             "currency": store.currency or '₦',
-            "callback_url": "marketplace-beryl-delta.vercel.app/api/internal/kiosk-ready",
+            "callback_url": "https://marketplace-beryl-delta.vercel.app/api/internal/kiosk-ready",
             "secret": builder_secret
         }
 
