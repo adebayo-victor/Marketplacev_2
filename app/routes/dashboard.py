@@ -86,7 +86,7 @@ def new_kiosk():
             background_image=bg_url,
             receipt_theme='classic',
             sections_config=json.dumps(sections_dict),
-            is_active=False,
+            is_active=True,
             has_ever_activated=False,
             build_status='building',  # ⏳ Locked until Render worker finishes!
             custom_html=''
