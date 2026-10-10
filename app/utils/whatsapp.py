@@ -29,7 +29,7 @@ def build_whatsapp_order_link(store_phone: str, store_name: str, order) -> str:
         "Please confirm item availability and send payment details. Thank you!",
         "--------------------------------",
         "⚡ _Created with Marketplace_",
-        "_Launch your kiosk free at: https://marketplace.app_"
+        "_Launch your kiosk free at: https://marketplace-beryl-delta.vercel.app/"
     ]
     
     raw_message = "\n".join(message_lines)
