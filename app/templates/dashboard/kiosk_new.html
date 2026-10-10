@@ -3,118 +3,225 @@
 {% block title %}Open a Kiosk // Marketplace{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-6 sm:py-12 px-3 sm:px-4 flex justify-center w-full">
-    <div class="max-w-xl w-full bg-white p-5 sm:p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
+<style>
+    /* ------------------------------------------------------------------
+       Theme tokens (scoped to .ok-page so base.html is never affected).
+       Dark mode activates when ANY of these is true:
+         - html/body has class "dark" or data-theme="dark"
+         - the OS prefers dark AND the site has not forced light
+       ------------------------------------------------------------------ */
+    .ok-page {
+        --ok-bg: #ffffff;
+        --ok-card: #ffffff;
+        --ok-surface: #fafaf9;
+        --ok-surface-2: #f5f5f4;
+        --ok-border: #e7e5e4;
+        --ok-border-strong: #d6d3d1;
+        --ok-text: #2d1e14;
+        --ok-muted: #78716c;
+        --ok-label: #8d5b3e;
+        --ok-accent: #8d5b3e;
+        --ok-tint: #fff9f5;
+        --ok-input: #fafafa;
+        --ok-placeholder: #a8a29e;
+        --ok-shadow: 0 10px 30px rgba(0,0,0,.05);
+        --ok-pill-active-bg: #8d5b3e;
+        --ok-pill-active-text: #ffffff;
+        color-scheme: light;
+        background: var(--ok-bg);
+        color: var(--ok-text);
+    }
+    html.dark .ok-page, html[data-theme="dark"] .ok-page, body.dark .ok-page, body[data-theme="dark"] .ok-page {
+        --ok-bg: #12100e;
+        --ok-card: #1b1714;
+        --ok-surface: #221d19;
+        --ok-surface-2: #2a2420;
+        --ok-border: #3a312a;
+        --ok-border-strong: #54463b;
+        --ok-text: #f5ede6;
+        --ok-muted: #b5a799;
+        --ok-label: #e0a982;
+        --ok-accent: #d99b72;
+        --ok-tint: #261d17;
+        --ok-input: #14110f;
+        --ok-placeholder: #7d7066;
+        --ok-shadow: 0 10px 40px rgba(0,0,0,.55);
+        --ok-pill-active-bg: #c08558;
+        --ok-pill-active-text: #1a110b;
+        color-scheme: dark;
+    }
+    @media (prefers-color-scheme: dark) {
+        html:not(.light):not([data-theme="light"]) body:not(.light):not([data-theme="light"]) .ok-page {
+            --ok-bg: #12100e;
+            --ok-card: #1b1714;
+            --ok-surface: #221d19;
+            --ok-surface-2: #2a2420;
+            --ok-border: #3a312a;
+            --ok-border-strong: #54463b;
+            --ok-text: #f5ede6;
+            --ok-muted: #b5a799;
+            --ok-label: #e0a982;
+            --ok-accent: #d99b72;
+            --ok-tint: #261d17;
+            --ok-input: #14110f;
+            --ok-placeholder: #7d7066;
+            --ok-shadow: 0 10px 40px rgba(0,0,0,.55);
+            --ok-pill-active-bg: #c08558;
+            --ok-pill-active-text: #1a110b;
+            color-scheme: dark;
+        }
+    }
+
+    /* Components */
+    .ok-card { background: var(--ok-card); box-shadow: var(--ok-shadow); border: 1px solid var(--ok-border); border-top: 5px solid #8d5b3e; }
+    .ok-title { color: var(--ok-text); }
+    .ok-muted { color: var(--ok-muted); }
+    .ok-back { color: var(--ok-muted); transition: color .2s; }
+    .ok-back:hover { color: var(--ok-text); }
+    .ok-label { color: var(--ok-label); }
+    .ok-sub-label { color: var(--ok-muted); }
+    .ok-strong { color: var(--ok-text); }
+
+    .ok-input { background: var(--ok-input); border: 1px solid var(--ok-border); color: var(--ok-text); transition: border-color .2s, box-shadow .2s; }
+    .ok-input::placeholder { color: var(--ok-placeholder); opacity: 1; }
+    .ok-input:focus, .ok-field:focus-within { border-color: var(--ok-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-accent) 22%, transparent); }
+    .ok-field { background: var(--ok-input); border: 1px solid var(--ok-border); transition: border-color .2s, box-shadow .2s; }
+    .ok-field input { color: var(--ok-text); }
+    .ok-field input::placeholder { color: var(--ok-placeholder); opacity: 1; }
+    .ok-prefix { color: var(--ok-muted); }
+
+    .cat-pill { background: var(--ok-surface); border: 1px solid var(--ok-border); color: var(--ok-text); transition: all .2s; cursor: pointer; }
+    .cat-pill:hover { border-color: var(--ok-accent); transform: translateY(-1px); }
+    .cat-pill.is-active { background: var(--ok-pill-active-bg); border-color: var(--ok-pill-active-bg); color: var(--ok-pill-active-text); box-shadow: 0 6px 16px -8px rgba(141,91,62,.7); }
+
+    .ok-panel { background: var(--ok-surface); border: 1px solid var(--ok-border); }
+    .ok-option { background: var(--ok-card); border: 1px solid var(--ok-border); color: var(--ok-text); transition: border-color .2s; }
+    .ok-option:hover { border-color: var(--ok-accent); }
+    .ok-option input[type="checkbox"] { accent-color: var(--ok-accent); width: 15px; height: 15px; }
+
+    .ok-ai { background: var(--ok-tint); border-left: 4px solid var(--ok-accent); }
+    .ok-ai textarea { background: var(--ok-input); border: 1px solid var(--ok-border); color: var(--ok-text); }
+    .ok-ai textarea::placeholder { color: var(--ok-placeholder); opacity: 1; }
+    .ok-ai textarea:focus { border-color: var(--ok-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok-accent) 22%, transparent); outline: none; }
+
+    .ok-divider { border-color: var(--ok-border); }
+    .ok-file { color: var(--ok-muted); }
+    .ok-file::file-selector-button { background: var(--ok-surface-2); color: var(--ok-text); border: 1px solid var(--ok-border-strong); border-radius: 8px; padding: 6px 10px; margin-right: 10px; font-weight: 600; cursor: pointer; transition: border-color .2s; }
+    .ok-file::file-selector-button:hover { border-color: var(--ok-accent); }
+</style>
+
+<div class="ok-page min-h-screen py-6 sm:py-12 px-3 sm:px-4 flex justify-center w-full">
+    <div class="ok-card max-w-xl w-full p-5 sm:p-10 h-fit">
         
         <div class="mb-6 sm:mb-8">
-            <a href="/dashboard" class="font-ui text-xs font-semibold text-stone-400 no-underline hover:text-dark-oak">&larr; Back to Merchant Hub</a>
-            <h1 class="font-ui text-2xl sm:text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak mt-2">open a new kiosk.</h1>
-            <p class="font-serif italic text-xs sm:text-sm text-stone-500 mt-1">Select your category, configure your link, and let our AI design your storefront.</p>
+            <a href="/dashboard" class="ok-back font-ui text-xs font-semibold no-underline">&larr; Back to Merchant Hub</a>
+            <h1 class="ok-title font-ui text-2xl sm:text-3xl font-normal lowercase tracking-tight m-0 mt-2">open a new kiosk.</h1>
+            <p class="ok-muted font-serif italic text-xs sm:text-sm mt-1">Select your category, configure your link, and let our AI design your storefront.</p>
         </div>
 
         <form method="POST" enctype="multipart/form-data" id="kioskForm" class="space-y-5 sm:space-y-6" data-loading-text="AI is assembling your custom storefront and deploying CDN assets...">
             
             <!-- 🏪 10 CATEGORIES (2-COL ON PHONE, 5-COL ON TABLET/DESKTOP) -->
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">
+                <label class="ok-label block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] mb-2">
                     1. Select Store Category (Guides AI Design Architecture)
                 </label>
                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2" id="categoryGrid">
-                    <button type="button" onclick="selectCategory(this, 'Restaurant & Gourmet Food')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">🍔 Food & Grill</button>
-                    <button type="button" onclick="selectCategory(this, 'Streetwear & Urban Fashion')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">👕 Streetwear</button>
-                    <button type="button" onclick="selectCategory(this, 'Electronics & Smart Gadgets')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">💻 Tech Gadgets</button>
-                    <button type="button" onclick="selectCategory(this, 'Luxury Fragrances & Perfumes')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">✨ Perfumes</button>
-                    <button type="button" onclick="selectCategory(this, 'Software, Code & Trading Bots')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">🤖 Code & Bots</button>
-                    <button type="button" onclick="selectCategory(this, 'Beauty, Skincare & Cosmetics')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">💄 Beauty</button>
-                    <button type="button" onclick="selectCategory(this, 'Jewelry, Watches & Luxury')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">💎 Jewelry</button>
-                    <button type="button" onclick="selectCategory(this, 'Home Decor & Modern Living')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">🛋️ Home Decor</button>
-                    <button type="button" onclick="selectCategory(this, 'Groceries & Gourmet Essentials')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">🛒 Groceries</button>
-                    <button type="button" onclick="selectCategory(this, 'Professional & Digital Services')" class="cat-pill p-2 sm:p-2.5 border border-stone-200 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg hover:border-clay transition bg-stone-50">⚡ Services</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Restaurant & Gourmet Food')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">🍔 Food & Grill</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Streetwear & Urban Fashion')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">👕 Streetwear</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Electronics & Smart Gadgets')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">💻 Tech Gadgets</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Luxury Fragrances & Perfumes')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">✨ Perfumes</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Software, Code & Trading Bots')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">🤖 Code & Bots</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Beauty, Skincare & Cosmetics')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">💄 Beauty</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Jewelry, Watches & Luxury')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">💎 Jewelry</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Home Decor & Modern Living')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">🛋️ Home Decor</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Groceries & Gourmet Essentials')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">🛒 Groceries</button>
+                    <button type="button" aria-pressed="false" onclick="selectCategory(this, 'Professional & Digital Services')" class="cat-pill p-2 sm:p-2.5 text-[10px] sm:text-[11px] font-ui font-semibold text-center rounded-lg">⚡ Services</button>
                 </div>
                 <input type="hidden" name="category" id="selectedCategory" value="General Retail">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-1.5">Kiosk Name</label>
+                    <label class="ok-label block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] mb-1.5">Kiosk Name</label>
                     <input type="text" name="name" id="name" required 
                            placeholder="e.g. Urban Sizzle Kitchen"
-                           class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+                           class="ok-input w-full p-3 font-ui text-xs outline-none">
                 </div>
 
                 <div>
-                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-1.5">Store Link Slug</label>
-                    <div class="flex items-center border border-[#eee] bg-[#fafafa] focus-within:border-clay px-3">
-                        <span class="font-ui text-xs text-stone-400 select-none">marketplace.com/</span>
+                    <label class="ok-label block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] mb-1.5">Store Link Slug</label>
+                    <div class="ok-field flex items-center px-3">
+                        <span class="ok-prefix font-ui text-xs select-none">marketplace.com/</span>
                         <input type="text" name="slug" id="slug" 
                                placeholder="urbansizzle"
-                               class="w-full py-3 px-1 bg-transparent outline-none font-ui text-xs font-semibold text-dark-oak">
+                               class="w-full py-3 px-1 bg-transparent outline-none font-ui text-xs font-semibold">
                     </div>
                 </div>
             </div>
 
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-1.5">WhatsApp Number for Orders</label>
+                <label class="ok-label block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] mb-1.5">WhatsApp Number for Orders</label>
                 <input type="text" name="whatsapp_number" required 
                        placeholder="e.g. 08012345678"
-                       class="w-full p-3 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+                       class="ok-input w-full p-3 font-ui text-xs outline-none">
             </div>
 
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-1.5">Tagline / Bio</label>
+                <label class="ok-label block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] mb-1.5">Tagline / Bio</label>
                 <input type="text" name="bio" placeholder="Artisan flame-grilled ribs and spicy wings delivered hot."
-                       class="w-full p-3 border border-[#eee] bg-[#fafafa] font-serif text-xs text-dark-oak outline-none focus:border-clay">
+                       class="ok-input w-full p-3 font-serif text-xs outline-none">
             </div>
 
             <!-- Sectional Activation -->
-            <div class="p-4 bg-stone-50 border border-stone-200 rounded-xl space-y-2">
-                <span class="font-ui text-xs font-bold uppercase tracking-wider text-dark-oak block">
+            <div class="ok-panel p-4 rounded-xl space-y-2">
+                <span class="ok-strong font-ui text-xs font-bold uppercase tracking-wider block">
                     Website Section Activation
                 </span>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 font-ui text-xs">
-                    <label class="flex items-center gap-2 cursor-pointer bg-white p-2.5 border border-stone-200 rounded-lg">
-                        <input type="checkbox" name="section_hero" checked class="accent-clay">
+                    <label class="ok-option flex items-center gap-2 cursor-pointer p-2.5 rounded-lg">
+                        <input type="checkbox" name="section_hero" checked>
                         <span>Hero Banner</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer bg-white p-2.5 border border-stone-200 rounded-lg">
-                        <input type="checkbox" name="section_flash" checked class="accent-clay">
+                    <label class="ok-option flex items-center gap-2 cursor-pointer p-2.5 rounded-lg">
+                        <input type="checkbox" name="section_flash" checked>
                         <span>Flash Deals</span>
                     </label>
-                    <label class="flex items-center gap-2 cursor-pointer bg-white p-2.5 border border-stone-200 rounded-lg">
-                        <input type="checkbox" name="section_ads" checked class="accent-clay">
+                    <label class="ok-option flex items-center gap-2 cursor-pointer p-2.5 rounded-lg">
+                        <input type="checkbox" name="section_ads" checked>
                         <span>Sponsor Ads</span>
                     </label>
                 </div>
             </div>
 
             <!-- AI Design Prompt -->
-            <div class="p-4 sm:p-5 bg-[#fff9f5] border-l-4 border-clay">
-                <label class="block font-ui text-xs font-bold uppercase tracking-wider text-dark-oak mb-1">
+            <div class="ok-ai p-4 sm:p-5">
+                <label class="ok-strong block font-ui text-xs font-bold uppercase tracking-wider mb-1">
                     🤖 AI Design Instructions (Prompt)
                 </label>
-                <p class="font-serif italic text-xs text-stone-500 mb-2">
+                <p class="ok-muted font-serif italic text-xs mb-2">
                     Describe your dream aesthetic, favorite colors, or special branding vibes:
                 </p>
                 <textarea name="ai_prompt" id="aiPrompt" rows="3" 
                           placeholder="e.g. A mouth-watering dark-mode smokehouse with sizzling ember accents, bold typography, and appetizing food photography showcase."
-                          class="w-full p-3 border border-[#eee] bg-white font-serif text-xs text-dark-oak outline-none focus:border-clay leading-relaxed"></textarea>
+                          class="w-full p-3 font-serif text-xs outline-none leading-relaxed"></textarea>
             </div>
 
             <!-- Visual Media -->
-            <div class="space-y-3 pt-2 border-t border-stone-100">
-                <span class="font-ui text-[0.65rem] font-bold uppercase tracking-wider text-dark-oak block">Branding Assets (Optional)</span>
+            <div class="ok-divider space-y-3 pt-2 border-t">
+                <span class="ok-strong font-ui text-[0.65rem] font-bold uppercase tracking-wider block">Branding Assets (Optional)</span>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div>
-                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Logo</label>
-                        <input type="file" name="logo" accept="image/*" class="font-ui text-[0.65rem] w-full">
+                        <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Logo</label>
+                        <input type="file" name="logo" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                     <div>
-                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Hero Banner</label>
-                        <input type="file" name="hero_image" accept="image/*" class="font-ui text-[0.65rem] w-full">
+                        <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Hero Banner</label>
+                        <input type="file" name="hero_image" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                     <div>
-                        <label class="block font-ui text-[0.6rem] font-semibold uppercase text-stone-500 mb-1">Background</label>
-                        <input type="file" name="background_image" accept="image/*" class="font-ui text-[0.65rem] w-full">
+                        <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Background</label>
+                        <input type="file" name="background_image" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                 </div>
             </div>
@@ -135,11 +242,11 @@
 
     function selectCategory(btn, categoryName) {
         document.querySelectorAll('.cat-pill').forEach(p => {
-            p.classList.remove('bg-clay', 'text-white', 'border-clay');
-            p.classList.add('bg-stone-50', 'text-stone-700');
+            p.classList.remove('is-active');
+            p.setAttribute('aria-pressed', 'false');
         });
-        btn.classList.add('bg-clay', 'text-white', 'border-clay');
-        btn.classList.remove('bg-stone-50', 'text-stone-700');
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
         document.getElementById('selectedCategory').value = categoryName;
     }
 </script>
