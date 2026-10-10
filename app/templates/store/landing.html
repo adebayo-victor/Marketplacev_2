@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Marketplace // The Easiest Way to Sell on WhatsApp{% endblock %}
+
+{% block content %}
+<style>
+    /* Scoped to this page (mk- prefix) so base.html is never affected */
+    .mk-page { position: relative; }
+    .mk-glow { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .45; pointer-events: none; z-index: 0; }
+    .mk-grain { background-image: radial-gradient(rgba(45,30,20,.07) 1px, transparent 1px); background-size: 22px 22px; }
+    .mk-rise { opacity: 0; transform: translateY(18px); animation: mkRise .8s cubic-bezier(.2,.7,.2,1) forwards; }
+    .mk-d1 { animation-delay: .08s; } .mk-d2 { animation-delay: .18s; } .mk-d3 { animation-delay: .3s; } .mk-d4 { animation-delay: .42s; }
+    @keyframes mkRise { to { opacity: 1; transform: none; } }
+    @keyframes mkFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(-2deg); } }
+    @keyframes mkMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .mk-phone { animation: mkFloat 6s ease-in-out infinite; }
+    .mk-marquee-track { display: flex; width: max-content; animation: mkMarquee 28s linear infinite; }
+    .mk-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease; }
+    .mk-card:hover { transform: translateY(-6px); box-shadow: 0 24px 50px -22px rgba(45,30,20,.35); }
+    .mk-underline { background-image: linear-gradient(transparent 62%, rgba(141,91,62,.28) 62%); }
+    .mk-shine { position: relative; overflow: hidden; }
+    .mk-shine::after { content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transition: left .7s ease; }
+    .mk-shine:hover::after { left: 140%; }
+    @media (prefers-reduced-motion: reduce) {
+        .mk-rise, .mk-phone, .mk-marquee-track { animation: none !important; opacity: 1; transform: none; }
+    }
+</style>
+
+<div class="mk-page relative overflow-hidden font-ui">
+
+    <!-- ========================================== -->
+    <!-- 1. HERO SECTION (CLEAR & SIMPLE)           -->
+    <!-- ========================================== -->
+    <section class="relative">
+        <div class="mk-glow w-72 h-72 bg-[#e9c9ae] -top-10 -left-16"></div>
+        <div class="mk-glow w-80 h-80 bg-[#bfe8cc] top-40 -right-24"></div>
+        <div class="mk-grain absolute inset-0 z-0 opacity-70"></div>
+
+        <div class="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
+            <div class="lg:col-span-7 text-center lg:text-left">
+                <!-- Benefit Badge -->
+                <div class="mk-rise inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-clay/30 px-4 py-1.5 rounded-full mb-7 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-clay font-mono">
+                        Built for WhatsApp & Instagram Sellers • 0% Commission
+                    </span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="mk-rise mk-d1 text-4xl sm:text-5xl md:text-6xl font-black text-dark-oak tracking-tight leading-[1.1] mb-6">
+                    The Easiest Way to Set Up an Online Store and <span class="text-clay mk-underline">Sell on WhatsApp</span>.
+                </h1>
+
+                <!-- Subtitle in Plain English -->
+                <p class="mk-rise mk-d2 font-serif text-base sm:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+                    Get a tailored website for your business in 60 seconds. Take structured orders on WhatsApp, generate daily status flyers without Canva, and send professional receipts—with zero monthly fees.
+                </p>
+
+                <!-- Action Buttons -->
+                <div class="mk-rise mk-d3 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">
+                    <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-sm py-4 px-8 tracking-wider font-bold w-full sm:w-auto text-center shadow-xl hover:-translate-y-0.5">
+                        CREATE YOUR STORE FREE &rarr;
+                    </a>
+                    <a href="#features" class="btn-oak text-sm py-4 px-8 tracking-wider font-semibold w-full sm:w-auto text-center hover:-translate-y-0.5">
+                        SEE HOW IT WORKS &darr;
+                    </a>
+                </div>
+
+                <!-- 3 Quick Guarantees -->
+                <div class="mk-rise mk-d4 flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-xs font-semibold text-stone-500 pt-5 border-t border-stone-300/60 max-w-xl mx-auto lg:mx-0">
+                    <span><span class="text-emerald-600">✓</span> Zero transaction cuts</span>
+                    <span><span class="text-emerald-600">✓</span> No developer required</span>
+                    <span><span class="text-emerald-600">✓</span> Works on any smartphone</span>
+                </div>
+            </div>
+
+            <!-- Decorative phone (illustration only, no real data) -->
+            <div class="lg:col-span-5 hidden md:flex justify-center mk-rise mk-d3" aria-hidden="true">
+                <div class="mk-phone relative w-[260px] bg-dark-oak rounded-[2.4rem] p-3 shadow-2xl">
+                    <div class="bg-[#f4efe8] rounded-[1.9rem] overflow-hidden">
+                        <div class="bg-[#16a34a] text-white px-4 py-3 flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm">💬</span>
+                            <span class="text-[11px] font-bold tracking-wide uppercase">New WhatsApp Order</span>
+                        </div>
+                        <div class="p-4 space-y-3">
+                            <div class="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm space-y-2">
+                                <div class="h-2.5 w-3/4 rounded bg-stone-200"></div>
+                                <div class="h-2.5 w-1/2 rounded bg-stone-200"></div>
+                                <div class="flex items-center justify-between pt-2 border-t border-stone-100">
+                                    <div class="h-2.5 w-10 rounded bg-stone-200"></div>
+                                    <div class="h-3 w-16 rounded bg-clay/60"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm space-y-2">
+                                <div class="h-2.5 w-2/3 rounded bg-stone-200"></div>
+                                <div class="h-2.5 w-1/3 rounded bg-stone-200"></div>
+                            </div>
+                            <div class="bg-[#dcf8c6] rounded-2xl rounded-tr-sm p-3 ml-10 shadow-sm">
+                                <div class="h-2.5 w-full rounded bg-emerald-700/25"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="absolute -right-5 -bottom-4 bg-white border border-stone-200 shadow-lg rounded-2xl px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">✓ 0% commission</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 2. THE REAL PROBLEMS WE SOLVE              -->
+    <!-- ========================================== -->
+    <section class="max-w-5xl mx-auto px-6 py-20 border-t border-stone-200/60">
+        <div class="text-center mb-14">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">The Daily Struggle</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Why Selling in DMs is Slowing You Down</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="mk-card relative bg-white p-7 border-l-4 border-rose-500 shadow-sm rounded-r-2xl overflow-hidden">
+                <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">1</span>
+                <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-rose-50 mb-4">💬</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Answering "How Much?" All Day</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Typing prices, sizes, and account numbers over and over in DMs drains your energy and makes customers wait.
+                </p>
+            </div>
+
+            <div class="mk-card relative bg-white p-7 border-l-4 border-rose-500 shadow-sm rounded-r-2xl overflow-hidden">
+                <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">2</span>
+                <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-rose-50 mb-4">🎨</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Fighting Canva Every Morning</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Wasting 1 to 2 hours every single morning trying to design status flyers with product photos and prices.
+                </p>
+            </div>
+
+            <div class="mk-card relative bg-white p-7 border-l-4 border-rose-500 shadow-sm rounded-r-2xl overflow-hidden">
+                <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">3</span>
+                <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-rose-50 mb-4">👻</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Customers Ghosting at Checkout</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Buyers who say "I'll get back to you" because there was no clear catalog, order total, or simple checkout.
+                </p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 3. ALL THE FEATURES (NO JARGON)            -->
+    <!-- ========================================== -->
+    <section id="features" class="relative max-w-6xl mx-auto px-6 py-20 border-t border-stone-200/60">
+        <div class="text-center mb-14">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Built-in Features</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Everything Your Business Needs</h2>
+            <p class="font-serif italic text-sm text-stone-500 mt-3">Every tool is built right in. No extra apps to download or pay for.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Feature 1: AI Storefront (featured, dark, wide) -->
+            <div class="mk-card lg:col-span-2 bg-dark-oak text-white p-9 rounded-3xl shadow-lg flex flex-col justify-between relative overflow-hidden">
+                <div class="mk-glow w-64 h-64 bg-clay -top-20 -right-16 opacity-40"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/10 border border-white/15 rounded-2xl flex items-center justify-center text-xl mb-5">🤖</div>
+                    <h3 class="font-black text-2xl mb-3 tracking-tight">Custom AI Website Builder</h3>
+                    <p class="font-serif text-sm text-stone-300 leading-relaxed mb-6 max-w-lg">
+                        Just pick your category and describe your business. Our AI designs a custom website matching your exact vibe (grillhouse, boutique, tech, or perfume shop)—not a generic spreadsheet.
+                    </p>
+                </div>
+                <span class="relative z-10 text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider block pt-4 border-t border-white/10">
+                    ✓ Ready in 60 seconds
+                </span>
+            </div>
+
+            <!-- Feature 2: WhatsApp Orders -->
+            <div class="mk-card bg-white p-8 rounded-3xl border border-stone-100 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="w-11 h-11 bg-[#ebfeef] border border-emerald-200 rounded-2xl flex items-center justify-center text-lg mb-4">💬</div>
+                    <h3 class="font-bold text-lg text-dark-oak mb-2">Direct WhatsApp Orders</h3>
+                    <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        Customers view your catalog, pick their size, color, or portion, and click checkout. You receive a clean, itemized order directly in your WhatsApp DM with zero transaction fees.
+                    </p>
+                </div>
+                <span class="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    ✓ 0% transaction commission
+                </span>
+            </div>
+
+            <!-- Feature 3: Status Flyer Studio -->
+            <div class="mk-card bg-white p-8 rounded-3xl border border-stone-100 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="w-11 h-11 bg-[#fff9f5] border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">📸</div>
+                    <h3 class="font-bold text-lg text-dark-oak mb-2">1-Click Status Flyer Studio</h3>
+                    <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        Turn any product in your inventory into a high-res graphic flyer for your WhatsApp Status or Instagram Story in one tap. Choose from 12 brand themes with prices and WhatsApp button included.
+                    </p>
+                </div>
+                <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    ✓ Instant PNG & PDF download
+                </span>
+            </div>
+
+            <!-- Feature 4: Invoices & Receipts (wide) -->
+            <div class="mk-card lg:col-span-2 bg-gradient-to-br from-[#fff9f5] to-white p-8 rounded-3xl border border-clay/20 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="w-11 h-11 bg-white border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">📄</div>
+                    <h3 class="font-bold text-xl text-dark-oak mb-2">Invoices & "PAID" Receipts</h3>
+                    <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4 max-w-xl">
+                        Send a formal Commercial Invoice before payment with your bank details so buyers know where to pay. Once payment enters, switch it to an official Receipt stamped "PAID IN FULL" with 1-click PDF export.
+                    </p>
+                </div>
+                <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-clay/10">
+                    ✓ 4 Themes (Clay, Cyber, Thermal, Luxury)
+                </span>
+            </div>
+
+            <!-- Feature 5: Unlimited Made-to-Order Stock -->
+            <div class="mk-card bg-white p-8 rounded-3xl border border-stone-100 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="w-11 h-11 bg-[#fff9f5] border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">🍲</div>
+                    <h3 class="font-bold text-lg text-dark-oak mb-2">Made-to-Order Stock Mode</h3>
+                    <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        Selling cooked meals, cakes, digital code, or services? Toggle "Always in Stock" so your items never get marked "OUT OF STOCK" when units hit zero. Perfect for restaurants and bakers.
+                    </p>
+                </div>
+                <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    ✓ Supports restaurants & food spots
+                </span>
+            </div>
+
+            <!-- Feature 6: Lost Leads Recovery (wide) -->
+            <div class="mk-card lg:col-span-2 bg-white p-8 rounded-3xl border border-stone-100 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="w-11 h-11 bg-[#ebfeef] border border-emerald-200 rounded-2xl flex items-center justify-center text-lg mb-4">🎯</div>
+                    <h3 class="font-bold text-xl text-dark-oak mb-2">Lost Leads Recovery</h3>
+                    <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4 max-w-xl">
+                        If a customer fills in their name and phone number on your website but gets distracted before sending the WhatsApp message, our system saves them so you can send a 1-click reminder.
+                    </p>
+                </div>
+                <span class="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    ✓ Recover abandoned sales
+                </span>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 4. HOW IT WORKS (3 SIMPLE STEPS)           -->
+    <!-- ========================================== -->
+    <section class="max-w-5xl mx-auto px-6 py-20 border-t border-stone-200/60">
+        <div class="text-center mb-14">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Easy Setup</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">How to Get Started</h2>
+        </div>
+
+        <div class="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="hidden md:block absolute top-10 left-[16%] right-[16%] border-t-2 border-dashed border-clay/30"></div>
+
+            <div class="mk-card relative bg-white p-8 rounded-3xl border border-stone-100 shadow-sm text-center">
+                <span class="relative mx-auto -mt-14 mb-4 w-14 h-14 rounded-full bg-white border-2 border-stone-300 flex items-center justify-center font-mono text-xl font-black text-clay/50">01</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Create Your Account</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Sign up with your username or Google 1-Click. No long forms or credit cards required.
+                </p>
+            </div>
+
+            <div class="mk-card relative bg-white p-8 rounded-3xl border-2 border-clay shadow-xl text-center md:-translate-y-3">
+                <span class="relative mx-auto -mt-14 mb-4 w-14 h-14 rounded-full bg-clay flex items-center justify-center font-mono text-xl font-black text-white shadow-lg">02</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Tell the AI Your Business</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Pick your category (Food, Fashion, Perfumes, Tech) and upload your photos. Your store is assembled instantly.
+                </p>
+            </div>
+
+            <div class="mk-card relative bg-white p-8 rounded-3xl border border-stone-100 shadow-sm text-center">
+                <span class="relative mx-auto -mt-14 mb-4 w-14 h-14 rounded-full bg-white border-2 border-stone-300 flex items-center justify-center font-mono text-xl font-black text-clay/50">03</span>
+                <h3 class="font-bold text-base text-dark-oak mb-2">Share & Take Orders</h3>
+                <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                    Put your link in your Instagram bio or WhatsApp status. Receive structured orders directly in your chat.
+                </p>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 5. HONEST, SIMPLE PRICING                  -->
+    <!-- ========================================== -->
+    <section class="max-w-4xl mx-auto px-6 py-20 border-t border-stone-200/60">
+        <div class="text-center mb-14">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Clear Pricing</span>
+            <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">No Monthly Debit Alerts. Pay Once.</h2>
+            <p class="font-serif italic text-sm text-stone-500 mt-3">Design and test your store completely free.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            <!-- Free Sandbox -->
+            <div class="mk-card bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400">Testing</span>
+                    <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Preview Mode</h3>
+                    <p class="text-xs text-stone-500 mb-6 font-serif italic">Build, test, and style your store before paying a dime.</p>
+                    <div class="text-4xl font-black text-dark-oak font-mono mb-6">₦0</div>
+                    <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Unlimited AI store redesigns</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Add products & custom variants</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Generate social status flyers (PNG & PDF)</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Test ordering on your phone</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('auth.register') }}" class="btn-oak text-center block text-xs py-3.5 tracking-wider">
+                    START BUILDING FREE &rarr;
+                </a>
+            </div>
+
+            <!-- Go Live -->
+            <div class="mk-card bg-white p-8 rounded-3xl border-2 border-clay shadow-2xl flex flex-col justify-between relative md:scale-[1.03]">
+                <span class="absolute -top-3 right-6 bg-[#ebfeef] text-[#16a34a] font-mono text-[9px] font-bold uppercase px-3 py-1 rounded-full border border-[#16a34a]/30 shadow-sm">
+                    ONE-TIME PAYMENT
+                </span>
+                <div>
+                    <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-clay">Public Store</span>
+                    <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Go Live</h3>
+                    <p class="text-xs text-stone-500 mb-6 font-serif italic">Unlock your storefront link to the entire public.</p>
+                    <div class="text-4xl font-black text-clay font-mono mb-6">₦0<span class="text-xs font-normal text-stone-400">once</span></div>
+                    <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> <span>Public link: <code class="bg-stone-100 px-1.5 py-0.5 rounded">marketplace.com/your-name</code></span></li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Live WhatsApp order intake</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> Commercial Invoices & PAID Receipts</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> 3 Sponsor Ad slots to earn extra money</li>
+                        <li class="flex gap-2"><span class="text-emerald-600">✓</span> 0% transaction commission forever</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-center block text-xs py-3.5 tracking-wider font-bold">
+                    GET STARTED NOW &rarr;
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 6. FINAL CALL TO ACTION                    -->
+    <!-- ========================================== -->
+    <section class="max-w-5xl mx-auto px-6 py-20 text-center border-t border-stone-200/60">
+        <div class="bg-dark-oak text-white p-10 md:p-16 rounded-3xl shadow-2xl relative overflow-hidden">
+            <div class="mk-glow w-80 h-80 bg-clay -top-24 -left-20 opacity-50"></div>
+            <div class="mk-glow w-72 h-72 bg-emerald-500 -bottom-24 -right-16 opacity-25"></div>
+            <div class="relative z-10">
+                <h2 class="text-3xl md:text-5xl font-black tracking-tight mb-5 uppercase leading-[1.1]">
+                    Ready to Stop Losing Sales in DMs?
+                </h2>
+                <p class="font-serif italic text-stone-300 max-w-xl mx-auto mb-9 text-sm md:text-base leading-relaxed">
+                    Join vendors who have stopped wasting hours on Canva and manual DM typing. Launch your digital storefront in 60 seconds.
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-sm py-4 px-10 tracking-widest font-black inline-block shadow-xl hover:-translate-y-0.5">
+                    CREATE YOUR STORE FOR FREE &rarr;
+                </a>
+                <div class="mt-8 text-[11px] text-stone-400 font-mono">
+                    Need help? Tap the green Merchant Support button in the bottom right corner.
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
