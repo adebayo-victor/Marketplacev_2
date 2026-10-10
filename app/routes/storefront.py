@@ -20,7 +20,7 @@ def store_catalog(store_slug):
 
     # ⏳ IF STILL ASSEMBLING IN BACKGROUND: CANNOT BE OPENED
     if store.build_status == 'building':
-        flash(f'⏳ Hold on! Kiosk "{store.name}" is still being assembled by the AI engine. You cannot open it until creation is finished.', 'warning')
+        flash(f'⏳ Hold on! Kiosk "{store.name}" is still being assembled by the AI engine.', 'warning')
         return redirect(url_for('dashboard.overview'))
 
     # 🔒 PREVIEW MODE / LOCKED CHECK
@@ -29,20 +29,22 @@ def store_catalog(store_slug):
         is_owner = current_user.is_authenticated and (current_user.id == store.user_id or current_user.is_admin)
         if not is_owner:
             return render_template('store/locked.html', store=store, is_owing=store.has_ever_activated)
-        else:
-            is_preview = True
+        is_preview = True
 
-    store.views_count += 1
-    db.session.commit()
+    # Only increment views if it's NOT preview mode (real customer traffic)
+    if not is_preview:
+        store.views_count += 1
+        db.session.commit()
 
     all_products = store.products.filter_by(is_active=True).all()
-    flash_sales = [p for p in all_products if p.is_flash_sale and p.stock > 0]
+    flash_sales = [p for p in all_products if p.is_flash_sale and p.is_available]
     regular_products = [p for p in all_products if not p.is_flash_sale]
-
+    
     ad_slots = {
         ad.slot_number: ad for ad in store.ads.filter_by(is_active=True).all() if ad.banner_image
     }
 
+    # ✅ FIXED: Actually return the rendered custom HTML if it exists
     if store.custom_html and store.custom_html.strip():
         try:
             from flask import render_template_string
@@ -53,25 +55,19 @@ def store_catalog(store_slug):
                 regular_products=regular_products,
                 ad_slots=ad_slots
             )
+            if is_preview:
+                banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+                    🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
+                    <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦5,000)]</a>
+                </div>'''
+                rendered = banner + rendered
+            return rendered
         except Exception as e:
-            flash("Your kiosk was created but it had issues see your AI agent or contact support to fix it, manage this for now")
-            return render_template(
-                'store/catalog.html',
-                store=store,
-                flash_sales=flash_sales,
-                regular_products=regular_products,
-                ad_slots=ad_slots,
-                is_preview=is_preview
-            )
-        if is_preview:
-            banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
-                🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
-                <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦5,000)]</a>
-            </div>'''
-            rendered = banner + rendered
-        return rendered
+            print(f"Template Render Error: {e}")
+            flash("Your kiosk had rendering issues. Falling back to default catalog.", 'error')
 
-    return render_template(
+    # Fallback to default catalog.html if no custom_html
+    rendered_default = render_template(
         'store/catalog.html',
         store=store,
         flash_sales=flash_sales,
@@ -79,6 +75,15 @@ def store_catalog(store_slug):
         ad_slots=ad_slots,
         is_preview=is_preview
     )
+    
+    if is_preview:
+        banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
+            🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
+            <a href="/dashboard" style="color:#fef08a;text-decoration:underline;margin-left:10px;">[ACTIVATE NOW TO GO LIVE (₦5,000)]</a>
+        </div>'''
+        return banner + rendered_default
+        
+    return rendered_default
 
 
 @storefront_bp.route('/ad/click/<int:ad_id>')
