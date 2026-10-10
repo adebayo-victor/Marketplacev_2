@@ -22,7 +22,7 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_size": 5,          # Keep base pool small
         "max_overflow": 2,       # Allow tiny overflow for sudden spikes
-        "pool_recycle": 300,     # Automatically drop/recreate connections every 5 mins
+        "pool_recycle": 180,     # Automatically drop/recreate connections every 5 mins
         "pool_pre_ping": True    # Verify connection is alive before using
     }
 
