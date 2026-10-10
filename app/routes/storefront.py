@@ -44,14 +44,25 @@ def store_catalog(store_slug):
     }
 
     if store.custom_html and store.custom_html.strip():
-        from flask import render_template_string
-        rendered = render_template_string(
-            store.custom_html,
-            store=store,
-            flash_sales=flash_sales,
-            regular_products=regular_products,
-            ad_slots=ad_slots
-        )
+        try:
+            from flask import render_template_string
+            rendered = render_template_string(
+                store.custom_html,
+                store=store,
+                flash_sales=flash_sales,
+                regular_products=regular_products,
+                ad_slots=ad_slots
+            )
+        except Exception as e:
+            flash("Your kiosk was created but it had issues see your AI agent or contact support to fix it, manage this for now")
+            return render_template(
+                'store/catalog.html',
+                store=store,
+                flash_sales=flash_sales,
+                regular_products=regular_products,
+                ad_slots=ad_slots,
+                is_preview=is_preview
+            )
         if is_preview:
             banner = f'''<div style="background:#b33a3a;color:white;padding:12px;text-align:center;font-family:sans-serif;font-size:12px;font-weight:bold;position:sticky;top:0;z-index:999999;box-shadow:0 4px 15px rgba(0,0,0,0.3);">
                 🔑 PREVIEW MODE: This kiosk is currently HIDDEN from customers. 
