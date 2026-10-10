@@ -4,102 +4,249 @@
 
 {% block content %}
 <style>
-    /* Scoped to this page (mk- prefix) so base.html is never affected */
-    .mk-page { position: relative; background: #ffffff; color: #2d1e14; }
-    .mk-glow { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: .28; pointer-events: none; z-index: 0; }
-    .mk-dots { background-image: radial-gradient(rgba(45,30,20,.10) 1px, transparent 1px); background-size: 24px 24px;
+    /* ------------------------------------------------------------------
+       Theme tokens, scoped to .mk-page. The page does NOT use Tailwind colour
+       utilities (bg-white, text-stone-*, text-dark-oak ...) because the site's
+       dark mode remaps some of them and leaves others, which is what produced
+       the invisible text. Every colour below comes from these variables.
+       A script at the bottom sets data-mk="dark" or "light" from the site's
+       real theme (follows the header sun/moon toggle). Light is the default.
+       ------------------------------------------------------------------ */
+    .mk-page {
+        --mk-bg: #ffffff;
+        --mk-band: #fafaf9;
+        --mk-card: #ffffff;
+        --mk-card2: #f5f5f4;
+        --mk-border: #e7e5e4;
+        --mk-border2: #d6d3d1;
+        --mk-text: #2d1e14;
+        --mk-body: #57534e;
+        --mk-muted: #78716c;
+        --mk-accent: #8d5b3e;
+        --mk-green: #047857;
+        --mk-rose: #f43f5e;
+        --mk-clay: #8d5b3e;
+        --mk-clay-hover: #a06a49;
+        --mk-tile-clay: #fff6ee;
+        --mk-tile-green: #ebfeef;
+        --mk-tile-rose: #fff1f2;
+        --mk-dot: rgba(45,30,20,.10);
+        --mk-glow-a: #f1d9c4;
+        --mk-glow-b: #c9efd7;
+        --mk-glow-opacity: .30;
+        --mk-shadow: 0 1px 2px rgba(0,0,0,.04);
+        --mk-shadow-hover: 0 24px 50px -24px rgba(45,30,20,.28);
+        --mk-feature-bg: #2d1e14;
+        --mk-feature-border: #2d1e14;
+        --mk-sec-bg: #2d1e14;
+        --mk-sec-text: #ffffff;
+        --mk-sec-border: #2d1e14;
+        --mk-phone-frame: #2d1e14;
+        --mk-phone-ring: #e7e5e4;
+        --mk-phone-screen: #f4f4f5;
+        --mk-phone-bubble: #ffffff;
+        --mk-phone-bar: #e7e5e4;
+        --mk-phone-sent: #dcf8c6;
+        --mk-phone-sent-bar: rgba(4,120,87,.28);
+        --mk-chip-green-bg: #ebfeef;
+        color-scheme: light;
+        background: var(--mk-bg);
+        color: var(--mk-text);
+    }
+    .mk-page[data-mk="dark"] {
+        --mk-bg: #0d0d0f;
+        --mk-band: #131316;
+        --mk-card: #19191c;
+        --mk-card2: #202024;
+        --mk-border: #2b2b30;
+        --mk-border2: #3f3f46;
+        --mk-text: #f4f4f5;
+        --mk-body: #c4c4cc;
+        --mk-muted: #a1a1aa;
+        --mk-accent: #e0a37c;
+        --mk-green: #34d399;
+        --mk-rose: #fb7185;
+        --mk-clay: #a5633b;
+        --mk-clay-hover: #b87650;
+        --mk-tile-clay: rgba(224,163,124,.14);
+        --mk-tile-green: rgba(52,211,153,.14);
+        --mk-tile-rose: rgba(251,113,133,.14);
+        --mk-dot: rgba(255,255,255,.07);
+        --mk-glow-a: #a5633b;
+        --mk-glow-b: #10b981;
+        --mk-glow-opacity: .16;
+        --mk-shadow: 0 1px 2px rgba(0,0,0,.4);
+        --mk-shadow-hover: 0 24px 50px -24px rgba(0,0,0,.9);
+        --mk-feature-bg: linear-gradient(135deg, #26262d, #16161a);
+        --mk-feature-border: #3a3a42;
+        --mk-sec-bg: linear-gradient(135deg, #1d1d22, #131316);
+        --mk-sec-text: #f4f4f5;
+        --mk-sec-border: #3a3a42;
+        --mk-phone-frame: #26262c;
+        --mk-phone-ring: #3a3a42;
+        --mk-phone-screen: #0f0f12;
+        --mk-phone-bubble: #1e1e23;
+        --mk-phone-bar: #34343b;
+        --mk-phone-sent: #14352a;
+        --mk-phone-sent-bar: rgba(52,211,153,.35);
+        --mk-chip-green-bg: rgba(52,211,153,.14);
+        color-scheme: dark;
+    }
+
+    /* Surfaces */
+    .mk-sec { background: var(--mk-bg); border-top: 1px solid var(--mk-border); }
+    .mk-sec-band { background: var(--mk-band); border-top: 1px solid var(--mk-border); }
+    .mk-card { background: var(--mk-card); border: 1px solid var(--mk-border); box-shadow: var(--mk-shadow); transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease, border-color .35s ease; }
+    .mk-card:hover { transform: translateY(-6px); box-shadow: var(--mk-shadow-hover); border-color: color-mix(in srgb, var(--mk-accent) 45%, var(--mk-border)); }
+    .mk-card-soft { background: var(--mk-card2); }
+    .mk-card-pop { border: 2px solid var(--mk-clay); }
+    .mk-feature { background: var(--mk-feature-bg); border: 1px solid var(--mk-feature-border); color: #fff; transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease; }
+    .mk-feature:hover { transform: translateY(-6px); box-shadow: var(--mk-shadow-hover); }
+    .mk-cta { background: var(--mk-sec-bg); border: 1px solid var(--mk-sec-border); color: var(--mk-sec-text); }
+
+    /* Text */
+    .mk-text { color: var(--mk-text); }
+    .mk-body { color: var(--mk-body); }
+    .mk-muted { color: var(--mk-muted); }
+    .mk-accent { color: var(--mk-accent); }
+    .mk-green { color: var(--mk-green); }
+    .mk-on-dark { color: #ffffff; }
+    .mk-on-dark-body { color: #d4d4d8; }
+    .mk-on-dark-muted { color: #a1a1aa; }
+    .mk-amber { color: #fcd34d; }
+    .mk-underline { background-image: linear-gradient(transparent 62%, color-mix(in srgb, var(--mk-accent) 28%, transparent) 62%); }
+    .mk-rule { border-color: var(--mk-border); }
+    .mk-rule-dark { border-color: rgba(255,255,255,.12); }
+
+    /* Pieces */
+    .mk-chip { background: var(--mk-card); border: 1px solid var(--mk-border); box-shadow: var(--mk-shadow); }
+    .mk-tile { border: 1px solid var(--mk-border); }
+    .mk-tile-clay { background: var(--mk-tile-clay); border-color: color-mix(in srgb, var(--mk-accent) 25%, transparent); }
+    .mk-tile-green { background: var(--mk-tile-green); border-color: color-mix(in srgb, var(--mk-green) 25%, transparent); }
+    .mk-tile-rose { background: var(--mk-tile-rose); border-color: color-mix(in srgb, var(--mk-rose) 25%, transparent); }
+    .mk-tile-glass { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
+    .mk-edge-rose { border-left: 4px solid var(--mk-rose); }
+    .mk-bar-clay { background: var(--mk-clay); }
+    .mk-bar-green { background: #10b981; }
+    .mk-bignum-rose { color: var(--mk-rose); opacity: .14; }
+    .mk-badge-green { background: var(--mk-chip-green-bg); color: var(--mk-green); border: 1px solid color-mix(in srgb, var(--mk-green) 35%, transparent); }
+    .mk-code { background: var(--mk-card2); color: var(--mk-text); border: 1px solid var(--mk-border); }
+    .mk-price-clay { color: var(--mk-accent); }
+
+    /* Step numbers */
+    .mk-step-num { background: var(--mk-card); border: 2px solid var(--mk-border2); color: var(--mk-muted); }
+    .mk-step-num-active { background: var(--mk-clay); border: 2px solid var(--mk-clay); color: #ffffff; box-shadow: 0 10px 22px -10px rgba(0,0,0,.5); }
+    .mk-dashed { border-color: color-mix(in srgb, var(--mk-accent) 40%, transparent); }
+
+    /* Buttons (own styles so dark mode never depends on base.html button colours) */
+    .mk-btn { display: inline-block; border-radius: 14px; font-weight: 700; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform .2s ease, background .2s ease, border-color .2s ease; position: relative; overflow: hidden; }
+    .mk-btn:hover { transform: translateY(-2px); }
+    .mk-btn-primary { background: var(--mk-clay); color: #ffffff; box-shadow: 0 14px 28px -14px rgba(141,91,62,.8); }
+    .mk-btn-primary:hover { background: var(--mk-clay-hover); }
+    .mk-btn-secondary { background: #2d1e14; color: #ffffff; }
+    .mk-btn-secondary:hover { background: #3d2a1c; }
+    .mk-page[data-mk="dark"] .mk-btn-secondary { background: transparent; color: var(--mk-text); border-color: var(--mk-border2); }
+    .mk-page[data-mk="dark"] .mk-btn-secondary:hover { background: var(--mk-card2); }
+    .mk-btn::after { content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); transition: left .7s ease; pointer-events: none; }
+    .mk-btn:hover::after { left: 140%; }
+
+    /* Decoration */
+    .mk-page { position: relative; }
+    .mk-glow { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: var(--mk-glow-opacity); pointer-events: none; z-index: 0; }
+    .mk-glow-a { background: var(--mk-glow-a); }
+    .mk-glow-b { background: var(--mk-glow-b); }
+    .mk-dots { background-image: radial-gradient(var(--mk-dot) 1px, transparent 1px); background-size: 24px 24px;
                -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%); mask-image: linear-gradient(to bottom, #000 0%, transparent 85%); }
     .mk-rise { opacity: 0; transform: translateY(18px); animation: mkRise .8s cubic-bezier(.2,.7,.2,1) forwards; }
     .mk-d1 { animation-delay: .08s; } .mk-d2 { animation-delay: .18s; } .mk-d3 { animation-delay: .3s; } .mk-d4 { animation-delay: .42s; }
     @keyframes mkRise { to { opacity: 1; transform: none; } }
     @keyframes mkFloat { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(-2deg); } }
-    .mk-phone { animation: mkFloat 6s ease-in-out infinite; }
-    .mk-card { transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s ease, border-color .35s ease; }
-    .mk-card:hover { transform: translateY(-6px); box-shadow: 0 24px 50px -24px rgba(45,30,20,.28); border-color: rgba(141,91,62,.35); }
-    .mk-underline { background-image: linear-gradient(transparent 62%, rgba(141,91,62,.22) 62%); }
-    .mk-shine { position: relative; overflow: hidden; }
-    .mk-shine::after { content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transition: left .7s ease; }
-    .mk-shine:hover::after { left: 140%; }
+    .mk-phone { animation: mkFloat 6s ease-in-out infinite; background: var(--mk-phone-frame); box-shadow: 0 30px 60px -20px rgba(0,0,0,.45); border: 1px solid var(--mk-phone-ring); }
+    .mk-phone-screen { background: var(--mk-phone-screen); }
+    .mk-phone-bubble { background: var(--mk-phone-bubble); }
+    .mk-phone-bar { background: var(--mk-phone-bar); }
+    .mk-phone-sent { background: var(--mk-phone-sent); }
+    .mk-phone-sent-bar { background: var(--mk-phone-sent-bar); }
     @media (prefers-reduced-motion: reduce) {
         .mk-rise, .mk-phone { animation: none !important; opacity: 1; transform: none; }
     }
 </style>
 
-<div class="mk-page relative overflow-hidden font-ui bg-white">
+<div class="mk-page relative overflow-hidden font-ui">
 
     <!-- ========================================== -->
     <!-- 1. HERO SECTION (CLEAR & SIMPLE)           -->
     <!-- ========================================== -->
-    <section class="relative bg-white">
-        <div class="mk-glow w-72 h-72 bg-[#f1d9c4] -top-10 -left-16"></div>
-        <div class="mk-glow w-80 h-80 bg-[#c9efd7] top-40 -right-24"></div>
+    <section class="relative">
+        <div class="mk-glow mk-glow-a w-72 h-72 -top-10 -left-16"></div>
+        <div class="mk-glow mk-glow-b w-80 h-80 top-40 -right-24"></div>
         <div class="mk-dots absolute inset-0 z-0"></div>
 
         <div class="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
             <div class="lg:col-span-7 text-center lg:text-left">
                 <!-- Benefit Badge -->
-                <div class="mk-rise inline-flex items-center gap-2 bg-white border border-stone-200 px-4 py-1.5 rounded-full mb-7 shadow-sm">
+                <div class="mk-rise mk-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-clay font-mono">
+                    <span class="mk-accent text-[11px] font-bold uppercase tracking-wider font-mono">
                         Built for WhatsApp & Instagram Sellers • 0% Commission
                     </span>
                 </div>
 
                 <!-- Headline -->
-                <h1 class="mk-rise mk-d1 text-4xl sm:text-5xl md:text-6xl font-black text-dark-oak tracking-tight leading-[1.1] mb-6">
-                    The Easiest Way to Set Up an Online Store and <span class="text-clay mk-underline">Sell on WhatsApp</span>.
+                <h1 class="mk-rise mk-d1 mk-text text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] mb-6">
+                    The Easiest Way to Set Up an Online Store and <span class="mk-accent mk-underline">Sell on WhatsApp</span>.
                 </h1>
 
                 <!-- Subtitle in Plain English -->
-                <p class="mk-rise mk-d2 font-serif text-base sm:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
+                <p class="mk-rise mk-d2 mk-body font-serif text-base sm:text-lg max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
                     Get a tailored website for your business in 60 seconds. Take structured orders on WhatsApp, generate daily status flyers without Canva, and send professional receipts—with zero monthly fees.
                 </p>
 
                 <!-- Action Buttons -->
                 <div class="mk-rise mk-d3 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-12">
-                    <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-sm py-4 px-8 tracking-wider font-bold w-full sm:w-auto text-center shadow-xl hover:-translate-y-0.5">
+                    <a href="{{ url_for('auth.register') }}" class="mk-btn mk-btn-primary text-sm py-4 px-8 tracking-wider w-full sm:w-auto text-center">
                         CREATE YOUR STORE FREE &rarr;
                     </a>
-                    <a href="#features" class="btn-oak text-sm py-4 px-8 tracking-wider font-semibold w-full sm:w-auto text-center hover:-translate-y-0.5">
+                    <a href="#features" class="mk-btn mk-btn-secondary text-sm py-4 px-8 tracking-wider w-full sm:w-auto text-center">
                         SEE HOW IT WORKS &darr;
                     </a>
                 </div>
 
                 <!-- 3 Quick Guarantees -->
-                <div class="mk-rise mk-d4 flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-xs font-semibold text-stone-500 pt-5 border-t border-stone-200 max-w-xl mx-auto lg:mx-0">
-                    <span><span class="text-emerald-600">✓</span> Zero transaction cuts</span>
-                    <span><span class="text-emerald-600">✓</span> No developer required</span>
-                    <span><span class="text-emerald-600">✓</span> Works on any smartphone</span>
+                <div class="mk-rise mk-d4 mk-muted mk-rule border-t flex flex-wrap items-center justify-center lg:justify-start gap-x-8 gap-y-3 text-xs font-semibold pt-5 max-w-xl mx-auto lg:mx-0">
+                    <span><span class="mk-green">✓</span> Zero transaction cuts</span>
+                    <span><span class="mk-green">✓</span> No developer required</span>
+                    <span><span class="mk-green">✓</span> Works on any smartphone</span>
                 </div>
             </div>
 
             <!-- Decorative phone (illustration only, no real data) -->
             <div class="lg:col-span-5 hidden md:flex justify-center mk-rise mk-d3" aria-hidden="true">
-                <div class="mk-phone relative w-[260px] bg-dark-oak rounded-[2.4rem] p-3 shadow-2xl ring-1 ring-stone-200">
-                    <div class="bg-stone-100 rounded-[1.9rem] overflow-hidden">
+                <div class="mk-phone relative w-[260px] rounded-[2.4rem] p-3">
+                    <div class="mk-phone-screen rounded-[1.9rem] overflow-hidden">
                         <div class="bg-[#16a34a] text-white px-4 py-3 flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-full bg-white/25 flex items-center justify-center text-sm">💬</span>
+                            <span class="w-7 h-7 rounded-full flex items-center justify-center text-sm" style="background:rgba(255,255,255,.25)">💬</span>
                             <span class="text-[11px] font-bold tracking-wide uppercase">New WhatsApp Order</span>
                         </div>
                         <div class="p-4 space-y-3">
-                            <div class="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm space-y-2">
-                                <div class="h-2.5 w-3/4 rounded bg-stone-200"></div>
-                                <div class="h-2.5 w-1/2 rounded bg-stone-200"></div>
-                                <div class="flex items-center justify-between pt-2 border-t border-stone-100">
-                                    <div class="h-2.5 w-10 rounded bg-stone-200"></div>
-                                    <div class="h-3 w-16 rounded bg-clay/60"></div>
+                            <div class="mk-phone-bubble rounded-2xl rounded-tl-sm p-3 space-y-2">
+                                <div class="mk-phone-bar h-2.5 w-3/4 rounded"></div>
+                                <div class="mk-phone-bar h-2.5 w-1/2 rounded"></div>
+                                <div class="mk-rule border-t flex items-center justify-between pt-2">
+                                    <div class="mk-phone-bar h-2.5 w-10 rounded"></div>
+                                    <div class="mk-bar-clay h-3 w-16 rounded" style="opacity:.7"></div>
                                 </div>
                             </div>
-                            <div class="bg-white rounded-2xl rounded-tl-sm p-3 shadow-sm space-y-2">
-                                <div class="h-2.5 w-2/3 rounded bg-stone-200"></div>
-                                <div class="h-2.5 w-1/3 rounded bg-stone-200"></div>
+                            <div class="mk-phone-bubble rounded-2xl rounded-tl-sm p-3 space-y-2">
+                                <div class="mk-phone-bar h-2.5 w-2/3 rounded"></div>
+                                <div class="mk-phone-bar h-2.5 w-1/3 rounded"></div>
                             </div>
-                            <div class="bg-[#dcf8c6] rounded-2xl rounded-tr-sm p-3 ml-10 shadow-sm">
-                                <div class="h-2.5 w-full rounded bg-emerald-700/25"></div>
+                            <div class="mk-phone-sent rounded-2xl rounded-tr-sm p-3 ml-10">
+                                <div class="mk-phone-sent-bar h-2.5 w-full rounded"></div>
                             </div>
                         </div>
                     </div>
-                    <span class="absolute -right-5 -bottom-4 bg-white border border-stone-200 shadow-lg rounded-2xl px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">✓ 0% commission</span>
+                    <span class="mk-chip mk-green absolute -right-5 -bottom-4 rounded-2xl px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">✓ 0% commission</span>
                 </div>
             </div>
         </div>
@@ -109,37 +256,37 @@
     <!-- ========================================== -->
     <!-- 2. THE REAL PROBLEMS WE SOLVE              -->
     <!-- ========================================== -->
-    <section class="bg-white border-t border-stone-200">
+    <section class="mk-sec">
         <div class="max-w-5xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
-                <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">The Daily Struggle</span>
-                <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Why Selling in DMs is Slowing You Down</h2>
+                <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">The Daily Struggle</span>
+                <h2 class="mk-text text-3xl md:text-4xl font-black tracking-tight m-0">Why Selling in DMs is Slowing You Down</h2>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="mk-card relative bg-stone-50 p-7 border border-stone-200 border-l-4 border-l-rose-500 rounded-2xl overflow-hidden">
-                    <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">1</span>
-                    <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-rose-100 shadow-sm mb-4">💬</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Answering "How Much?" All Day</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
+                    <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">1</span>
+                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">💬</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Answering "How Much?" All Day</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Typing prices, sizes, and account numbers over and over in DMs drains your energy and makes customers wait.
                     </p>
                 </div>
 
-                <div class="mk-card relative bg-stone-50 p-7 border border-stone-200 border-l-4 border-l-rose-500 rounded-2xl overflow-hidden">
-                    <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">2</span>
-                    <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-rose-100 shadow-sm mb-4">🎨</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Fighting Canva Every Morning</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
+                    <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">2</span>
+                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">🎨</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Fighting Canva Every Morning</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Wasting 1 to 2 hours every single morning trying to design status flyers with product photos and prices.
                     </p>
                 </div>
 
-                <div class="mk-card relative bg-stone-50 p-7 border border-stone-200 border-l-4 border-l-rose-500 rounded-2xl overflow-hidden">
-                    <span class="absolute -top-3 right-3 font-mono text-7xl font-black text-rose-500/10 select-none">3</span>
-                    <span class="text-2xl w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-rose-100 shadow-sm mb-4">👻</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Customers Ghosting at Checkout</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
+                    <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">3</span>
+                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">👻</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Customers Ghosting at Checkout</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Buyers who say "I'll get back to you" because there was no clear catalog, order total, or simple checkout.
                     </p>
                 </div>
@@ -151,99 +298,99 @@
     <!-- ========================================== -->
     <!-- 3. ALL THE FEATURES (NO JARGON)            -->
     <!-- ========================================== -->
-    <section id="features" class="relative bg-stone-50 border-t border-stone-200">
+    <section id="features" class="mk-sec-band relative">
         <div class="max-w-6xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
-                <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Built-in Features</span>
-                <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">Everything Your Business Needs</h2>
-                <p class="font-serif italic text-sm text-stone-500 mt-3">Every tool is built right in. No extra apps to download or pay for.</p>
+                <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Built-in Features</span>
+                <h2 class="mk-text text-3xl md:text-4xl font-black tracking-tight m-0">Everything Your Business Needs</h2>
+                <p class="mk-muted font-serif italic text-sm mt-3">Every tool is built right in. No extra apps to download or pay for.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                <!-- Feature 1: AI Storefront (featured, dark, wide) -->
-                <div class="mk-card lg:col-span-2 bg-dark-oak text-white p-9 rounded-3xl shadow-lg border border-dark-oak flex flex-col justify-between relative overflow-hidden">
-                    <div class="mk-glow w-64 h-64 bg-clay -top-20 -right-16 opacity-40"></div>
+                <!-- Feature 1: AI Storefront (featured, wide) -->
+                <div class="mk-feature lg:col-span-2 p-9 rounded-3xl shadow-lg flex flex-col justify-between relative overflow-hidden">
+                    <div class="mk-glow mk-glow-a w-64 h-64 -top-20 -right-16" style="opacity:.35"></div>
                     <div class="relative z-10">
-                        <div class="w-12 h-12 bg-white/10 border border-white/15 rounded-2xl flex items-center justify-center text-xl mb-5">🤖</div>
-                        <h3 class="font-black text-2xl mb-3 tracking-tight">Custom AI Website Builder</h3>
-                        <p class="font-serif text-sm text-stone-300 leading-relaxed mb-6 max-w-lg">
+                        <div class="mk-tile mk-tile-glass w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-5">🤖</div>
+                        <h3 class="mk-on-dark font-black text-2xl mb-3 tracking-tight">Custom AI Website Builder</h3>
+                        <p class="mk-on-dark-body font-serif text-sm leading-relaxed mb-6 max-w-lg">
                             Just pick your category and describe your business. Our AI designs a custom website matching your exact vibe (grillhouse, boutique, tech, or perfume shop)—not a generic spreadsheet.
                         </p>
                     </div>
-                    <span class="relative z-10 text-[10px] font-mono text-amber-300 font-bold uppercase tracking-wider block pt-4 border-t border-white/10">
+                    <span class="mk-amber mk-rule-dark relative z-10 text-[10px] font-mono font-bold uppercase tracking-wider block pt-4 border-t">
                         ✓ Ready in 60 seconds
                     </span>
                 </div>
 
                 <!-- Feature 2: WhatsApp Orders -->
-                <div class="mk-card bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="w-11 h-11 bg-[#ebfeef] border border-emerald-200 rounded-2xl flex items-center justify-center text-lg mb-4">💬</div>
-                        <h3 class="font-bold text-lg text-dark-oak mb-2">Direct WhatsApp Orders</h3>
-                        <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        <div class="mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">💬</div>
+                        <h3 class="mk-text font-bold text-lg mb-2">Direct WhatsApp Orders</h3>
+                        <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Customers view your catalog, pick their size, color, or portion, and click checkout. You receive a clean, itemized order directly in your WhatsApp DM with zero transaction fees.
                         </p>
                     </div>
-                    <span class="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    <span class="mk-green mk-rule text-[10px] font-mono font-bold uppercase tracking-wider block pt-3 border-t">
                         ✓ 0% transaction commission
                     </span>
                 </div>
 
                 <!-- Feature 3: Status Flyer Studio -->
-                <div class="mk-card bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="w-11 h-11 bg-[#fff6ee] border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">📸</div>
-                        <h3 class="font-bold text-lg text-dark-oak mb-2">1-Click Status Flyer Studio</h3>
-                        <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📸</div>
+                        <h3 class="mk-text font-bold text-lg mb-2">1-Click Status Flyer Studio</h3>
+                        <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Turn any product in your inventory into a high-res graphic flyer for your WhatsApp Status or Instagram Story in one tap. Choose from 12 brand themes with prices and WhatsApp button included.
                         </p>
                     </div>
-                    <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    <span class="mk-accent mk-rule text-[10px] font-mono font-bold uppercase tracking-wider block pt-3 border-t">
                         ✓ Instant PNG & PDF download
                     </span>
                 </div>
 
                 <!-- Feature 4: Invoices & Receipts (wide) -->
-                <div class="mk-card lg:col-span-2 bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                    <div class="absolute top-0 left-0 h-full w-1.5 bg-clay"></div>
+                <div class="mk-card lg:col-span-2 p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div class="mk-bar-clay absolute top-0 left-0 h-full w-1.5"></div>
                     <div>
-                        <div class="w-11 h-11 bg-[#fff6ee] border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">📄</div>
-                        <h3 class="font-bold text-xl text-dark-oak mb-2">Invoices & "PAID" Receipts</h3>
-                        <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4 max-w-xl">
+                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📄</div>
+                        <h3 class="mk-text font-bold text-xl mb-2">Invoices & "PAID" Receipts</h3>
+                        <p class="mk-body font-serif text-xs leading-relaxed mb-4 max-w-xl">
                             Send a formal Commercial Invoice before payment with your bank details so buyers know where to pay. Once payment enters, switch it to an official Receipt stamped "PAID IN FULL" with 1-click PDF export.
                         </p>
                     </div>
-                    <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    <span class="mk-accent mk-rule text-[10px] font-mono font-bold uppercase tracking-wider block pt-3 border-t">
                         ✓ 4 Themes (Clay, Cyber, Thermal, Luxury)
                     </span>
                 </div>
 
                 <!-- Feature 5: Unlimited Made-to-Order Stock -->
-                <div class="mk-card bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="w-11 h-11 bg-[#fff6ee] border border-clay/20 rounded-2xl flex items-center justify-center text-lg mb-4">🍲</div>
-                        <h3 class="font-bold text-lg text-dark-oak mb-2">Made-to-Order Stock Mode</h3>
-                        <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4">
+                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🍲</div>
+                        <h3 class="mk-text font-bold text-lg mb-2">Made-to-Order Stock Mode</h3>
+                        <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Selling cooked meals, cakes, digital code, or services? Toggle "Always in Stock" so your items never get marked "OUT OF STOCK" when units hit zero. Perfect for restaurants and bakers.
                         </p>
                     </div>
-                    <span class="text-[10px] font-mono text-clay font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    <span class="mk-accent mk-rule text-[10px] font-mono font-bold uppercase tracking-wider block pt-3 border-t">
                         ✓ Supports restaurants & food spots
                     </span>
                 </div>
 
                 <!-- Feature 6: Lost Leads Recovery (wide) -->
-                <div class="mk-card lg:col-span-2 bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
-                    <div class="absolute top-0 left-0 h-full w-1.5 bg-emerald-500"></div>
+                <div class="mk-card lg:col-span-2 p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
+                    <div class="mk-bar-green absolute top-0 left-0 h-full w-1.5"></div>
                     <div>
-                        <div class="w-11 h-11 bg-[#ebfeef] border border-emerald-200 rounded-2xl flex items-center justify-center text-lg mb-4">🎯</div>
-                        <h3 class="font-bold text-xl text-dark-oak mb-2">Lost Leads Recovery</h3>
-                        <p class="font-serif text-xs text-stone-600 leading-relaxed mb-4 max-w-xl">
+                        <div class="mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🎯</div>
+                        <h3 class="mk-text font-bold text-xl mb-2">Lost Leads Recovery</h3>
+                        <p class="mk-body font-serif text-xs leading-relaxed mb-4 max-w-xl">
                             If a customer fills in their name and phone number on your website but gets distracted before sending the WhatsApp message, our system saves them so you can send a 1-click reminder.
                         </p>
                     </div>
-                    <span class="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider block pt-3 border-t border-stone-100">
+                    <span class="mk-green mk-rule text-[10px] font-mono font-bold uppercase tracking-wider block pt-3 border-t">
                         ✓ Recover abandoned sales
                     </span>
                 </div>
@@ -256,36 +403,36 @@
     <!-- ========================================== -->
     <!-- 4. HOW IT WORKS (3 SIMPLE STEPS)           -->
     <!-- ========================================== -->
-    <section class="bg-white border-t border-stone-200">
+    <section class="mk-sec">
         <div class="max-w-5xl mx-auto px-6 py-20">
             <div class="text-center mb-16">
-                <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Easy Setup</span>
-                <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">How to Get Started</h2>
+                <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Easy Setup</span>
+                <h2 class="mk-text text-3xl md:text-4xl font-black tracking-tight m-0">How to Get Started</h2>
             </div>
 
             <div class="relative grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-14">
-                <div class="hidden md:block absolute top-0 left-[16%] right-[16%] border-t-2 border-dashed border-clay/30"></div>
+                <div class="mk-dashed hidden md:block absolute top-0 left-[16%] right-[16%] border-t-2 border-dashed"></div>
 
-                <div class="mk-card relative bg-white p-8 pt-12 rounded-3xl border border-stone-200 shadow-sm text-center">
-                    <span class="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white border-2 border-stone-300 flex items-center justify-center font-mono text-xl font-black text-stone-400">01</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Create Your Account</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card relative p-8 pt-12 rounded-3xl text-center">
+                    <span class="mk-step-num absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center font-mono text-xl font-black">01</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Create Your Account</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Sign up with your username or Google 1-Click. No long forms or credit cards required.
                     </p>
                 </div>
 
-                <div class="mk-card relative bg-white p-8 pt-12 rounded-3xl border-2 border-clay shadow-xl text-center md:-translate-y-3">
-                    <span class="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-clay flex items-center justify-center font-mono text-xl font-black text-white shadow-lg">02</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Tell the AI Your Business</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card mk-card-pop relative p-8 pt-12 rounded-3xl text-center md:-translate-y-3">
+                    <span class="mk-step-num-active absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center font-mono text-xl font-black">02</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Tell the AI Your Business</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Pick your category (Food, Fashion, Perfumes, Tech) and upload your photos. Your store is assembled instantly.
                     </p>
                 </div>
 
-                <div class="mk-card relative bg-white p-8 pt-12 rounded-3xl border border-stone-200 shadow-sm text-center">
-                    <span class="absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full bg-white border-2 border-stone-300 flex items-center justify-center font-mono text-xl font-black text-stone-400">03</span>
-                    <h3 class="font-bold text-base text-dark-oak mb-2">Share & Take Orders</h3>
-                    <p class="font-serif text-xs text-stone-500 leading-relaxed m-0">
+                <div class="mk-card relative p-8 pt-12 rounded-3xl text-center">
+                    <span class="mk-step-num absolute -top-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center font-mono text-xl font-black">03</span>
+                    <h3 class="mk-text font-bold text-base mb-2">Share & Take Orders</h3>
+                    <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Put your link in your Instagram bio or WhatsApp status. Receive structured orders directly in your chat.
                     </p>
                 </div>
@@ -297,53 +444,53 @@
     <!-- ========================================== -->
     <!-- 5. HONEST, SIMPLE PRICING                  -->
     <!-- ========================================== -->
-    <section class="bg-stone-50 border-t border-stone-200">
+    <section class="mk-sec-band">
         <div class="max-w-4xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
-                <span class="text-[10px] font-mono uppercase tracking-widest text-clay font-bold block mb-2">Clear Pricing</span>
-                <h2 class="text-3xl md:text-4xl font-black text-dark-oak tracking-tight m-0">No Monthly Debit Alerts. Pay Once.</h2>
-                <p class="font-serif italic text-sm text-stone-500 mt-3">Design and test your store completely free.</p>
+                <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Clear Pricing</span>
+                <h2 class="mk-text text-3xl md:text-4xl font-black tracking-tight m-0">No Monthly Debit Alerts. Pay Once.</h2>
+                <p class="mk-muted font-serif italic text-sm mt-3">Design and test your store completely free.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
                 <!-- Free Sandbox -->
-                <div class="mk-card bg-white p-8 rounded-3xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-400">Testing</span>
-                        <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Preview Mode</h3>
-                        <p class="text-xs text-stone-500 mb-6 font-serif italic">Build, test, and style your store before paying a dime.</p>
-                        <div class="text-4xl font-black text-dark-oak font-mono mb-6">₦0</div>
-                        <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Unlimited AI store redesigns</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Add products & custom variants</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Generate social status flyers (PNG & PDF)</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Test ordering on your phone</li>
+                        <span class="mk-muted text-[10px] font-mono font-bold uppercase tracking-wider">Testing</span>
+                        <h3 class="mk-text text-2xl font-bold mt-1 mb-2">Preview Mode</h3>
+                        <p class="mk-muted text-xs mb-6 font-serif italic">Build, test, and style your store before paying a dime.</p>
+                        <div class="mk-text text-4xl font-black font-mono mb-6">₦0</div>
+                        <ul class="mk-body space-y-3 text-xs font-ui mb-8 list-none p-0">
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Unlimited AI store redesigns</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Add products & custom variants</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Generate social status flyers (PNG & PDF)</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Test ordering on your phone</li>
                         </ul>
                     </div>
-                    <a href="{{ url_for('auth.register') }}" class="btn-oak text-center block text-xs py-3.5 tracking-wider">
+                    <a href="{{ url_for('auth.register') }}" class="mk-btn mk-btn-secondary text-center block text-xs py-3.5 tracking-wider">
                         START BUILDING FREE &rarr;
                     </a>
                 </div>
 
                 <!-- Go Live -->
-                <div class="mk-card bg-white p-8 rounded-3xl border-2 border-clay shadow-2xl flex flex-col justify-between relative md:scale-[1.03]">
-                    <span class="absolute -top-3 right-6 bg-[#ebfeef] text-[#16a34a] font-mono text-[9px] font-bold uppercase px-3 py-1 rounded-full border border-[#16a34a]/30 shadow-sm">
+                <div class="mk-card mk-card-pop p-8 rounded-3xl flex flex-col justify-between relative md:scale-[1.03]">
+                    <span class="mk-badge-green absolute -top-3 right-6 font-mono text-[9px] font-bold uppercase px-3 py-1 rounded-full">
                         ONE-TIME PAYMENT
                     </span>
                     <div>
-                        <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-clay">Public Store</span>
-                        <h3 class="text-2xl font-bold text-dark-oak mt-1 mb-2">Go Live</h3>
-                        <p class="text-xs text-stone-500 mb-6 font-serif italic">Unlock your storefront link to the entire public.</p>
-                        <div class="text-4xl font-black text-clay font-mono mb-6">₦0<span class="text-xs font-normal text-stone-400">once</span></div>
-                        <ul class="space-y-3 text-xs text-stone-600 font-ui mb-8">
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> <span>Public link: <code class="bg-stone-100 px-1.5 py-0.5 rounded">marketplace.com/your-name</code></span></li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Live WhatsApp order intake</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> Commercial Invoices & PAID Receipts</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> 3 Sponsor Ad slots to earn extra money</li>
-                            <li class="flex gap-2"><span class="text-emerald-600">✓</span> 0% transaction commission forever</li>
+                        <span class="mk-accent text-[10px] font-mono font-bold uppercase tracking-wider">Public Store</span>
+                        <h3 class="mk-text text-2xl font-bold mt-1 mb-2">Go Live</h3>
+                        <p class="mk-muted text-xs mb-6 font-serif italic">Unlock your storefront link to the entire public.</p>
+                        <div class="mk-price-clay text-4xl font-black font-mono mb-6">₦0<span class="mk-muted text-xs font-normal">once</span></div>
+                        <ul class="mk-body space-y-3 text-xs font-ui mb-8 list-none p-0">
+                            <li class="flex gap-2"><span class="mk-green">✓</span> <span>Public link: <code class="mk-code px-1.5 py-0.5 rounded">marketplace.com/your-name</code></span></li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Live WhatsApp order intake</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> Commercial Invoices & PAID Receipts</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> 3 Sponsor Ad slots to earn extra money</li>
+                            <li class="flex gap-2"><span class="mk-green">✓</span> 0% transaction commission forever</li>
                         </ul>
                     </div>
-                    <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-center block text-xs py-3.5 tracking-wider font-bold">
+                    <a href="{{ url_for('auth.register') }}" class="mk-btn mk-btn-primary text-center block text-xs py-3.5 tracking-wider">
                         GET STARTED NOW &rarr;
                     </a>
                 </div>
@@ -355,22 +502,22 @@
     <!-- ========================================== -->
     <!-- 6. FINAL CALL TO ACTION                    -->
     <!-- ========================================== -->
-    <section class="bg-white border-t border-stone-200">
+    <section class="mk-sec">
         <div class="max-w-5xl mx-auto px-6 py-20 text-center">
-            <div class="bg-dark-oak text-white p-10 md:p-16 rounded-3xl shadow-2xl relative overflow-hidden">
-                <div class="mk-glow w-80 h-80 bg-clay -top-24 -left-20 opacity-50"></div>
-                <div class="mk-glow w-72 h-72 bg-emerald-500 -bottom-24 -right-16 opacity-25"></div>
+            <div class="mk-cta p-10 md:p-16 rounded-3xl shadow-2xl relative overflow-hidden">
+                <div class="mk-glow mk-glow-a w-80 h-80 -top-24 -left-20" style="opacity:.45"></div>
+                <div class="mk-glow mk-glow-b w-72 h-72 -bottom-24 -right-16" style="opacity:.22"></div>
                 <div class="relative z-10">
-                    <h2 class="text-3xl md:text-5xl font-black tracking-tight mb-5 uppercase leading-[1.1]">
+                    <h2 class="mk-on-dark text-3xl md:text-5xl font-black tracking-tight mb-5 uppercase leading-[1.1]">
                         Ready to Stop Losing Sales in DMs?
                     </h2>
-                    <p class="font-serif italic text-stone-300 max-w-xl mx-auto mb-9 text-sm md:text-base leading-relaxed">
+                    <p class="mk-on-dark-body font-serif italic max-w-xl mx-auto mb-9 text-sm md:text-base leading-relaxed">
                         Join vendors who have stopped wasting hours on Canva and manual DM typing. Launch your digital storefront in 60 seconds.
                     </p>
-                    <a href="{{ url_for('auth.register') }}" class="btn-clay mk-shine text-sm py-4 px-10 tracking-widest font-black inline-block shadow-xl hover:-translate-y-0.5">
+                    <a href="{{ url_for('auth.register') }}" class="mk-btn mk-btn-primary text-sm py-4 px-10 tracking-widest inline-block">
                         CREATE YOUR STORE FOR FREE &rarr;
                     </a>
-                    <div class="mt-8 text-[11px] text-stone-400 font-mono">
+                    <div class="mk-on-dark-muted mt-8 text-[11px] font-mono">
                         Need help? Tap the green Merchant Support button in the bottom right corner.
                     </div>
                 </div>
@@ -379,4 +526,55 @@
     </section>
 
 </div>
+
+<script>
+    /* Theme sync: reads the site's real theme (class/attribute first, then the
+       page's actual text colour) and follows the header sun/moon toggle. */
+    (function () {
+        const page = document.querySelector('.mk-page');
+        const root = document.documentElement;
+        const body = document.body;
+
+        function luminance(rgb) {
+            const m = (rgb || '').match(/[\d.]+/g);
+            if (!m || m.length < 3) return null;
+            const c = m.slice(0, 3).map(Number).map(v => {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+        }
+
+        function detectDark() {
+            const attr = (root.getAttribute('data-theme') || body.getAttribute('data-theme') ||
+                          root.getAttribute('data-bs-theme') || '').toLowerCase();
+            const cls = (root.className + ' ' + body.className).toLowerCase();
+            if (attr === 'dark' || /\bdark\b/.test(cls)) return true;
+            if (attr === 'light' || /\blight\b/.test(cls)) return false;
+            const l = luminance(getComputedStyle(body).color);
+            if (l !== null) return l > 0.5;
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        function apply() {
+            page.setAttribute('data-mk', detectDark() ? 'dark' : 'light');
+        }
+        function applySoon() {
+            apply();
+            setTimeout(apply, 80);
+            setTimeout(apply, 450);
+        }
+
+        apply();
+        const opts = { attributes: true, attributeFilter: ['class', 'data-theme', 'data-bs-theme', 'style'] };
+        new MutationObserver(applySoon).observe(root, opts);
+        new MutationObserver(applySoon).observe(body, opts);
+        document.addEventListener('click', applySoon, true);
+        if (window.matchMedia) {
+            const mq = window.matchMedia('(prefers-color-scheme: dark)');
+            (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(applySoon);
+        }
+        window.addEventListener('storage', applySoon);
+    })();
+</script>
 {% endblock %}
