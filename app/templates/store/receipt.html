@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><span id="pageTitle">Document</span> #{{ order.order_ref }} // {{ store.name }}</title>
+    <!-- FIX: <title> may only hold plain text. JS below updates it per document type. -->
+    <title>Document #{{ order.order_ref }} // {{ store.name }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- NOTE: the Tailwind CDN script is for development. For production, build Tailwind. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     {% set theme = store.receipt_theme or 'classic' %}
+    {% if theme not in ['classic', 'cyber', 'thermal', 'luxury'] %}{% set theme = 'classic' %}{% endif %}
 
     <style>
         .font-ui { font-family: 'Montserrat', sans-serif; }
@@ -22,50 +25,61 @@
         .invoice-card { background: white; border-top: 8px solid #8d5b3e; color: #2d1e14; }
         .brand-accent { color: #8d5b3e; }
         .status-badge { border: 1px solid #8d5b3e; color: #8d5b3e; }
+        .notice-box { background: #faf7f2; border: 1px solid #e7dccd; }
 
         {% elif theme == 'cyber' %}
         body { background-color: #09090b; color: #f4f4f5; font-family: 'JetBrains Mono', monospace; }
         .invoice-card { background: #121217; border: 1px solid rgba(6, 182, 212, 0.4); color: #f4f4f5; box-shadow: 0 0 30px rgba(6, 182, 212, 0.1); }
         .brand-accent { color: #06b6d4; }
         .status-badge { border: 1px solid #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .notice-box { background: rgba(6, 182, 212, 0.06); border: 1px solid rgba(6, 182, 212, 0.3); }
 
         {% elif theme == 'thermal' %}
         body { background-color: #e5e7eb; color: #111827; font-family: 'Courier New', Courier, monospace; }
         .invoice-card { background: #ffffff; border: 2px dashed #111827; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .brand-accent { color: #111827; }
         .status-badge { border: 1px solid #111827; color: #111827; }
+        .notice-box { background: #f9fafb; border: 1px dashed #111827; }
 
         {% elif theme == 'luxury' %}
         body { background-color: #0f172a; color: #1e293b; font-family: 'Montserrat', sans-serif; }
         .invoice-card { background: #ffffff; border-top: 8px solid #d97706; color: #1e293b; }
         .brand-accent { color: #d97706; }
         .status-badge { border: 1px solid #d97706; color: #d97706; background: #fffbeb; }
+        .notice-box { background: #fffbeb; border: 1px solid #fcd9a0; }
         {% endif %}
+
+        /* Toolbar sits on the page background; keep it readable in dark themes */
+        .doc-toggle { background: rgba(231, 229, 228, 0.85); }
     </style>
 </head>
 <body class="p-4 md:p-12 min-h-screen flex flex-col items-center justify-center">
 
     <div class="max-w-2xl w-full flex flex-wrap justify-between items-center gap-4 mb-6">
         <a href="/{{ store.slug }}" class="font-ui text-xs font-semibold brand-accent no-underline">&larr; Return to Storefront</a>
-        
-        <!-- 🔄 INVOICE VS RECEIPT SELECTOR -->
-        <div class="flex items-center bg-stone-200/80 p-1 rounded-xl text-xs font-ui font-bold">
-            <button type="button" onclick="setDocType('invoice')" id="btnInvoice" class="px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+
+        <!-- INVOICE VS RECEIPT SELECTOR -->
+        <div class="doc-toggle flex items-center p-1 rounded-xl text-xs font-ui font-bold">
+            <button type="button" onclick="setDocType('invoice')" id="btnInvoice"
+                    class="px-3.5 py-1.5 rounded-lg transition cursor-pointer font-bold">
                 📄 Commercial Invoice
             </button>
-            <button type="button" onclick="setDocType('receipt')" id="btnReceipt" class="px-3.5 py-1.5 rounded-lg transition cursor-pointer">
+            <button type="button" onclick="setDocType('receipt')" id="btnReceipt"
+                    class="px-3.5 py-1.5 rounded-lg transition cursor-pointer font-bold"
+                    {% if order.status != 'paid' %}disabled title="Receipts are available once the order is paid"{% endif %}>
                 🧾 Official Receipt
             </button>
         </div>
 
-        <button onclick="downloadPDF()" id="pdfBtn" class="font-ui text-xs font-bold uppercase tracking-wider bg-stone-900 hover:bg-black text-white px-5 py-2.5 rounded-xl shadow transition cursor-pointer">
+        <button type="button" onclick="downloadPDF()" id="pdfBtn"
+                class="font-ui text-xs font-bold uppercase tracking-wider bg-stone-900 hover:bg-black text-white px-5 py-2.5 rounded-xl shadow transition cursor-pointer">
             Download PDF 🖨️
         </button>
     </div>
 
     <!-- DOCUMENT PAPER -->
     <div id="invoiceCard" class="invoice-card max-w-2xl w-full p-8 md:p-12 shadow-2xl relative">
-        
+
         <div class="flex justify-between items-start pb-8 border-b border-black/10">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight m-0">{{ store.name }}</h1>
@@ -75,7 +89,9 @@
             <div class="text-right">
                 <span id="docRefLabel" class="text-xs font-bold uppercase tracking-wider brand-accent block font-mono">Invoice No:</span>
                 <span class="font-mono text-xl font-bold">#{{ order.order_ref }}</span>
-                <p class="text-[10px] opacity-50 mt-1 font-mono">{{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+                <p class="text-[10px] opacity-50 mt-1 font-mono">
+                    {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else '' }}
+                </p>
             </div>
         </div>
 
@@ -95,7 +111,7 @@
             <table class="w-full text-xs">
                 <thead>
                     <tr class="opacity-50 uppercase text-[10px] border-b border-black/10 font-mono">
-                        <th class="text-left pb-2">Description & Specs</th>
+                        <th class="text-left pb-2">Description &amp; Specs</th>
                         <th class="text-center pb-2">Qty</th>
                         <th class="text-right pb-2">Subtotal</th>
                     </tr>
@@ -118,16 +134,17 @@
         </div>
 
         <!-- Settlement Instructions Box (Invoice Mode Only) -->
-        <div id="invoicePaymentNotice" class="p-4 my-4 bg-stone-50 border border-stone-200 rounded-xl text-left hidden">
-            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-clay block mb-1">Bank Settlement Instructions</span>
+        <div id="invoicePaymentNotice" class="notice-box p-4 my-4 rounded-xl text-left hidden">
+            <span class="text-[10px] font-mono font-bold uppercase tracking-wider brand-accent block mb-1">Bank Settlement Instructions</span>
             <p class="text-xs opacity-75 m-0 leading-relaxed">
-                Please settle payment of <strong>{{ store.currency }}{{ "{:,.2f}".format(order.total_amount) }}</strong> to the merchant's registered account or WhatsApp (<strong>{{ store.whatsapp_number }}</strong>).
+                Please settle payment of <strong>{{ store.currency }}{{ "{:,.2f}".format(order.total_amount) }}</strong>
+                to the merchant's registered account or WhatsApp (<strong>{{ store.whatsapp_number }}</strong>).
             </p>
         </div>
 
         <div class="pt-6 flex justify-between items-center">
             <div>
-                <span id="docStatusBadge" class="status-badge text-[10px] uppercase tracking-wider px-3.5 py-1.5 font-bold font-mono rounded">
+                <span id="docStatusBadge" class="status-badge inline-block text-[10px] uppercase tracking-wider px-3.5 py-1.5 leading-none font-bold font-mono rounded">
                     STATUS: {{ order.status|upper }}
                 </span>
             </div>
@@ -143,12 +160,24 @@
     </div>
 
     <script>
-        let currentDocType = "{{ 'receipt' if order.status == 'paid' else 'invoice' }}";
-        const orderRef = "{{ order.order_ref }}";
-        const orderStatus = "{{ order.status }}";
+        // FIX: |tojson safely escapes values placed inside JavaScript
+        const orderRef = {{ order.order_ref|tojson }};
+        const orderStatus = {{ order.status|tojson }};
+        const storeName = {{ store.name|tojson }};
+        const isPaid = orderStatus === 'paid';
+
+        let currentDocType = isPaid ? 'receipt' : 'invoice';
+
+        // FIX: keep base classes so transition/cursor/etc. are never lost
+        const BTN_BASE = 'px-3.5 py-1.5 rounded-lg transition cursor-pointer font-bold ';
+        const BTN_ACTIVE = BTN_BASE + 'bg-white text-stone-900 shadow-sm';
+        const BTN_IDLE = BTN_BASE + 'text-stone-500 hover:text-black';
+        const BTN_DISABLED = 'px-3.5 py-1.5 rounded-lg font-bold text-stone-400 opacity-50 cursor-not-allowed';
 
         function setDocType(type) {
+            if (type === 'receipt' && !isPaid) return; // receipts only for paid orders
             currentDocType = type;
+
             const btnInv = document.getElementById('btnInvoice');
             const btnRec = document.getElementById('btnReceipt');
             const subTitle = document.getElementById('docSubtitle');
@@ -157,32 +186,25 @@
             const noticeBox = document.getElementById('invoicePaymentNotice');
             const statusBadge = document.getElementById('docStatusBadge');
 
+            const label = type === 'invoice' ? 'Invoice' : 'Receipt';
+            document.title = `${label} #${orderRef} // ${storeName}`;
+
             if (type === 'invoice') {
-                btnInv.className = 'px-3.5 py-1.5 rounded-lg bg-white text-stone-900 shadow-sm font-bold';
-                btnRec.className = 'px-3.5 py-1.5 rounded-lg text-stone-500 hover:text-black font-bold';
+                btnInv.className = BTN_ACTIVE;
+                btnRec.className = isPaid ? BTN_IDLE : BTN_DISABLED;
                 subTitle.innerText = 'Commercial Invoice // Payment Request';
                 refLabel.innerText = 'Invoice No:';
                 totalLabel.innerText = 'Total Amount Due';
                 noticeBox.classList.remove('hidden');
-
-                if (orderStatus === 'paid') {
-                    statusBadge.innerText = 'STATUS: PAID (INVOICE)';
-                } else {
-                    statusBadge.innerText = 'STATUS: PAYMENT DUE / PENDING';
-                }
+                statusBadge.innerText = isPaid ? 'STATUS: PAID (INVOICE)' : 'STATUS: PAYMENT DUE / PENDING';
             } else {
-                btnRec.className = 'px-3.5 py-1.5 rounded-lg bg-white text-stone-900 shadow-sm font-bold';
-                btnInv.className = 'px-3.5 py-1.5 rounded-lg text-stone-500 hover:text-black font-bold';
+                btnRec.className = BTN_ACTIVE;
+                btnInv.className = BTN_IDLE;
                 subTitle.innerText = 'Official Sales Receipt // Payment Confirmation';
                 refLabel.innerText = 'Receipt No:';
                 totalLabel.innerText = 'Total Amount Settled';
                 noticeBox.classList.add('hidden');
-
-                if (orderStatus === 'paid') {
-                    statusBadge.innerText = 'STATUS: PAID IN FULL ✓';
-                } else {
-                    statusBadge.innerText = 'STATUS: ISSUED (PENDING SETTLEMENT)';
-                }
+                statusBadge.innerText = 'STATUS: PAID IN FULL ✓';
             }
         }
 
@@ -192,23 +214,41 @@
 
         function downloadPDF() {
             const btn = document.getElementById('pdfBtn');
+            const originalText = btn.innerText;
             btn.innerText = 'EXPORTING PDF...';
             btn.disabled = true;
 
+            // FIX: reset scroll so the capture isn't offset
+            window.scrollTo(0, 0);
+
             const element = document.getElementById('invoiceCard');
             const prefix = currentDocType === 'invoice' ? 'Invoice' : 'Receipt';
+
             const opt = {
-                margin: 10,
-                filename: `${prefix}_#${orderRef}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                margin: 8,
+                // FIX: no '#' in filename (breaks on some devices)
+                filename: `${prefix}_${orderRef}.pdf`,
+                image: { type: 'jpeg', quality: 0.95 },
+                html2canvas: {
+                    scale: 1.5,          // was 2: smaller, faster files
+                    useCORS: true,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: 1024    // same desktop layout on phone and laptop
+                },
+                pagebreak: { mode: ['avoid-all'] },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerText = 'Download PDF 🖨️';
-                btn.disabled = false;
-            });
+            html2pdf().set(opt).from(element).save()
+                .catch(err => {
+                    console.error('PDF export failed:', err);
+                    alert('Could not export the PDF. Please try again.');
+                })
+                .finally(() => {
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                });
         }
     </script>
 </body>
