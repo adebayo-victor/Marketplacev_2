@@ -207,3 +207,57 @@ class PasswordResetTicket(db.Model):
     temp_password = db.Column(db.String(100), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     resolved_at = db.Column(db.DateTime, nullable=True)
+
+# ==============================================================================
+# AI FLYER DESIGN STUDIO MODELS
+# ==============================================================================
+
+class FlyerTemplate(db.Model):
+    __tablename__ = 'flyer_templates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # --- Identity & Context ---
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    creator_name = db.Column(db.String(100), nullable=False)
+    original_context = db.Column(db.String(255), nullable=True)
+    
+    # --- The Core Asset ---
+    html = db.Column(db.Text, nullable=False) 
+    
+    # --- Visibility ---
+    is_official = db.Column(db.Boolean, default=False)
+    
+    # --- Social Proof & Metrics ---
+    usage_count = db.Column(db.Integer, default=0)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    likes_count = db.Column(db.Integer, default=0)
+    
+    # --- Dual Rating System Aggregates ---
+    avg_star_rating = db.Column(db.Float, default=0.0)
+    avg_scale_rating = db.Column(db.Float, default=0.0)
+    total_ratings = db.Column(db.Integer, default=0)
+    
+    # --- Metadata ---
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship to reviews
+    reviews = db.relationship('TemplateReview', backref='template', lazy='dynamic', cascade='all, delete-orphan')
+
+
+class TemplateReview(db.Model):
+    __tablename__ = 'template_reviews'
+
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('flyer_templates.id'), nullable=False, index=True)
+    store_id = db.Column(db.Integer, db.ForeignKey('stores.id'), nullable=False)
+    
+    star_rating = db.Column(db.Integer, nullable=False)
+    scale_rating = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Prevent a store from reviewing the same template multiple times
+    __table_args__ = (
+        db.UniqueConstraint('template_id', 'store_id', name='uq_template_store_review'),
+    )
