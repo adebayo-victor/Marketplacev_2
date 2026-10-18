@@ -34,9 +34,9 @@ def generate_flyer():
     if not api_key or api_key == 'your_api_key_here':
         return jsonify({"status": "error", "message": "API key not configured."}), 500
 
-    # 2. The System Prompt (FIXED: uses product.current_price)
+    # 2. The System Prompt (FIXED: Extremely strict about double braces)
     system_prompt = (
-        "You are an expert frontend developer creating HTML flyers.\n"
+        "You are an expert frontend developer creating beautiful HTML flyers.\n"
         "You MUST respond with ONLY a valid JSON object containing three keys: \"name\", \"category\", and \"html\".\n"
         "DO NOT include markdown formatting, code blocks, or any text outside the JSON.\n\n"
         f"Product: {product.name}\n"
@@ -44,27 +44,25 @@ def generate_flyer():
         f"Price: ₦{product.current_price:,.2f}\n"
         f"Store: {store.name if store else 'Marketplace'}\n\n"
         "CRITICAL RULES:\n"
-        "1. Output MUST be valid JSON only - no markdown, no ```json blocks\n"
+        "1. Output MUST be valid JSON only.\n"
         "2. \"name\": A short, catchy name (e.g., \"Newspaper Layout\")\n"
         "3. \"category\": Use the category provided above\n"
-        "4. \"html\": Raw HTML/Tailwind CSS flyer code\n"
-        "5. Use EXACTLY these Jinja placeholders: {{{{PRODUCT_IMAGE}}}}, {{{{PRODUCT_NAME}}}}, {{{{PRICE}}}}, {{{{STORE_NAME}}}}, {{{{DESCRIPTION}}}}\n"
-        "6. Make the design modern, professional, and mobile-responsive\n"
-        "7. Use Tailwind CSS classes for styling\n"
-        "8. Include the product image placeholder prominently\n\n"
+        "4. \"html\": Raw HTML/Tailwind CSS flyer code. Make it visually stunning.\n"
+        "5. Use EXACTLY TWO curly braces on each side for placeholders, like this: {{PRODUCT_IMAGE}}. DO NOT use three braces.\n"
+        "6. Required placeholders: {{PRODUCT_IMAGE}}, {{PRODUCT_NAME}}, {{PRICE}}, {{STORE_NAME}}, {{DESCRIPTION}}\n"
+        "7. Use Tailwind CSS classes for styling\n\n"
         f"User request: {prompt}"
     )
 
     try:
         # 3. Call the AI
-        print(f"🤖 Calling OpenRouter API for user: {current_user.id if current_user else 'anonymous'}")
+        print(f"🤖 Calling OpenRouter API...")
         ai_response = query_openrouter(system_prompt, api_key)
         
         if not ai_response:
-            print("❌ AI returned None/empty response")
-            return jsonify({"status": "error", "message": "AI service did not respond. Please try again."}), 500
+            return jsonify({"status": "error", "message": "AI service did not respond."}), 500
 
-        # 4. Clean the response - remove markdown code blocks
+        # 4. Clean the response
         clean_response = ai_response.strip()
         if clean_response.startswith("```"):
             first_newline = clean_response.find('\n')
@@ -78,18 +76,16 @@ def generate_flyer():
         # 5. Parse JSON
         try:
             template_data = json.loads(clean_response)
-        except json.JSONDecodeError as json_err:
-            print(f"❌ JSON Decode Error: {str(json_err)}")
-            return jsonify({
-                "status": "error", 
-                "message": f"Invalid JSON from AI. Try a simpler prompt."
-            }), 500
+        except json.JSONDecodeError:
+            return jsonify({"status": "error", "message": "Invalid JSON from AI. Try a simpler prompt."}), 500
 
-        # 6. Validate the data
         if 'html' not in template_data:
-            return jsonify({"status": "error", "message": "AI response missing HTML code. Try again."}), 500
+            return jsonify({"status": "error", "message": "AI response missing HTML code."}), 500
 
-        # 7. Save to Database
+        # 🛡️ SAFETY NET: Force double braces in case the AI used three
+        template_data['html'] = template_data['html'].replace('{{{', '{{').replace('}}}', '}}')
+
+        # 6. Save to Database
         new_template = FlyerTemplate(
             name=template_data.get('name', 'Custom Design'),
             category=template_data.get('category', category),
@@ -100,9 +96,8 @@ def generate_flyer():
         )
         db.session.add(new_template)
         db.session.commit()
-        print(f"✅ Template saved with ID: {new_template.id}")
 
-        # 8. Render the Preview using Jinja (FIXED: uses product.current_price and product.image)
+        # 7. Render the Preview using Jinja
         try:
             image_url = product.image if product.image.startswith('http') else url_for('static', filename='uploads/products/' + product.image)
             
@@ -114,9 +109,7 @@ def generate_flyer():
                 STORE_NAME=store.name if store else "Marketplace",
                 DESCRIPTION=product.description or "Premium quality product."
             )
-            print("✅ Jinja rendering successful")
-        except Exception as render_err:
-            print(f"❌ Jinja render error: {str(render_err)}")
+        except Exception:
             preview_html = new_template.html
 
         return jsonify({
@@ -128,7 +121,5 @@ def generate_flyer():
 
     except Exception as e:
         db.session.rollback()
-        print(f"💥 Unexpected error in generate_flyer: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print(f"💥 Error: {str(e)}")
         return jsonify({"status": "error", "message": f"Server error: {str(e)[:100]}"}), 500
