@@ -3,718 +3,333 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graphic Studio // {{ product.name }}</title>
+    <title>Product Graphic Studio // {{ product.name }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=DM+Serif+Display&family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        .font-ui   { font-family: 'Montserrat', sans-serif; }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* ---------- Default flyer themes (CSS variables) ---------- */
-        .flyer-card-container {
-            width: 360px; max-width: 92vw; box-sizing: border-box; border-radius: 26px;
-            background: linear-gradient(145deg, var(--bg1), var(--bg2));
-            color: var(--fg); border: 2px solid var(--bd);
+        
+        .theme-marketplace { 
+            background: linear-gradient(145deg, #f9f5f0 0%, #ede5dc 100%) !important; 
+            color: #2d1e14 !important; 
+            border: 2px solid #8d5b3e !important; 
         }
-        .flyer-card-container .accent-text   { color: var(--accent); }
-        .flyer-card-container .badge-bg      { background: var(--badge); color: var(--badge-fg); }
-        .flyer-card-container .border-subtle { border-color: var(--subtle) !important; }
-        .flyer-card-container .tag-bg        { background: var(--tag-bg); color: var(--tag-fg); border-color: var(--tag-bd); }
+        .theme-marketplace .accent-text { color: #8d5b3e !important; }
+        .theme-marketplace .badge-bg { background: #8d5b3e !important; color: white !important; }
+        .theme-marketplace .border-subtle { border-color: rgba(141, 91, 62, 0.2) !important; }
+        .theme-marketplace .tag-bg { background: rgba(141, 91, 62, 0.1) !important; color: #2d1e14 !important; border-color: rgba(141, 91, 62, 0.3) !important; }
 
-        .theme-marketplace { --bg1:#f9f5f0; --bg2:#ede5dc; --fg:#2d1e14; --bd:#8d5b3e; --accent:#8d5b3e; --badge:#8d5b3e; --badge-fg:#fff;  --subtle:rgba(141,91,62,.2);  --tag-bg:rgba(141,91,62,.1);  --tag-fg:#2d1e14; --tag-bd:rgba(141,91,62,.3); }
-        .theme-cyber       { --bg1:#09090b; --bg2:#18181b; --fg:#f4f4f5; --bd:#06b6d4; --accent:#06b6d4; --badge:#06b6d4; --badge-fg:#000; --subtle:rgba(255,255,255,.1); --tag-bg:rgba(6,182,212,.1);   --tag-fg:#f4f4f5; --tag-bd:rgba(6,182,212,.3); }
-        .theme-flame       { --bg1:#18100c; --bg2:#291710; --fg:#fff7ed; --bd:#ea580c; --accent:#f97316; --badge:#ea580c; --badge-fg:#fff;  --subtle:rgba(234,88,12,.25);  --tag-bg:rgba(234,88,12,.15);  --tag-fg:#ffedd5; --tag-bd:rgba(234,88,12,.4); }
-        .theme-emerald     { --bg1:#022c22; --bg2:#064e3b; --fg:#ecfdf5; --bd:#10b981; --accent:#34d399; --badge:#10b981; --badge-fg:#000; --subtle:rgba(16,185,129,.2);  --tag-bg:rgba(16,185,129,.15); --tag-fg:#ecfdf5; --tag-bd:rgba(16,185,129,.35); }
-        .theme-gold        { --bg1:#0f172a; --bg2:#1e293b; --fg:#f8fafc; --bd:#f59e0b; --accent:#fbbf24; --badge:#f59e0b; --badge-fg:#000; --subtle:rgba(245,158,11,.2);  --tag-bg:rgba(245,158,11,.15); --tag-fg:#fef3c7; --tag-bd:rgba(245,158,11,.35); }
-        .theme-rose        { --bg1:#1c1015; --bg2:#2e1520; --fg:#fff1f2; --bd:#f43f5e; --accent:#fb7185; --badge:#f43f5e; --badge-fg:#fff;  --subtle:rgba(244,63,94,.2);   --tag-bg:rgba(244,63,94,.15);  --tag-fg:#ffe4e6; --tag-bd:rgba(244,63,94,.35); }
-        .theme-minimal     { --bg1:#ffffff; --bg2:#ffffff; --fg:#18181b; --bd:#18181b; --accent:#18181b; --badge:#18181b; --badge-fg:#fff;  --subtle:#e4e4e7;               --tag-bg:#f4f4f5;               --tag-fg:#18181b; --tag-bd:#d4d4d8; }
-        .theme-violet      { --bg1:#140d21; --bg2:#22123b; --fg:#faf5ff; --bd:#a855f7; --accent:#c084fc; --badge:#a855f7; --badge-fg:#fff;  --subtle:rgba(168,85,247,.2);  --tag-bg:rgba(168,85,247,.15); --tag-fg:#f3e8ff; --tag-bd:rgba(168,85,247,.35); }
-        .theme-mocha       { --bg1:#1c1514; --bg2:#2b1d1a; --fg:#fef3c7; --bd:#d97706; --accent:#f59e0b; --badge:#d97706; --badge-fg:#fff;  --subtle:rgba(217,119,6,.2);   --tag-bg:rgba(217,119,6,.15);  --tag-fg:#fef3c7; --tag-bd:rgba(217,119,6,.35); }
-        .theme-arctic      { --bg1:#09131f; --bg2:#0f1d30; --fg:#f0f9ff; --bd:#38bdf8; --accent:#38bdf8; --badge:#38bdf8; --badge-fg:#000; --subtle:rgba(56,189,248,.2);  --tag-bg:rgba(56,189,248,.15); --tag-fg:#e0f2fe; --tag-bd:rgba(56,189,248,.35); }
-        .theme-concrete    { --bg1:#191816; --bg2:#262420; --fg:#fef08a; --bd:#eab308; --accent:#eab308; --badge:#eab308; --badge-fg:#000; --subtle:rgba(234,179,8,.2);   --tag-bg:rgba(234,179,8,.15);  --tag-fg:#fef9c3; --tag-bd:rgba(234,179,8,.35); }
-        .theme-matcha      { --bg1:#101c12; --bg2:#192e1c; --fg:#f7fee7; --bd:#84cc16; --accent:#a3e635; --badge:#84cc16; --badge-fg:#000; --subtle:rgba(132,204,22,.2);  --tag-bg:rgba(132,204,22,.15); --tag-fg:#ecfccb; --tag-bd:rgba(132,204,22,.35); }
+        .theme-cyber { 
+            background: linear-gradient(145deg, #09090b 0%, #18181b 100%) !important; 
+            color: #f4f4f5 !important; 
+            border: 2px solid #06b6d4 !important; 
+        }
+        .theme-cyber .accent-text { color: #06b6d4 !important; }
+        .theme-cyber .badge-bg { background: #06b6d4 !important; color: black !important; }
+        .theme-cyber .border-subtle { border-color: rgba(255, 255, 255, 0.1) !important; }
+        .theme-cyber .tag-bg { background: rgba(6, 182, 212, 0.1) !important; color: #f4f4f5 !important; border-color: rgba(6, 182, 212, 0.3) !important; }
+
+        .theme-flame { 
+            background: linear-gradient(145deg, #18100c 0%, #291710 100%) !important; 
+            color: #fff7ed !important; 
+            border: 2px solid #ea580c !important; 
+        }
+        .theme-flame .accent-text { color: #f97316 !important; }
+        .theme-flame .badge-bg { background: #ea580c !important; color: white !important; }
+        .theme-flame .border-subtle { border-color: rgba(234, 88, 12, 0.25) !important; }
+        .theme-flame .tag-bg { background: rgba(234, 88, 12, 0.15) !important; color: #ffedd5 !important; border-color: rgba(234, 88, 12, 0.4) !important; }
+
+        .theme-emerald { 
+            background: linear-gradient(145deg, #022c22 0%, #064e3b 100%) !important; 
+            color: #ecfdf5 !important; 
+            border: 2px solid #10b981 !important; 
+        }
+        .theme-emerald .accent-text { color: #34d399 !important; }
+        .theme-emerald .badge-bg { background: #10b981 !important; color: black !important; }
+        .theme-emerald .border-subtle { border-color: rgba(16, 185, 129, 0.2) !important; }
+        .theme-emerald .tag-bg { background: rgba(16, 185, 129, 0.15) !important; color: #ecfdf5 !important; border-color: rgba(16, 185, 129, 0.35) !important; }
+
+        .theme-gold { 
+            background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important; 
+            color: #f8fafc !important; 
+            border: 2px solid #f59e0b !important; 
+        }
+        .theme-gold .accent-text { color: #fbbf24 !important; }
+        .theme-gold .badge-bg { background: #f59e0b !important; color: black !important; }
+        .theme-gold .border-subtle { border-color: rgba(245, 158, 11, 0.2) !important; }
+        .theme-gold .tag-bg { background: rgba(245, 158, 11, 0.15) !important; color: #fef3c7 !important; border-color: rgba(245, 158, 11, 0.35) !important; }
+
+        .theme-rose { 
+            background: linear-gradient(145deg, #1c1015 0%, #2e1520 100%) !important; 
+            color: #fff1f2 !important; 
+            border: 2px solid #f43f5e !important; 
+        }
+        .theme-rose .accent-text { color: #fb7185 !important; }
+        .theme-rose .badge-bg { background: #f43f5e !important; color: white !important; }
+        .theme-rose .border-subtle { border-color: rgba(244, 63, 94, 0.2) !important; }
+        .theme-rose .tag-bg { background: rgba(244, 63, 94, 0.15) !important; color: #ffe4e6 !important; border-color: rgba(244, 63, 94, 0.35) !important; }
+
+        .theme-minimal { 
+            background: #ffffff !important; 
+            color: #18181b !important; 
+            border: 2px solid #18181b !important; 
+        }
+        .theme-minimal .accent-text { color: #18181b !important; }
+        .theme-minimal .badge-bg { background: #18181b !important; color: white !important; }
+        .theme-minimal .border-subtle { border-color: #e4e4e7 !important; }
+        .theme-minimal .tag-bg { background: #f4f4f5 !important; color: #18181b !important; border-color: #d4d4d8 !important; }
+
+        .theme-violet { 
+            background: linear-gradient(145deg, #140d21 0%, #22123b 100%) !important; 
+            color: #faf5ff !important; 
+            border: 2px solid #a855f7 !important; 
+        }
+        .theme-violet .accent-text { color: #c084fc !important; }
+        .theme-violet .badge-bg { background: #a855f7 !important; color: white !important; }
+        .theme-violet .border-subtle { border-color: rgba(168, 85, 247, 0.2) !important; }
+        .theme-violet .tag-bg { background: rgba(168, 85, 247, 0.15) !important; color: #f3e8ff !important; border-color: rgba(168, 85, 247, 0.35) !important; }
+
+        .theme-mocha { 
+            background: linear-gradient(145deg, #1c1514 0%, #2b1d1a 100%) !important; 
+            color: #fef3c7 !important; 
+            border: 2px solid #d97706 !important; 
+        }
+        .theme-mocha .accent-text { color: #f59e0b !important; }
+        .theme-mocha .badge-bg { background: #d97706 !important; color: white !important; }
+        .theme-mocha .border-subtle { border-color: rgba(217, 119, 6, 0.2) !important; }
+        .theme-mocha .tag-bg { background: rgba(217, 119, 6, 0.15) !important; color: #fef3c7 !important; border-color: rgba(217, 119, 6, 0.35) !important; }
+
+        .theme-arctic { 
+            background: linear-gradient(145deg, #09131f 0%, #0f1d30 100%) !important; 
+            color: #f0f9ff !important; 
+            border: 2px solid #38bdf8 !important; 
+        }
+        .theme-arctic .accent-text { color: #38bdf8 !important; }
+        .theme-arctic .badge-bg { background: #38bdf8 !important; color: black !important; }
+        .theme-arctic .border-subtle { border-color: rgba(56, 189, 248, 0.2) !important; }
+        .theme-arctic .tag-bg { background: rgba(56, 189, 248, 0.15) !important; color: #e0f2fe !important; border-color: rgba(56, 189, 248, 0.35) !important; }
+
+        .theme-concrete { 
+            background: linear-gradient(145deg, #191816 0%, #262420 100%) !important; 
+            color: #fef08a !important; 
+            border: 2px solid #eab308 !important; 
+        }
+        .theme-concrete .accent-text { color: #eab308 !important; }
+        .theme-concrete .badge-bg { background: #eab308 !important; color: black !important; }
+        .theme-concrete .border-subtle { border-color: rgba(234, 179, 8, 0.2) !important; }
+        .theme-concrete .tag-bg { background: rgba(234, 179, 8, 0.15) !important; color: #fef9c3 !important; border-color: rgba(234, 179, 8, 0.35) !important; }
+
+        .theme-matcha { 
+            background: linear-gradient(145deg, #101c12 0%, #192e1c 100%) !important; 
+            color: #f7fee7 !important; 
+            border: 2px solid #84cc16 !important; 
+        }
+        .theme-matcha .accent-text { color: #a3e635 !important; }
+        .theme-matcha .badge-bg { background: #84cc16 !important; color: black !important; }
+        .theme-matcha .border-subtle { border-color: rgba(132, 204, 22, 0.2) !important; }
+        .theme-matcha .tag-bg { background: rgba(132, 204, 22, 0.15) !important; color: #ecfccb !important; border-color: rgba(132, 204, 22, 0.35) !important; }
+
+        .flyer-card-container {
+            width: 360px;
+            max-width: 92vw;
+            box-sizing: border-box;
+            border-radius: 26px;
+        }
 
         .product-image-box {
-            width: 100%; height: 220px; border-radius: 18px;
-            background-size: cover; background-position: center; background-repeat: no-repeat;
+            width: 100%;
+            height: 220px;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            border-radius: 18px;
         }
-
-        /* ---------- Studio chrome ---------- */
-        .panel { background: #17171a; border: 1px solid #27272a; }
-        .preview-wrapper {
-            min-height: 560px; display: flex; align-items: center; justify-content: center;
-            background:
-                radial-gradient(circle at 20% 10%, rgba(245,158,11,.07), transparent 40%),
-                radial-gradient(circle at 80% 90%, rgba(244,63,94,.06), transparent 40%),
-                #09090b;
-            border-radius: 18px; padding: 20px; position: relative;
-        }
-        .label { font: 700 10px/1 'JetBrains Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: #a1a1aa; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { scrollbar-width: none; }
-        .thin-scroll::-webkit-scrollbar { height: 6px; }
-        .thin-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
-
-        /* Community cards */
-        .tpl-card { width: 208px; flex: none; scroll-snap-align: start; transition: transform .18s, border-color .18s, box-shadow .18s; }
-        .tpl-card:hover { transform: translateY(-3px); border-color: #f59e0b; box-shadow: 0 14px 30px rgba(0,0,0,.45); }
-        .tpl-card.active { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.35); }
-        .skeleton { background: linear-gradient(90deg,#1f1f23 25%,#2a2a30 37%,#1f1f23 63%); background-size: 400% 100%; animation: shimmer 1.3s ease infinite; }
-        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
-
-        /* Rating modal */
-        .modal-pop { animation: pop .22s cubic-bezier(.2,.9,.3,1.2); }
-        @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
-        .star-btn { transition: transform .12s, color .12s; color: #3f3f46; }
-        .star-btn:hover { transform: scale(1.15); }
-        .star-btn.on { color: #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.45)); }
-        input[type=range].scale { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px; outline: none;
-            background: linear-gradient(90deg, #f59e0b var(--pct, 60%), #3f3f46 var(--pct, 60%)); }
-        input[type=range].scale::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 4px solid #f59e0b; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
-        input[type=range].scale::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid #f59e0b; cursor: pointer; }
-        @media (prefers-reduced-motion: reduce) { .modal-pop, .skeleton, .tpl-card { animation: none; transition: none; } }
     </style>
 </head>
-<body class="bg-stone-950 min-h-screen p-4 md:p-8 flex flex-col items-center font-ui text-stone-200">
+<body class="bg-stone-950 min-h-screen p-4 md:p-8 flex flex-col items-center justify-center font-ui text-stone-200">
 
-    <!-- Header -->
-    <div class="max-w-7xl w-full flex justify-between items-center mb-6">
-        <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white flex items-center gap-1">&larr; Back to Inventory</a>
-        <div class="text-right">
-            <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold block">Graphic Studio</span>
-            <span class="text-[10px] text-stone-500">{{ product.name }}</span>
-        </div>
+    <div class="max-w-md w-full flex justify-between items-center mb-4">
+        <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white">&larr; Back to Inventory</a>
+        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">12 Visual Themes</span>
     </div>
 
-    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- ===================== LEFT: CONTROLS ===================== -->
-        <div class="lg:col-span-5 space-y-4 min-w-0">
-
-            <!-- 1. AI prompt -->
-            <section class="panel p-5 rounded-2xl shadow-xl">
-                <h3 class="text-sm font-bold text-white mb-3">✨ AI Design Studio</h3>
-                <label for="promptInput" class="label block mb-2">Describe your vibe</label>
-                <textarea id="promptInput" rows="4" maxlength="800"
-                    class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl text-stone-200 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none resize-none placeholder-stone-600"
-                    placeholder="e.g. A luxury editorial look with lots of white space, or a loud streetwear drop with giant type..."></textarea>
-                <div id="vibeChips" class="flex flex-wrap gap-1.5 mt-3"></div>
-
-                <button id="generateBtn" onclick="generateFlyer()"
-                    class="w-full mt-4 py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span id="btnText">Generate with AI</span>
-                    <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-stone-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+    <!-- 12 THEMES HORIZONTAL SCROLL BAR -->
+    <div class="max-w-md w-full bg-stone-900 p-4 rounded-2xl mb-6 border border-stone-800 shadow-xl">
+        <div class="flex justify-between items-center mb-2.5">
+            <label class="text-[10px] font-mono uppercase text-stone-400 font-bold">Swipe / Click Theme</label>
+            <div class="flex gap-2">
+                <button type="button" onclick="downloadFlyerPNG()" id="pngBtn" class="bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold px-3 py-1.5 rounded-lg text-xs uppercase transition cursor-pointer">
+                    PNG 📸
                 </button>
-                <div id="messageBox" class="hidden mt-3 p-3 rounded-lg text-xs font-medium" role="status" aria-live="polite"></div>
-            </section>
-
-            <!-- 2. Export -->
-            <section class="panel p-5 rounded-2xl shadow-xl">
-                <span class="label block mb-3">Export</span>
-                <div class="flex gap-3">
-                    <button type="button" onclick="downloadPreview('png', this)" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-3 rounded-xl text-xs uppercase tracking-wide transition disabled:opacity-50">Download PNG 📸</button>
-                    <button type="button" onclick="downloadPreview('pdf', this)" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-3 rounded-xl text-xs uppercase tracking-wide transition disabled:opacity-50">Download PDF 🖨️</button>
-                </div>
-                <p class="text-[10px] text-stone-500 mt-3">AI designs export at 2160 × 2700 px (4:5): ready for Instagram and WhatsApp status.</p>
-            </section>
-
-            <!-- 3. Community gallery -->
-            <section class="panel p-5 rounded-2xl shadow-xl">
-                <div class="flex items-end justify-between mb-3">
-                    <div>
-                        <span class="label block mb-1">Community gallery</span>
-                        <span class="text-[11px] text-stone-500">Designs by other sellers, ranked by downloads</span>
-                    </div>
-                    <button type="button" onclick="loadCommunityTemplates()" class="text-[10px] font-bold uppercase text-amber-400 hover:text-amber-300" aria-label="Refresh gallery">↻ Refresh</button>
-                </div>
-                <div id="communityGallery" class="flex gap-3 overflow-x-auto thin-scroll pb-3 snap-x" style="scroll-snap-type:x proximity"></div>
-            </section>
-
-            <!-- 4. Default themes -->
-            <section class="panel p-5 rounded-2xl shadow-xl">
-                <span class="label block mb-3">Default themes</span>
-                <div id="themePills" class="flex flex-wrap gap-2"></div>
-            </section>
+                <button type="button" onclick="downloadFlyerPDF()" id="pdfBtn" class="bg-stone-700 hover:bg-stone-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs uppercase transition cursor-pointer">
+                    PDF 🖨️
+                </button>
+            </div>
         </div>
 
-        <!-- ===================== RIGHT: PREVIEW ===================== -->
-        <div class="lg:col-span-7 min-w-0">
-            <div class="lg:sticky lg:top-6">
-                <div class="preview-wrapper">
-                    <div id="previewInfo" class="hidden absolute top-4 left-4 right-4 z-10 flex justify-between items-center gap-3">
-                        <div class="min-w-0 bg-stone-900/90 border border-stone-700 rounded-xl px-3 py-2">
-                            <div id="infoName" class="text-[11px] font-bold text-amber-400 truncate"></div>
-                            <div id="infoSub" class="text-[10px] text-stone-400 truncate"></div>
-                        </div>
-                        <button onclick="resetToDefault()" class="shrink-0 text-[10px] bg-stone-900/90 border border-stone-700 rounded-lg px-3 py-2 text-amber-400 hover:text-amber-300 font-bold uppercase">Back to default</button>
-                    </div>
-
-                    <!-- THE PREVIEW TARGET -->
-                    <div id="previewTarget" class="w-full flex justify-center mt-10">
-
-                        <!-- DEFAULT FLYER CARD -->
-                        <div id="flyerCard" class="theme-marketplace flyer-card-container p-6 shadow-2xl flex flex-col gap-3">
-                            <div class="flex items-center justify-between pb-2.5 border-b border-subtle">
-                                <div>
-                                    <span class="text-[9px] font-mono uppercase tracking-widest accent-text block font-bold">OFFICIAL RELEASE</span>
-                                    <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
-                                </div>
-                                {% if product.is_flash_sale %}
-                                    <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">🔥 FLASH SALE</span>
-                                {% else %}
-                                    <span class="badge-bg font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">IN STOCK</span>
-                                {% endif %}
-                            </div>
-
-                            <div class="product-image-box border-subtle border shadow-inner"
-                                 style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
-                            </div>
-
-                            <div class="space-y-1">
-                                <h2 class="text-base font-black tracking-tight leading-snug m-0">{{ product.name }}</h2>
-                                <p class="text-[11px] opacity-75 leading-relaxed m-0 line-clamp-2">{{ product.description }}</p>
-
-                                {% if product.get_attributes() %}
-                                <div class="flex flex-wrap gap-1 pt-1">
-                                    {% for a_name, a_vals in product.get_attributes().items() %}
-                                        <span class="text-[9px] font-mono font-semibold tag-bg border px-2 py-0.5 rounded-md">
-                                            {{ a_name }}: {{ a_vals if a_vals is string else a_vals|join(', ') }}
-                                        </span>
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="pt-2.5 border-t border-subtle flex items-center justify-between">
-                                <div>
-                                    <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
-                                    {% if product.has_discount %}
-                                        <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
-                                        <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
-                                    {% else %}
-                                        <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-[8px] font-mono accent-text font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                                    <span class="bg-[#16a34a] text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-md inline-block">💬 {{ kiosk.whatsapp_number }}</span>
-                                </div>
-                            </div>
-
-                            <div class="text-center pt-2 border-t border-subtle">
-                                <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">marketplace.com/{{ kiosk.slug }} • Powered by Techlite</span>
-                            </div>
-                        </div>
-                        <!-- END DEFAULT FLYER CARD -->
-
-                    </div>
-                </div>
-            </div>
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            <button type="button" onclick="setTheme('theme-marketplace')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#f9f5f0] text-[#2d1e14] border-2 border-[#8d5b3e] text-xs font-bold whitespace-nowrap cursor-pointer">1. Marketplace</button>
+            <button type="button" onclick="setTheme('theme-cyber')" class="theme-pill px-3 py-1.5 rounded-lg bg-black text-cyan-400 border border-cyan-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">2. Cyber</button>
+            <button type="button" onclick="setTheme('theme-flame')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#18100c] text-orange-400 border border-orange-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">3. Flame</button>
+            <button type="button" onclick="setTheme('theme-emerald')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#022c22] text-emerald-300 border border-emerald-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">4. Emerald</button>
+            <button type="button" onclick="setTheme('theme-gold')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#0f172a] text-amber-300 border border-amber-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">5. Royal Gold</button>
+            <button type="button" onclick="setTheme('theme-rose')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#1c1015] text-rose-300 border border-rose-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">6. Rose</button>
+            <button type="button" onclick="setTheme('theme-minimal')" class="theme-pill px-3 py-1.5 rounded-lg bg-white text-black border border-black text-xs font-bold whitespace-nowrap cursor-pointer">7. Minimal</button>
+            <button type="button" onclick="setTheme('theme-violet')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#140d21] text-purple-300 border border-purple-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">8. Violet</button>
+            <button type="button" onclick="setTheme('theme-mocha')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#1c1514] text-amber-200 border border-amber-600/50 text-xs font-mono whitespace-nowrap cursor-pointer">9. Mocha</button>
+            <button type="button" onclick="setTheme('theme-arctic')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#09131f] text-sky-300 border border-sky-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">10. Arctic</button>
+            <button type="button" onclick="setTheme('theme-concrete')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#191816] text-yellow-300 border border-yellow-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">11. Concrete</button>
+            <button type="button" onclick="setTheme('theme-matcha')" class="theme-pill px-3 py-1.5 rounded-lg bg-[#101c12] text-lime-300 border border-lime-500/50 text-xs font-mono whitespace-nowrap cursor-pointer">12. Matcha</button>
         </div>
     </div>
 
-    <!-- ===================== RATE-TO-DOWNLOAD MODAL ===================== -->
-    <div id="ratingModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="ratingTitle">
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="closeRatingModal()"></div>
-
-            <div class="modal-pop relative w-full max-w-md rounded-3xl border border-stone-700 bg-stone-900 shadow-2xl overflow-hidden">
-                <div class="h-1.5 bg-gradient-to-r from-amber-400 via-rose-500 to-violet-500"></div>
-                <div class="p-6 sm:p-7">
-                    <div class="flex items-start gap-3">
-                        <div class="text-3xl leading-none" aria-hidden="true">🔓</div>
-                        <div>
-                            <h2 id="ratingTitle" class="text-lg font-black text-white leading-snug">
-                                Rate this design by <span id="ratingCreator" class="text-amber-400"></span> to unlock your download!
-                            </h2>
-                            <p class="text-xs text-stone-400 mt-1.5 leading-relaxed">
-                                It takes 5 seconds. Your honest rating helps the best designs rise to the top, so every seller finds great flyers faster. One rating per design.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Stars -->
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="label">Design quality</span>
-                            <span id="starLabel" class="text-[11px] font-semibold text-stone-500">Tap a star</span>
-                        </div>
-                        <div id="starRow" class="flex gap-1.5" role="radiogroup" aria-label="Design quality, 1 to 5 stars"></div>
-                    </div>
-
-                    <!-- Scale -->
-                    <div class="mt-6">
-                        <div class="flex items-center justify-between mb-3">
-                            <label for="scaleInput" class="label">Usefulness</label>
-                            <span class="text-sm font-black text-white"><span id="scaleValue">7</span><span class="text-stone-500 font-semibold">/10</span></span>
-                        </div>
-                        <input id="scaleInput" type="range" min="1" max="10" step="1" value="7" class="scale">
-                        <div class="flex justify-between text-[10px] text-stone-500 mt-2">
-                            <span>Not for my product</span><span>Exactly what I needed</span>
-                        </div>
-                    </div>
-
-                    <div id="ratingError" class="hidden mt-4 p-3 rounded-lg text-xs font-medium bg-red-900/50 text-red-200 border border-red-800" role="alert"></div>
-
-                    <div class="mt-7 flex flex-col gap-2">
-                        <button id="ratingSubmit" type="button" onclick="submitRatingAndDownload()" disabled
-                            class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 font-black text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
-                            Submit &amp; Download
-                        </button>
-                        <button type="button" onclick="closeRatingModal()" class="w-full py-2 text-xs font-semibold text-stone-500 hover:text-stone-300">Maybe later</button>
-                    </div>
-                </div>
+    <!-- 📸 THE PRODUCT GRAPHIC CARD -->
+    <div id="flyerCard" class="theme-marketplace flyer-card-container p-6 shadow-2xl flex flex-col gap-3">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-2.5 border-b border-subtle">
+            <div>
+                <span class="text-[9px] font-mono uppercase tracking-widest accent-text block font-bold">OFFICIAL RELEASE</span>
+                <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
             </div>
+            {% if product.is_flash_sale %}
+                <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">🔥 FLASH SALE</span>
+            {% else %}
+                <span class="badge-bg font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">IN STOCK</span>
+            {% endif %}
+        </div>
+
+        <!-- Product Image Box -->
+        <div class="product-image-box border-subtle border shadow-inner" 
+             style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
+        </div>
+
+        <!-- Details -->
+        <div class="space-y-1">
+            <h2 class="text-base font-black tracking-tight leading-snug m-0">{{ product.name }}</h2>
+            <p class="text-[11px] opacity-75 leading-relaxed m-0 line-clamp-2">{{ product.description }}</p>
+
+            <!-- Custom Attributes Pills -->
+            {% if product.get_attributes() %}
+            <div class="flex flex-wrap gap-1 pt-1">
+                {% for a_name, a_vals in product.get_attributes().items() %}
+                    <span class="text-[9px] font-mono font-semibold tag-bg border px-2 py-0.5 rounded-md">
+                        {{ a_name }}: {{ a_vals|join(', ') }}
+                    </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Price & WhatsApp Order Button -->
+        <div class="pt-2.5 border-t border-subtle flex items-center justify-between">
+            <div>
+                <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
+                {% if product.has_discount %}
+                    <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
+                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                {% else %}
+                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                {% endif %}
+            </div>
+
+            <div class="text-right">
+                <span class="text-[8px] font-mono accent-text font-bold block mb-1">ORDER ON WHATSAPP:</span>
+                <span class="bg-[#16a34a] text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-md inline-block">
+                    💬 {{ kiosk.whatsapp_number }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Watermark -->
+        <div class="text-center pt-2 border-t border-subtle">
+            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">
+                marketplace.com/{{ kiosk.slug }} • Powered by Techlite
+            </span>
         </div>
     </div>
 
+    <!-- WYSIWYG CAPTURE SCRIPT WITH FONT SYNC -->
     <script>
-        // ====================================================================
-        // Config (Flask values JSON-encoded so quotes can never break the script)
-        // ====================================================================
-        const PRODUCT_ID   = {{ product.id|tojson }};
-        const CATEGORY     = {{ (product.category or 'General')|tojson }};
-        const PRODUCT_NAME = {{ product.name|tojson }};
-        const FLYER_W = 1080, FLYER_H = 1350;
-
-        const THEMES = [
-            ['theme-marketplace', 'Market',   '#f9f5f0', '#2d1e14', '#8d5b3e'],
-            ['theme-cyber',       'Cyber',    '#09090b', '#22d3ee', '#06b6d4'],
-            ['theme-flame',       'Flame',    '#18100c', '#fb923c', '#ea580c'],
-            ['theme-emerald',     'Emerald',  '#022c22', '#6ee7b7', '#10b981'],
-            ['theme-gold',        'Gold',     '#0f172a', '#fcd34d', '#f59e0b'],
-            ['theme-rose',        'Rose',     '#1c1015', '#fda4af', '#f43f5e'],
-            ['theme-minimal',     'Minimal',  '#ffffff', '#000000', '#000000'],
-            ['theme-violet',      'Violet',   '#140d21', '#d8b4fe', '#a855f7'],
-            ['theme-mocha',       'Mocha',    '#1c1514', '#fde68a', '#d97706'],
-            ['theme-arctic',      'Arctic',   '#09131f', '#7dd3fc', '#38bdf8'],
-            ['theme-concrete',    'Concrete', '#191816', '#fde047', '#eab308'],
-            ['theme-matcha',      'Matcha',   '#101c12', '#bef264', '#84cc16'],
+        const allThemes = [
+            'theme-marketplace', 'theme-cyber', 'theme-flame', 'theme-emerald', 
+            'theme-gold', 'theme-rose', 'theme-minimal', 'theme-violet', 
+            'theme-mocha', 'theme-arctic', 'theme-concrete', 'theme-matcha'
         ];
-        const ALL_THEME_CLASSES = THEMES.map(t => t[0]);
 
-        const VIBES = {
-            'Luxury editorial': 'Luxury editorial look: lots of negative space, elegant serif headline, a tall arched photo, two-colour palette.',
-            'Streetwear drop':  'Streetwear drop: huge chunky type, sticker-style badges, flat bold colours, slightly rotated elements.',
-            'Sale blast':       'High-energy sale poster: diagonal colour split, massive price numerals, starburst shape, still clean and readable.',
-            'Soft studio':      'Soft studio product shot: seamless gradient backdrop, floating shadow, rounded pill tags, friendly geometric type.',
-            'Retro 70s':        'Retro 70s sunburst: warm concentric arcs, rounded display type, orange, plum and mustard palette.',
-            'Magazine cover':   'Fashion magazine cover: masthead with the store name, full-bleed photo, cover-line style tagline.',
-        };
-        const STAR_LABELS = ['Poor', 'Fair', 'Good', 'Great', 'Stunning'];
-
-        // ====================================================================
-        // State
-        // ====================================================================
-        let isAiGenerated = false;
-        let originalFlyerHTML = '';
-        let currentCommunityTemplateId = null;   // set only while a *community* design is on screen
-        let currentCommunityCreator = '';
-        let activeTemplateId = null;
-        let communityTemplates = new Map();
-        let pendingFormat = null;
-        let starValue = 0;
-
-        const $ = id => document.getElementById(id);
-        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-
-        // ====================================================================
-        // Init
-        // ====================================================================
-        document.addEventListener('DOMContentLoaded', () => {
-            originalFlyerHTML = $('previewTarget').innerHTML;
-
-            $('themePills').innerHTML = THEMES.map(([id, label, bg, fg, bd]) =>
-                `<button type="button" onclick="setTheme('${id}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer hover:scale-105 transition"
-                    style="background:${bg};color:${fg};border:1px solid ${bd}">${label}</button>`).join('');
-
-            $('vibeChips').innerHTML = Object.keys(VIBES).map(label =>
-                `<button type="button" data-vibe="${esc(label)}" class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-stone-800 text-stone-300 hover:bg-amber-500 hover:text-stone-900 transition">${esc(label)}</button>`).join('');
-            $('vibeChips').addEventListener('click', e => {
-                const chip = e.target.closest('[data-vibe]');
-                if (chip) $('promptInput').value = VIBES[chip.dataset.vibe];
-            });
-
-            buildStarRow();
-            $('scaleInput').addEventListener('input', syncScale);
-            syncScale();
-            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ratingModal').classList.contains('hidden')) closeRatingModal(); });
-            window.addEventListener('resize', rescaleAiFlyer);
-
-            loadCommunityTemplates();
-        });
-
-        // ====================================================================
-        // Default themes
-        // ====================================================================
         function setTheme(themeClass) {
-            if (isAiGenerated) resetToDefault();
-            const card = $('flyerCard');
-            card.classList.remove(...ALL_THEME_CLASSES);
+            const card = document.getElementById('flyerCard');
+            card.classList.remove(...allThemes);
             card.classList.add(themeClass);
         }
 
-        function resetToDefault() {
-            isAiGenerated = false;
-            activeTemplateId = null;
-            currentCommunityTemplateId = null;       // default theme => free download
-            currentCommunityCreator = '';
-            $('previewInfo').classList.add('hidden');
-            $('previewTarget').innerHTML = originalFlyerHTML;
-            highlightActiveCard();
-        }
+        async function downloadFlyerPNG() {
+            const btn = document.getElementById('pngBtn');
+            btn.innerText = 'GENERATING...';
+            btn.disabled = true;
 
-        // ====================================================================
-        // AI / community flyer mounting (1080x1350 canvas, scaled to fit)
-        // ====================================================================
-        function mountFlyer(html, { name, creator, gated }) {
-            isAiGenerated = true;
-            $('previewTarget').innerHTML =
-                `<div id="aiStage" style="position:relative;overflow:hidden;border-radius:14px;box-shadow:0 25px 60px rgba(0,0,0,.65)">
-                    <div id="aiScale" style="width:${FLYER_W}px;height:${FLYER_H}px;transform-origin:top left">${html}</div>
-                 </div>`;
-            $('infoName').textContent = name || 'Design';
-            $('infoSub').textContent = gated ? `Community design by ${creator}. Rate it to download.` : (creator ? `By ${creator}` : 'Your design');
-            $('previewInfo').classList.remove('hidden');
-            rescaleAiFlyer();
-            highlightActiveCard();
-        }
+            const originalCard = document.getElementById('flyerCard');
 
-        function rescaleAiFlyer() {
-            const stage = $('aiStage'), inner = $('aiScale');
-            if (!stage || !inner) return;
-            const avail = $('previewTarget').parentElement.clientWidth - 40;
-            const s = Math.max(0.2, Math.min(1, avail / FLYER_W, (window.innerHeight * 0.82) / FLYER_H));
-            inner.style.transform = `scale(${s})`;
-            stage.style.width = FLYER_W * s + 'px';
-            stage.style.height = FLYER_H * s + 'px';
-        }
+            await document.fonts.ready;
 
-        // ====================================================================
-        // generateFlyer()
-        // ====================================================================
-        const LOADING_STEPS = ['Reading your product…', 'Choosing a layout…', 'Setting the type…', 'Adding depth and colour…', 'Polishing details…'];
-        let loadingTimer = null;
-
-        function setLoading(on) {
-            $('generateBtn').disabled = on;
-            $('btnSpinner').classList.toggle('hidden', !on);
-            clearInterval(loadingTimer);
-            if (on) {
-                let i = 0;
-                $('btnText').innerText = LOADING_STEPS[0];
-                loadingTimer = setInterval(() => { i = Math.min(i + 1, LOADING_STEPS.length - 1); $('btnText').innerText = LOADING_STEPS[i]; }, 7000);
-            } else {
-                $('btnText').innerText = 'Generate with AI';
-            }
-        }
-
-        async function generateFlyer() {
-            const prompt = $('promptInput').value.trim();
-            if (!prompt) return showMessage('Please describe the look you want first.', 'error');
-
-            setLoading(true);
-            $('messageBox').classList.add('hidden');
-            try {
-                const res = await fetch('/design/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, product_id: PRODUCT_ID, category: CATEGORY })
-                });
-                const data = await res.json().catch(() => ({}));
-
-                if (res.ok && data.status === 'success') {
-                    currentCommunityTemplateId = null;      // your own generation => free download
-                    currentCommunityCreator = '';
-                    activeTemplateId = data.template_id;
-                    mountFlyer(data.preview_html, { name: data.name, creator: '', gated: false });
-                    showMessage('Design ready. Download it, or try another vibe.', 'success');
-                    loadCommunityTemplates();
-                } else {
-                    showMessage(data.message || 'Failed to generate design.', 'error');
-                }
-            } catch (err) {
-                console.error(err);
-                showMessage('Network error. Please check your connection and try again.', 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        function showMessage(msg, type) {
-            const box = $('messageBox');
-            box.innerText = msg;
-            box.className = `mt-3 p-3 rounded-lg text-xs font-medium ${type === 'error'
-                ? 'bg-red-900/50 text-red-200 border border-red-800'
-                : 'bg-green-900/50 text-green-200 border border-green-800'}`;
-        }
-
-        // ====================================================================
-        // Community gallery
-        // ====================================================================
-        function coverFor(name) {
-            let h = 0;
-            for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % 360;
-            return `linear-gradient(135deg, hsl(${h} 75% 52%), hsl(${(h + 55) % 360} 80% 28%))`;
-        }
-
-        function renderGallerySkeleton() {
-            $('communityGallery').innerHTML = Array.from({ length: 3 }, () =>
-                `<div class="tpl-card rounded-2xl border border-stone-800 overflow-hidden"><div class="skeleton h-24"></div><div class="p-3 space-y-2"><div class="skeleton h-3 w-3/4 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div><div class="skeleton h-3 w-2/3 rounded"></div></div></div>`).join('');
-        }
-
-        async function loadCommunityTemplates() {
-            const box = $('communityGallery');
-            renderGallerySkeleton();
-            try {
-                const res = await fetch('/design/get-templates');
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'load failed');
-
-                communityTemplates = new Map(data.templates.map(t => [t.id, t]));
-                if (!data.templates.length) {
-                    box.innerHTML = `<div class="w-full text-center py-6 text-xs text-stone-500">No community designs yet. Generate one and it will appear here for other sellers.</div>`;
-                    return;
-                }
-                box.innerHTML = data.templates.map((t, i) => {
-                    const rated = t.total_ratings > 0;
-                    return `
-                    <article class="tpl-card rounded-2xl border border-stone-800 bg-stone-900 overflow-hidden flex flex-col" data-card="${t.id}">
-                        <div class="relative h-24 p-3 flex items-end" style="background:${coverFor(t.name)}">
-                            ${i < 3 ? `<span class="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-black/45 text-amber-300 px-2 py-0.5 rounded-full">#${i + 1} Trending</span>` : ''}
-                            <span class="absolute top-2 right-2 text-[10px] font-bold bg-black/45 text-white px-2 py-0.5 rounded-full">${esc(t.category)}</span>
-                            <span class="text-white font-black text-[15px] leading-tight drop-shadow line-clamp-2">${esc(t.name)}</span>
-                        </div>
-                        <div class="p-3 flex flex-col gap-1.5 flex-1">
-                            <div class="text-[11px] text-stone-400 truncate">by <span class="text-stone-200 font-semibold">${esc(t.creator_name)}</span>${t.is_mine ? ' <span class="text-amber-400">(you)</span>' : ''}</div>
-                            <div class="flex items-center justify-between text-[11px]">
-                                <span class="font-bold text-amber-300">${rated ? `★ ${t.avg_star_rating.toFixed(1)}` : '★ New'}</span>
-                                <span class="text-stone-500">${rated ? `${t.total_ratings} rating${t.total_ratings === 1 ? '' : 's'}` : 'Be the first'}</span>
-                            </div>
-                            <div class="text-[11px] font-semibold text-rose-300">🔥 ${t.usage_count.toLocaleString()} downloads</div>
-                            <button type="button" onclick="useCommunityTemplate(${t.id})"
-                                class="mt-1.5 w-full text-[11px] font-black py-2 rounded-lg bg-stone-800 hover:bg-amber-500 hover:text-stone-900 text-stone-100 transition">Use this design</button>
-                        </div>
-                    </article>`;
-                }).join('');
-                highlightActiveCard();
-            } catch (err) {
-                console.error(err);
-                box.innerHTML = `<div class="w-full text-center py-6 text-xs text-red-300">Couldn't load community designs. <button class="underline font-bold" onclick="loadCommunityTemplates()">Try again</button></div>`;
-            }
-        }
-
-        function highlightActiveCard() {
-            document.querySelectorAll('[data-card]').forEach(c =>
-                c.classList.toggle('active', Number(c.dataset.card) === activeTemplateId));
-        }
-
-        async function useCommunityTemplate(id) {
-            const meta = communityTemplates.get(id);
-            const btn = document.querySelector(`[data-card="${id}"] button`);
-            const original = btn ? btn.textContent : '';
-            if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
-            try {
-                const res = await fetch(`/design/render-template/${id}?product_id=${encodeURIComponent(PRODUCT_ID)}`);
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Could not load that design.');
-
-                const creator = data.creator_name || (meta && meta.creator_name) || 'a community seller';
-                const mine = !!(meta && meta.is_mine);
-                activeTemplateId = id;
-                currentCommunityTemplateId = mine ? null : id;     // your own designs are never gated
-                currentCommunityCreator = creator;
-                mountFlyer(data.preview_html, { name: data.name, creator, gated: !mine });
-                showMessage(mine ? 'Loaded your design.' : `Loaded "${data.name}". Rate it when you download to support ${creator}.`, 'success');
-            } catch (err) {
-                console.error(err);
-                showMessage(err.message || 'Could not load that design.', 'error');
-            } finally {
-                if (btn) { btn.textContent = original; btn.disabled = false; }
-            }
-        }
-
-        // ====================================================================
-        // Rate-to-Download modal
-        // ====================================================================
-        function buildStarRow() {
-            $('starRow').innerHTML = [1, 2, 3, 4, 5].map(n =>
-                `<button type="button" role="radio" aria-checked="false" aria-label="${n} star${n > 1 ? 's' : ''}: ${STAR_LABELS[n - 1]}" data-star="${n}" class="star-btn text-4xl leading-none">★</button>`).join('');
-            const row = $('starRow');
-            row.addEventListener('click', e => { const b = e.target.closest('[data-star]'); if (b) setStars(Number(b.dataset.star)); });
-            row.addEventListener('mouseover', e => { const b = e.target.closest('[data-star]'); if (b) paintStars(Number(b.dataset.star)); });
-            row.addEventListener('mouseleave', () => paintStars(starValue));
-            row.addEventListener('keydown', e => {
-                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setStars(Math.min(5, (starValue || 0) + 1)); }
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setStars(Math.max(1, (starValue || 2) - 1)); }
-            });
-        }
-
-        function paintStars(n) {
-            document.querySelectorAll('#starRow [data-star]').forEach(b => {
-                const v = Number(b.dataset.star);
-                b.classList.toggle('on', v <= n);
-                b.setAttribute('aria-checked', String(v === starValue));
-            });
-            $('starLabel').textContent = n ? STAR_LABELS[n - 1] : 'Tap a star';
-            $('starLabel').className = `text-[11px] font-semibold ${n ? 'text-amber-300' : 'text-stone-500'}`;
-        }
-
-        function setStars(n) {
-            starValue = n;
-            paintStars(n);
-            $('ratingSubmit').disabled = false;
-            $('ratingError').classList.add('hidden');
-        }
-
-        function syncScale() {
-            const el = $('scaleInput');
-            $('scaleValue').textContent = el.value;
-            el.style.setProperty('--pct', ((el.value - 1) / 9) * 100 + '%');
-        }
-
-        function openRatingModal() {
-            starValue = 0;
-            paintStars(0);
-            $('scaleInput').value = 7;
-            syncScale();
-            $('ratingSubmit').disabled = true;
-            $('ratingSubmit').textContent = 'Submit & Download';
-            $('ratingError').classList.add('hidden');
-            $('ratingCreator').textContent = currentCommunityCreator || 'this seller';
-            $('ratingModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            const first = document.querySelector('#starRow [data-star]');
-            if (first) first.focus();
-        }
-
-        function closeRatingModal() {
-            $('ratingModal').classList.add('hidden');
-            document.body.style.overflow = '';
-            pendingFormat = null;
-        }
-
-        async function submitRatingAndDownload() {
-            if (!starValue || !currentCommunityTemplateId) return;
-            const submit = $('ratingSubmit');
-            const err = $('ratingError');
-            submit.disabled = true;
-            submit.textContent = 'Saving your rating…';
-            err.classList.add('hidden');
-
-            try {
-                const res = await fetch('/design/rate-and-download', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        template_id: currentCommunityTemplateId,
-                        star_rating: starValue,
-                        scale_rating: Number($('scaleInput').value)
-                    })
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Could not save your rating.');
-
-                const format = pendingFormat || 'png';
-                $('ratingModal').classList.add('hidden');
-                document.body.style.overflow = '';
-                pendingFormat = null;
-                currentCommunityTemplateId = null;           // unlocked: later downloads of this view are free
-                $('infoSub').textContent = `Community design by ${currentCommunityCreator}. Thanks for rating!`;
-
-                await performDownload(format, null);
-                loadCommunityTemplates();                    // refresh the social proof numbers
-            } catch (e) {
-                console.error(e);
-                err.textContent = e.message || 'Something went wrong. Please try again.';
-                err.classList.remove('hidden');
-                submit.disabled = false;
-                submit.textContent = 'Submit & Download';
-            }
-        }
-
-        // ====================================================================
-        // downloadPreview(format): gated for community designs
-        // ====================================================================
-        async function downloadPreview(format, btn) {
-            if (currentCommunityTemplateId) {                // community design: rate first
-                pendingFormat = format;
-                openRatingModal();
-                return;
-            }
-            await performDownload(format, btn);
-        }
-
-        function waitForImages(root) {
-            return Promise.all([...root.querySelectorAll('img')].map(img =>
-                img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })));
-        }
-
-        async function renderToPng(el, w, h, ratio) {
-            try {
-                return await htmlToImage.toPng(el, { pixelRatio: ratio, width: w, height: h, cacheBust: true });
-            } catch (err) {
-                console.warn('html-to-image failed, falling back to html2canvas', err);
-                const canvas = await html2canvas(el, { scale: ratio, useCORS: true, backgroundColor: null, width: w, height: h, logging: false });
-                return canvas.toDataURL('image/png');
-            }
-        }
-
-        async function performDownload(format, btn) {
-            const original = btn ? btn.innerHTML : '';
-            if (btn) { btn.innerHTML = 'Processing…'; btn.disabled = true; }
-
-            // What is currently inside #previewTarget?
-            let source, w, h, ratio;
-            const aiRoot = document.querySelector('#previewTarget .ai-flyer-scope');
-            if (aiRoot) { source = aiRoot; w = FLYER_W; h = FLYER_H; ratio = 2; }
-            else { source = $('flyerCard'); w = source.offsetWidth; h = source.offsetHeight; ratio = 3; }
-
-            // Unscaled off-screen clone so the preview's scale() never leaks into the export
-            const holder = document.createElement('div');
-            holder.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px;z-index:-99999;pointer-events:none;`;
-            const clone = source.cloneNode(true);
+            const clone = originalCard.cloneNode(true);
+            clone.id = 'flyerClone';
+            clone.style.position = 'fixed';
+            clone.style.top = '0px';
+            clone.style.left = '0px';
+            clone.style.zIndex = '-99999';
+            clone.style.width = originalCard.offsetWidth + 'px';
+            clone.style.height = originalCard.offsetHeight + 'px';
             clone.style.margin = '0';
-            clone.style.width = w + 'px';
-            holder.appendChild(clone);
-            document.body.appendChild(holder);
+            clone.style.transform = 'none';
 
-            try {
-                await document.fonts.ready;
-                await waitForImages(clone);
-                await new Promise(r => setTimeout(r, 150));   // let the Tailwind CDN style the clone
+            document.body.appendChild(clone);
 
-                const dataUrl = await renderToPng(clone, w, h, ratio);
-                const safeName = PRODUCT_NAME.replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || 'product';
+            html2canvas(clone, {
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false
+            }).then(canvas => {
+                document.body.removeChild(clone);
 
-                if (format === 'png') {
-                    const a = document.createElement('a');
-                    a.download = `Flyer_${safeName}.png`;
-                    a.href = dataUrl;
-                    a.click();
-                } else {
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({ orientation: w > h ? 'l' : 'p', unit: 'px', format: [w, h], hotfixes: ['px_scaling'] });
-                    pdf.addImage(dataUrl, 'PNG', 0, 0, w, h, undefined, 'FAST');
-                    pdf.save(`Flyer_${safeName}.pdf`);
+                const link = document.createElement('a');
+                link.download = `Flyer_${'{{ product.name }}'}.png`.replace(/\s+/g, '_');
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                btn.innerText = 'PNG 📸';
+                btn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                if (document.getElementById('flyerClone')) {
+                    document.body.removeChild(document.getElementById('flyerClone'));
                 }
-            } catch (err) {
-                console.error('Export failed:', err);
-                showMessage('Export failed. If your product photo is hosted on another site it may block downloads: re-upload it to your store and try again.', 'error');
-            } finally {
-                document.body.removeChild(holder);
-                if (btn) { btn.innerHTML = original; btn.disabled = false; }
-            }
+                downloadFlyerPDF();
+                btn.innerText = 'PNG 📸';
+                btn.disabled = false;
+            });
+        }
+
+        async function downloadFlyerPDF() {
+            await document.fonts.ready;
+            const card = document.getElementById('flyerCard');
+            const opt = {
+                margin: 5,
+                filename: `Flyer_${'{{ product.name }}'}.pdf`.replace(/\s+/g, '_'),
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: [100, 135], orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(card).save();
         }
     </script>
 </body>
