@@ -7,7 +7,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Fonts the AI designer is allowed to use + the studio UI fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bebas+Neue&family=DM+Serif+Display&family=Inter:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;500;600;700;800;900&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Poppins:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
@@ -22,13 +21,12 @@
         .flyer-card-container {
             width: 360px; max-width: 92vw; box-sizing: border-box; border-radius: 26px;
             background: linear-gradient(145deg, var(--bg1), var(--bg2));
-            color: var(--fg);
-            border: 2px solid var(--bd);
+            color: var(--fg); border: 2px solid var(--bd);
         }
-        .flyer-card-container .accent-text { color: var(--accent); }
-        .flyer-card-container .badge-bg    { background: var(--badge); color: var(--badge-fg); }
+        .flyer-card-container .accent-text   { color: var(--accent); }
+        .flyer-card-container .badge-bg      { background: var(--badge); color: var(--badge-fg); }
         .flyer-card-container .border-subtle { border-color: var(--subtle) !important; }
-        .flyer-card-container .tag-bg      { background: var(--tag-bg); color: var(--tag-fg); border-color: var(--tag-bd); }
+        .flyer-card-container .tag-bg        { background: var(--tag-bg); color: var(--tag-fg); border-color: var(--tag-bd); }
 
         .theme-marketplace { --bg1:#f9f5f0; --bg2:#ede5dc; --fg:#2d1e14; --bd:#8d5b3e; --accent:#8d5b3e; --badge:#8d5b3e; --badge-fg:#fff;  --subtle:rgba(141,91,62,.2);  --tag-bg:rgba(141,91,62,.1);  --tag-fg:#2d1e14; --tag-bd:rgba(141,91,62,.3); }
         .theme-cyber       { --bg1:#09090b; --bg2:#18181b; --fg:#f4f4f5; --bd:#06b6d4; --accent:#06b6d4; --badge:#06b6d4; --badge-fg:#000; --subtle:rgba(255,255,255,.1); --tag-bg:rgba(6,182,212,.1);   --tag-fg:#f4f4f5; --tag-bd:rgba(6,182,212,.3); }
@@ -49,163 +47,241 @@
         }
 
         /* ---------- Studio chrome ---------- */
-        .ai-panel { background: #18181b; border: 1px solid #27272a; }
+        .panel { background: #17171a; border: 1px solid #27272a; }
         .preview-wrapper {
             min-height: 560px; display: flex; align-items: center; justify-content: center;
-            background: #09090b; border-radius: 16px; padding: 20px; position: relative;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(245,158,11,.07), transparent 40%),
+                radial-gradient(circle at 80% 90%, rgba(244,63,94,.06), transparent 40%),
+                #09090b;
+            border-radius: 18px; padding: 20px; position: relative;
         }
-        .vibe-chip { transition: background .15s, color .15s; }
-        .vibe-chip:hover { background: #f59e0b; color: #18181b; }
-        .gallery-item.active { border-color: #f59e0b; color: #fbbf24; }
+        .label { font: 700 10px/1 'JetBrains Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: #a1a1aa; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { scrollbar-width: none; }
+        .thin-scroll::-webkit-scrollbar { height: 6px; }
+        .thin-scroll::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 99px; }
+
+        /* Community cards */
+        .tpl-card { width: 208px; flex: none; scroll-snap-align: start; transition: transform .18s, border-color .18s, box-shadow .18s; }
+        .tpl-card:hover { transform: translateY(-3px); border-color: #f59e0b; box-shadow: 0 14px 30px rgba(0,0,0,.45); }
+        .tpl-card.active { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.35); }
+        .skeleton { background: linear-gradient(90deg,#1f1f23 25%,#2a2a30 37%,#1f1f23 63%); background-size: 400% 100%; animation: shimmer 1.3s ease infinite; }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        /* Rating modal */
+        .modal-pop { animation: pop .22s cubic-bezier(.2,.9,.3,1.2); }
+        @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+        .star-btn { transition: transform .12s, color .12s; color: #3f3f46; }
+        .star-btn:hover { transform: scale(1.15); }
+        .star-btn.on { color: #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.45)); }
+        input[type=range].scale { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 99px; outline: none;
+            background: linear-gradient(90deg, #f59e0b var(--pct, 60%), #3f3f46 var(--pct, 60%)); }
+        input[type=range].scale::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 4px solid #f59e0b; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+        input[type=range].scale::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid #f59e0b; cursor: pointer; }
+        @media (prefers-reduced-motion: reduce) { .modal-pop, .skeleton, .tpl-card { animation: none; transition: none; } }
     </style>
 </head>
 <body class="bg-stone-950 min-h-screen p-4 md:p-8 flex flex-col items-center font-ui text-stone-200">
 
     <!-- Header -->
-    <div class="max-w-6xl w-full flex justify-between items-center mb-6">
-        <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white flex items-center gap-1">
-            &larr; Back to Inventory
-        </a>
+    <div class="max-w-7xl w-full flex justify-between items-center mb-6">
+        <a href="/{{ kiosk.slug }}/manage#inventory" class="text-xs font-semibold text-stone-400 hover:text-white flex items-center gap-1">&larr; Back to Inventory</a>
         <div class="text-right">
             <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-bold block">Graphic Studio</span>
             <span class="text-[10px] text-stone-500">{{ product.name }}</span>
         </div>
     </div>
 
-    <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- LEFT COLUMN -->
-        <div class="lg:col-span-4 space-y-4">
-            <div class="ai-panel p-5 rounded-2xl shadow-xl">
+        <!-- ===================== LEFT: CONTROLS ===================== -->
+        <div class="lg:col-span-5 space-y-4 min-w-0">
+
+            <!-- 1. AI prompt -->
+            <section class="panel p-5 rounded-2xl shadow-xl">
                 <h3 class="text-sm font-bold text-white mb-3">✨ AI Design Studio</h3>
-
-                <label for="promptInput" class="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-2">Describe your vibe</label>
-                <textarea id="promptInput" rows="5" maxlength="800"
+                <label for="promptInput" class="label block mb-2">Describe your vibe</label>
+                <textarea id="promptInput" rows="4" maxlength="800"
                     class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl text-stone-200 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none resize-none placeholder-stone-600"
-                    placeholder="e.g. Bold streetwear drop with giant type, or a calm luxury look with lots of white space..."></textarea>
-
+                    placeholder="e.g. A luxury editorial look with lots of white space, or a loud streetwear drop with giant type..."></textarea>
                 <div id="vibeChips" class="flex flex-wrap gap-1.5 mt-3"></div>
 
                 <button id="generateBtn" onclick="generateFlyer()"
                     class="w-full mt-4 py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 font-bold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="btnText">Generate with AI</span>
-                    <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-stone-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-stone-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </button>
-                <div id="messageBox" class="hidden mt-3 p-3 rounded-lg text-xs font-medium" role="status"></div>
-            </div>
+                <div id="messageBox" class="hidden mt-3 p-3 rounded-lg text-xs font-medium" role="status" aria-live="polite"></div>
+            </section>
 
-            <!-- Saved designs -->
-            <div class="ai-panel p-5 rounded-2xl shadow-xl">
-                <label class="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-3">Your designs</label>
-                <div id="gallery" class="flex flex-wrap gap-2">
-                    <span class="text-[11px] text-stone-600">No saved designs yet.</span>
-                </div>
-            </div>
-
-            <!-- Export -->
-            <div class="ai-panel p-5 rounded-2xl shadow-xl">
-                <label class="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-3">Export design</label>
+            <!-- 2. Export -->
+            <section class="panel p-5 rounded-2xl shadow-xl">
+                <span class="label block mb-3">Export</span>
                 <div class="flex gap-3">
-                    <button type="button" onclick="downloadPreview(this, 'png')" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-2.5 rounded-xl text-xs uppercase transition disabled:opacity-50">PNG 📸</button>
-                    <button type="button" onclick="downloadPreview(this, 'pdf')" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-2.5 rounded-xl text-xs uppercase transition disabled:opacity-50">PDF 🖨️</button>
+                    <button type="button" onclick="downloadPreview('png', this)" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-3 rounded-xl text-xs uppercase tracking-wide transition disabled:opacity-50">Download PNG 📸</button>
+                    <button type="button" onclick="downloadPreview('pdf', this)" class="flex-1 bg-stone-800 hover:bg-stone-700 text-white font-bold px-3 py-3 rounded-xl text-xs uppercase tracking-wide transition disabled:opacity-50">Download PDF 🖨️</button>
                 </div>
-                <p class="text-[10px] text-stone-500 mt-3">AI designs export at 2160 × 2700 px (4:5), ready for Instagram and WhatsApp status.</p>
-            </div>
+                <p class="text-[10px] text-stone-500 mt-3">AI designs export at 2160 × 2700 px (4:5): ready for Instagram and WhatsApp status.</p>
+            </section>
+
+            <!-- 3. Community gallery -->
+            <section class="panel p-5 rounded-2xl shadow-xl">
+                <div class="flex items-end justify-between mb-3">
+                    <div>
+                        <span class="label block mb-1">Community gallery</span>
+                        <span class="text-[11px] text-stone-500">Designs by other sellers, ranked by downloads</span>
+                    </div>
+                    <button type="button" onclick="loadCommunityTemplates()" class="text-[10px] font-bold uppercase text-amber-400 hover:text-amber-300" aria-label="Refresh gallery">↻ Refresh</button>
+                </div>
+                <div id="communityGallery" class="flex gap-3 overflow-x-auto thin-scroll pb-3 snap-x" style="scroll-snap-type:x proximity"></div>
+            </section>
+
+            <!-- 4. Default themes -->
+            <section class="panel p-5 rounded-2xl shadow-xl">
+                <span class="label block mb-3">Default themes</span>
+                <div id="themePills" class="flex flex-wrap gap-2"></div>
+            </section>
         </div>
 
-        <!-- RIGHT COLUMN -->
-        <div class="lg:col-span-8">
-            <div class="preview-wrapper">
-
-                <!-- Default theme picker -->
-                <div id="defaultThemeControls" class="absolute top-4 left-4 right-4 z-10">
-                    <div class="bg-stone-900/90 backdrop-blur-sm p-3 rounded-xl border border-stone-700 shadow-lg">
-                        <label class="block text-[10px] font-mono uppercase text-stone-400 font-bold mb-2">Default themes</label>
-                        <div id="themePills" class="flex gap-2 overflow-x-auto pb-1"></div>
+        <!-- ===================== RIGHT: PREVIEW ===================== -->
+        <div class="lg:col-span-7 min-w-0">
+            <div class="lg:sticky lg:top-6">
+                <div class="preview-wrapper">
+                    <div id="previewInfo" class="hidden absolute top-4 left-4 right-4 z-10 flex justify-between items-center gap-3">
+                        <div class="min-w-0 bg-stone-900/90 border border-stone-700 rounded-xl px-3 py-2">
+                            <div id="infoName" class="text-[11px] font-bold text-amber-400 truncate"></div>
+                            <div id="infoSub" class="text-[10px] text-stone-400 truncate"></div>
+                        </div>
+                        <button onclick="resetToDefault()" class="shrink-0 text-[10px] bg-stone-900/90 border border-stone-700 rounded-lg px-3 py-2 text-amber-400 hover:text-amber-300 font-bold uppercase">Back to default</button>
                     </div>
-                </div>
 
-                <!-- AI mode toolbar -->
-                <div id="aiToolbar" class="hidden absolute top-4 left-4 right-4 z-10 flex justify-between items-center">
-                    <span id="aiName" class="text-[11px] font-mono text-amber-400 font-bold truncate"></span>
-                    <button onclick="resetToDefault()" class="text-[10px] bg-stone-900/90 border border-stone-700 rounded-lg px-3 py-1.5 text-amber-400 hover:text-amber-300 font-bold uppercase">Back to default</button>
-                </div>
+                    <!-- THE PREVIEW TARGET -->
+                    <div id="previewTarget" class="w-full flex justify-center mt-10">
 
-                <!-- PREVIEW TARGET -->
-                <div id="previewTarget" class="w-full flex justify-center mt-12">
-
-                    <!-- DEFAULT FLYER CARD -->
-                    <div id="flyerCard" class="theme-marketplace flyer-card-container p-6 shadow-2xl flex flex-col gap-3">
-                        <div class="flex items-center justify-between pb-2.5 border-b border-subtle">
-                            <div>
-                                <span class="text-[9px] font-mono uppercase tracking-widest accent-text block font-bold">OFFICIAL RELEASE</span>
-                                <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
-                            </div>
-                            {% if product.is_flash_sale %}
-                                <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">🔥 FLASH SALE</span>
-                            {% else %}
-                                <span class="badge-bg font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">IN STOCK</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="product-image-box border-subtle border shadow-inner"
-                             style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
-                        </div>
-
-                        <div class="space-y-1">
-                            <h2 class="text-base font-black tracking-tight leading-snug m-0">{{ product.name }}</h2>
-                            <p class="text-[11px] opacity-75 leading-relaxed m-0 line-clamp-2">{{ product.description }}</p>
-
-                            {% if product.get_attributes() %}
-                            <div class="flex flex-wrap gap-1 pt-1">
-                                {% for a_name, a_vals in product.get_attributes().items() %}
-                                    <span class="text-[9px] font-mono font-semibold tag-bg border px-2 py-0.5 rounded-md">
-                                        {{ a_name }}: {{ a_vals|join(', ') if a_vals is not string else a_vals }}
-                                    </span>
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="pt-2.5 border-t border-subtle flex items-center justify-between">
-                            <div>
-                                <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
-                                {% if product.has_discount %}
-                                    <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
-                                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                        <!-- DEFAULT FLYER CARD -->
+                        <div id="flyerCard" class="theme-marketplace flyer-card-container p-6 shadow-2xl flex flex-col gap-3">
+                            <div class="flex items-center justify-between pb-2.5 border-b border-subtle">
+                                <div>
+                                    <span class="text-[9px] font-mono uppercase tracking-widest accent-text block font-bold">OFFICIAL RELEASE</span>
+                                    <h3 class="font-extrabold text-sm tracking-tight m-0">{{ kiosk.name }}</h3>
+                                </div>
+                                {% if product.is_flash_sale %}
+                                    <span class="bg-rose-500 text-white font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">🔥 FLASH SALE</span>
                                 {% else %}
-                                    <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                                    <span class="badge-bg font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">IN STOCK</span>
                                 {% endif %}
                             </div>
 
-                            <div class="text-right">
-                                <span class="text-[8px] font-mono accent-text font-bold block mb-1">ORDER ON WHATSAPP:</span>
-                                <span class="bg-[#16a34a] text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-md inline-block">
-                                    💬 {{ kiosk.whatsapp_number }}
-                                </span>
+                            <div class="product-image-box border-subtle border shadow-inner"
+                                 style="background-image: url('{{ product.image if product.image.startswith("http") else url_for("static", filename="uploads/products/" + product.image) }}');">
+                            </div>
+
+                            <div class="space-y-1">
+                                <h2 class="text-base font-black tracking-tight leading-snug m-0">{{ product.name }}</h2>
+                                <p class="text-[11px] opacity-75 leading-relaxed m-0 line-clamp-2">{{ product.description }}</p>
+
+                                {% if product.get_attributes() %}
+                                <div class="flex flex-wrap gap-1 pt-1">
+                                    {% for a_name, a_vals in product.get_attributes().items() %}
+                                        <span class="text-[9px] font-mono font-semibold tag-bg border px-2 py-0.5 rounded-md">
+                                            {{ a_name }}: {{ a_vals if a_vals is string else a_vals|join(', ') }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="pt-2.5 border-t border-subtle flex items-center justify-between">
+                                <div>
+                                    <span class="text-[9px] font-mono opacity-60 uppercase block">Price</span>
+                                    {% if product.has_discount %}
+                                        <span class="text-[10px] line-through opacity-50 font-mono">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</span>
+                                        <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.discount_price) }}</div>
+                                    {% else %}
+                                        <div class="text-lg font-black font-mono accent-text">{{ kiosk.currency }}{{ "{:,.2f}".format(product.original_price) }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[8px] font-mono accent-text font-bold block mb-1">ORDER ON WHATSAPP:</span>
+                                    <span class="bg-[#16a34a] text-white font-mono font-bold text-xs px-3 py-1.5 rounded-lg shadow-md inline-block">💬 {{ kiosk.whatsapp_number }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-center pt-2 border-t border-subtle">
+                                <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">marketplace.com/{{ kiosk.slug }} • Powered by Techlite</span>
                             </div>
                         </div>
+                        <!-- END DEFAULT FLYER CARD -->
 
-                        <div class="text-center pt-2 border-t border-subtle">
-                            <span class="text-[8px] font-mono opacity-50 uppercase tracking-widest">
-                                marketplace.com/{{ kiosk.slug }} • Powered by Techlite
-                            </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== RATE-TO-DOWNLOAD MODAL ===================== -->
+    <div id="ratingModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="ratingTitle">
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" onclick="closeRatingModal()"></div>
+
+            <div class="modal-pop relative w-full max-w-md rounded-3xl border border-stone-700 bg-stone-900 shadow-2xl overflow-hidden">
+                <div class="h-1.5 bg-gradient-to-r from-amber-400 via-rose-500 to-violet-500"></div>
+                <div class="p-6 sm:p-7">
+                    <div class="flex items-start gap-3">
+                        <div class="text-3xl leading-none" aria-hidden="true">🔓</div>
+                        <div>
+                            <h2 id="ratingTitle" class="text-lg font-black text-white leading-snug">
+                                Rate this design by <span id="ratingCreator" class="text-amber-400"></span> to unlock your download!
+                            </h2>
+                            <p class="text-xs text-stone-400 mt-1.5 leading-relaxed">
+                                It takes 5 seconds. Your honest rating helps the best designs rise to the top, so every seller finds great flyers faster. One rating per design.
+                            </p>
                         </div>
                     </div>
-                    <!-- END DEFAULT FLYER CARD -->
 
+                    <!-- Stars -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="label">Design quality</span>
+                            <span id="starLabel" class="text-[11px] font-semibold text-stone-500">Tap a star</span>
+                        </div>
+                        <div id="starRow" class="flex gap-1.5" role="radiogroup" aria-label="Design quality, 1 to 5 stars"></div>
+                    </div>
+
+                    <!-- Scale -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <label for="scaleInput" class="label">Usefulness</label>
+                            <span class="text-sm font-black text-white"><span id="scaleValue">7</span><span class="text-stone-500 font-semibold">/10</span></span>
+                        </div>
+                        <input id="scaleInput" type="range" min="1" max="10" step="1" value="7" class="scale">
+                        <div class="flex justify-between text-[10px] text-stone-500 mt-2">
+                            <span>Not for my product</span><span>Exactly what I needed</span>
+                        </div>
+                    </div>
+
+                    <div id="ratingError" class="hidden mt-4 p-3 rounded-lg text-xs font-medium bg-red-900/50 text-red-200 border border-red-800" role="alert"></div>
+
+                    <div class="mt-7 flex flex-col gap-2">
+                        <button id="ratingSubmit" type="button" onclick="submitRatingAndDownload()" disabled
+                            class="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-900 font-black text-sm transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            Submit &amp; Download
+                        </button>
+                        <button type="button" onclick="closeRatingModal()" class="w-full py-2 text-xs font-semibold text-stone-500 hover:text-stone-300">Maybe later</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ------------------------------------------------------------------
-        // Config (values from Flask, JSON-encoded so quotes can't break JS)
-        // ------------------------------------------------------------------
+        // ====================================================================
+        // Config (Flask values JSON-encoded so quotes can never break the script)
+        // ====================================================================
         const PRODUCT_ID   = {{ product.id|tojson }};
         const CATEGORY     = {{ (product.category or 'General')|tojson }};
         const PRODUCT_NAME = {{ product.name|tojson }};
@@ -228,45 +304,62 @@
         const ALL_THEME_CLASSES = THEMES.map(t => t[0]);
 
         const VIBES = {
-            'Luxury editorial':  'Luxury editorial look: lots of negative space, elegant serif headline, a tall arched photo, two-colour palette.',
-            'Streetwear drop':   'Streetwear drop: huge chunky type, sticker-style badges, flat bold colours, slightly rotated elements.',
-            'Flash sale blast':  'High-energy sale poster: diagonal colour split, massive price numerals, starburst shape, still clean and readable.',
-            'Soft studio':       'Soft studio product shot: seamless gradient backdrop, floating shadow, rounded pill tags, friendly geometric type.',
-            'Retro 70s':         'Retro 70s sunburst: warm concentric arcs, rounded display type, orange, plum and mustard palette.',
-            'Magazine cover':    'Fashion magazine cover: masthead with the store name, full-bleed photo, cover-line style tagline.',
+            'Luxury editorial': 'Luxury editorial look: lots of negative space, elegant serif headline, a tall arched photo, two-colour palette.',
+            'Streetwear drop':  'Streetwear drop: huge chunky type, sticker-style badges, flat bold colours, slightly rotated elements.',
+            'Sale blast':       'High-energy sale poster: diagonal colour split, massive price numerals, starburst shape, still clean and readable.',
+            'Soft studio':      'Soft studio product shot: seamless gradient backdrop, floating shadow, rounded pill tags, friendly geometric type.',
+            'Retro 70s':        'Retro 70s sunburst: warm concentric arcs, rounded display type, orange, plum and mustard palette.',
+            'Magazine cover':   'Fashion magazine cover: masthead with the store name, full-bleed photo, cover-line style tagline.',
         };
+        const STAR_LABELS = ['Poor', 'Fair', 'Good', 'Great', 'Stunning'];
 
+        // ====================================================================
+        // State
+        // ====================================================================
         let isAiGenerated = false;
         let originalFlyerHTML = '';
+        let currentCommunityTemplateId = null;   // set only while a *community* design is on screen
+        let currentCommunityCreator = '';
         let activeTemplateId = null;
+        let communityTemplates = new Map();
+        let pendingFormat = null;
+        let starValue = 0;
 
-        // ------------------------------------------------------------------
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+        // ====================================================================
         // Init
-        // ------------------------------------------------------------------
+        // ====================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            originalFlyerHTML = document.getElementById('previewTarget').innerHTML;
+            originalFlyerHTML = $('previewTarget').innerHTML;
 
-            document.getElementById('themePills').innerHTML = THEMES.map(([id, label, bg, fg, bd]) =>
-                `<button type="button" onclick="setTheme('${id}')" class="px-2.5 py-1 rounded-md text-[10px] font-bold whitespace-nowrap cursor-pointer"
+            $('themePills').innerHTML = THEMES.map(([id, label, bg, fg, bd]) =>
+                `<button type="button" onclick="setTheme('${id}')" class="px-3 py-1.5 rounded-lg text-[11px] font-bold whitespace-nowrap cursor-pointer hover:scale-105 transition"
                     style="background:${bg};color:${fg};border:1px solid ${bd}">${label}</button>`).join('');
 
-            document.getElementById('vibeChips').innerHTML = Object.keys(VIBES).map(label =>
-                `<button type="button" class="vibe-chip text-[10px] font-semibold px-2.5 py-1 rounded-full bg-stone-800 text-stone-300" data-vibe="${label}">${label}</button>`).join('');
-            document.getElementById('vibeChips').addEventListener('click', e => {
+            $('vibeChips').innerHTML = Object.keys(VIBES).map(label =>
+                `<button type="button" data-vibe="${esc(label)}" class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-stone-800 text-stone-300 hover:bg-amber-500 hover:text-stone-900 transition">${esc(label)}</button>`).join('');
+            $('vibeChips').addEventListener('click', e => {
                 const chip = e.target.closest('[data-vibe]');
-                if (chip) document.getElementById('promptInput').value = VIBES[chip.dataset.vibe];
+                if (chip) $('promptInput').value = VIBES[chip.dataset.vibe];
             });
 
-            loadGallery();
+            buildStarRow();
+            $('scaleInput').addEventListener('input', syncScale);
+            syncScale();
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ratingModal').classList.contains('hidden')) closeRatingModal(); });
             window.addEventListener('resize', rescaleAiFlyer);
+
+            loadCommunityTemplates();
         });
 
-        // ------------------------------------------------------------------
+        // ====================================================================
         // Default themes
-        // ------------------------------------------------------------------
+        // ====================================================================
         function setTheme(themeClass) {
             if (isAiGenerated) resetToDefault();
-            const card = document.getElementById('flyerCard');
+            const card = $('flyerCard');
             card.classList.remove(...ALL_THEME_CLASSES);
             card.classList.add(themeClass);
         }
@@ -274,141 +367,294 @@
         function resetToDefault() {
             isAiGenerated = false;
             activeTemplateId = null;
-            document.getElementById('defaultThemeControls').style.display = 'block';
-            document.getElementById('aiToolbar').classList.add('hidden');
-            document.getElementById('previewTarget').innerHTML = originalFlyerHTML;
-            document.querySelectorAll('.gallery-item').forEach(b => b.classList.remove('active'));
+            currentCommunityTemplateId = null;       // default theme => free download
+            currentCommunityCreator = '';
+            $('previewInfo').classList.add('hidden');
+            $('previewTarget').innerHTML = originalFlyerHTML;
+            highlightActiveCard();
         }
 
-        // ------------------------------------------------------------------
-        // AI flyer: mount at 1080x1350 and scale down to fit the preview
-        // ------------------------------------------------------------------
-        function mountAiFlyer(html, name) {
+        // ====================================================================
+        // AI / community flyer mounting (1080x1350 canvas, scaled to fit)
+        // ====================================================================
+        function mountFlyer(html, { name, creator, gated }) {
             isAiGenerated = true;
-            document.getElementById('defaultThemeControls').style.display = 'none';
-            const bar = document.getElementById('aiToolbar');
-            bar.classList.remove('hidden');
-            document.getElementById('aiName').textContent = name || 'AI design';
-
-            document.getElementById('previewTarget').innerHTML =
-                `<div id="aiStage" style="position:relative;overflow:hidden;border-radius:14px;box-shadow:0 25px 60px rgba(0,0,0,.6)">
+            $('previewTarget').innerHTML =
+                `<div id="aiStage" style="position:relative;overflow:hidden;border-radius:14px;box-shadow:0 25px 60px rgba(0,0,0,.65)">
                     <div id="aiScale" style="width:${FLYER_W}px;height:${FLYER_H}px;transform-origin:top left">${html}</div>
                  </div>`;
+            $('infoName').textContent = name || 'Design';
+            $('infoSub').textContent = gated ? `Community design by ${creator}. Rate it to download.` : (creator ? `By ${creator}` : 'Your design');
+            $('previewInfo').classList.remove('hidden');
             rescaleAiFlyer();
+            highlightActiveCard();
         }
 
         function rescaleAiFlyer() {
-            const stage = document.getElementById('aiStage');
-            const inner = document.getElementById('aiScale');
+            const stage = $('aiStage'), inner = $('aiScale');
             if (!stage || !inner) return;
-            const wrapperWidth = document.getElementById('previewTarget').parentElement.clientWidth - 40;
-            const s = Math.max(0.2, Math.min(1, wrapperWidth / FLYER_W, (window.innerHeight * 0.85) / FLYER_H));
+            const avail = $('previewTarget').parentElement.clientWidth - 40;
+            const s = Math.max(0.2, Math.min(1, avail / FLYER_W, (window.innerHeight * 0.82) / FLYER_H));
             inner.style.transform = `scale(${s})`;
-            stage.style.width  = FLYER_W * s + 'px';
+            stage.style.width = FLYER_W * s + 'px';
             stage.style.height = FLYER_H * s + 'px';
         }
 
-        // ------------------------------------------------------------------
-        // Generate / gallery
-        // ------------------------------------------------------------------
-        const LOADING_STEPS = ['Reading your product…', 'Choosing a layout…', 'Setting the type…', 'Adding depth and colour…', 'Polishing the details…'];
+        // ====================================================================
+        // generateFlyer()
+        // ====================================================================
+        const LOADING_STEPS = ['Reading your product…', 'Choosing a layout…', 'Setting the type…', 'Adding depth and colour…', 'Polishing details…'];
         let loadingTimer = null;
 
         function setLoading(on) {
-            const btn = document.getElementById('generateBtn');
-            const text = document.getElementById('btnText');
-            btn.disabled = on;
-            document.getElementById('btnSpinner').classList.toggle('hidden', !on);
+            $('generateBtn').disabled = on;
+            $('btnSpinner').classList.toggle('hidden', !on);
             clearInterval(loadingTimer);
             if (on) {
                 let i = 0;
-                text.innerText = LOADING_STEPS[0];
-                loadingTimer = setInterval(() => { i = Math.min(i + 1, LOADING_STEPS.length - 1); text.innerText = LOADING_STEPS[i]; }, 7000);
+                $('btnText').innerText = LOADING_STEPS[0];
+                loadingTimer = setInterval(() => { i = Math.min(i + 1, LOADING_STEPS.length - 1); $('btnText').innerText = LOADING_STEPS[i]; }, 7000);
             } else {
-                text.innerText = 'Generate with AI';
+                $('btnText').innerText = 'Generate with AI';
             }
         }
 
         async function generateFlyer() {
-            const prompt = document.getElementById('promptInput').value.trim();
+            const prompt = $('promptInput').value.trim();
             if (!prompt) return showMessage('Please describe the look you want first.', 'error');
 
             setLoading(true);
-            document.getElementById('messageBox').classList.add('hidden');
-
+            $('messageBox').classList.add('hidden');
             try {
-                const response = await fetch('/design/generate', {
+                const res = await fetch('/design/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt, product_id: PRODUCT_ID, category: CATEGORY })
                 });
-                const data = await response.json().catch(() => ({}));
+                const data = await res.json().catch(() => ({}));
 
-                if (response.ok && data.status === 'success') {
+                if (res.ok && data.status === 'success') {
+                    currentCommunityTemplateId = null;      // your own generation => free download
+                    currentCommunityCreator = '';
                     activeTemplateId = data.template_id;
-                    mountAiFlyer(data.preview_html, data.name);
-                    showMessage('Design ready. Export it as PNG or PDF, or try another vibe.', 'success');
-                    loadGallery();
+                    mountFlyer(data.preview_html, { name: data.name, creator: '', gated: false });
+                    showMessage('Design ready. Download it, or try another vibe.', 'success');
+                    loadCommunityTemplates();
                 } else {
                     showMessage(data.message || 'Failed to generate design.', 'error');
                 }
             } catch (err) {
                 console.error(err);
-                showMessage('Network error. Please try again.', 'error');
+                showMessage('Network error. Please check your connection and try again.', 'error');
             } finally {
                 setLoading(false);
             }
         }
 
-        async function loadGallery() {
-            try {
-                const res = await fetch('/design/templates');
-                if (!res.ok) return;
-                const items = await res.json();
-                if (!items.length) return;
-                const box = document.getElementById('gallery');
-                box.innerHTML = '';
-                items.forEach(t => {
-                    const b = document.createElement('button');
-                    b.type = 'button';
-                    b.className = 'gallery-item text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-stone-900 border border-stone-700 text-stone-300 hover:text-white max-w-full truncate';
-                    b.textContent = t.name;
-                    b.title = t.category || '';
-                    b.dataset.id = t.id;
-                    if (t.id === activeTemplateId) b.classList.add('active');
-                    b.addEventListener('click', () => applySavedDesign(t.id));
-                    box.appendChild(b);
-                });
-            } catch (e) { /* gallery is optional */ }
-        }
-
-        async function applySavedDesign(id) {
-            try {
-                const res = await fetch(`/design/render/${id}?product_id=${encodeURIComponent(PRODUCT_ID)}`);
-                const data = await res.json();
-                if (res.ok && data.status === 'success') {
-                    activeTemplateId = id;
-                    mountAiFlyer(data.preview_html, data.name);
-                    document.querySelectorAll('.gallery-item').forEach(b => b.classList.toggle('active', Number(b.dataset.id) === id));
-                } else {
-                    showMessage(data.message || 'Could not load that design.', 'error');
-                }
-            } catch (e) {
-                showMessage('Could not load that design.', 'error');
-            }
-        }
-
         function showMessage(msg, type) {
-            const box = document.getElementById('messageBox');
+            const box = $('messageBox');
             box.innerText = msg;
             box.className = `mt-3 p-3 rounded-lg text-xs font-medium ${type === 'error'
                 ? 'bg-red-900/50 text-red-200 border border-red-800'
                 : 'bg-green-900/50 text-green-200 border border-green-800'}`;
         }
 
-        // ------------------------------------------------------------------
-        // Export (PNG / PDF)
-        // ------------------------------------------------------------------
+        // ====================================================================
+        // Community gallery
+        // ====================================================================
+        function coverFor(name) {
+            let h = 0;
+            for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % 360;
+            return `linear-gradient(135deg, hsl(${h} 75% 52%), hsl(${(h + 55) % 360} 80% 28%))`;
+        }
+
+        function renderGallerySkeleton() {
+            $('communityGallery').innerHTML = Array.from({ length: 3 }, () =>
+                `<div class="tpl-card rounded-2xl border border-stone-800 overflow-hidden"><div class="skeleton h-24"></div><div class="p-3 space-y-2"><div class="skeleton h-3 w-3/4 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div><div class="skeleton h-3 w-2/3 rounded"></div></div></div>`).join('');
+        }
+
+        async function loadCommunityTemplates() {
+            const box = $('communityGallery');
+            renderGallerySkeleton();
+            try {
+                const res = await fetch('/design/get-templates');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'load failed');
+
+                communityTemplates = new Map(data.templates.map(t => [t.id, t]));
+                if (!data.templates.length) {
+                    box.innerHTML = `<div class="w-full text-center py-6 text-xs text-stone-500">No community designs yet. Generate one and it will appear here for other sellers.</div>`;
+                    return;
+                }
+                box.innerHTML = data.templates.map((t, i) => {
+                    const rated = t.total_ratings > 0;
+                    return `
+                    <article class="tpl-card rounded-2xl border border-stone-800 bg-stone-900 overflow-hidden flex flex-col" data-card="${t.id}">
+                        <div class="relative h-24 p-3 flex items-end" style="background:${coverFor(t.name)}">
+                            ${i < 3 ? `<span class="absolute top-2 left-2 text-[9px] font-black uppercase tracking-wider bg-black/45 text-amber-300 px-2 py-0.5 rounded-full">#${i + 1} Trending</span>` : ''}
+                            <span class="absolute top-2 right-2 text-[10px] font-bold bg-black/45 text-white px-2 py-0.5 rounded-full">${esc(t.category)}</span>
+                            <span class="text-white font-black text-[15px] leading-tight drop-shadow line-clamp-2">${esc(t.name)}</span>
+                        </div>
+                        <div class="p-3 flex flex-col gap-1.5 flex-1">
+                            <div class="text-[11px] text-stone-400 truncate">by <span class="text-stone-200 font-semibold">${esc(t.creator_name)}</span>${t.is_mine ? ' <span class="text-amber-400">(you)</span>' : ''}</div>
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="font-bold text-amber-300">${rated ? `★ ${t.avg_star_rating.toFixed(1)}` : '★ New'}</span>
+                                <span class="text-stone-500">${rated ? `${t.total_ratings} rating${t.total_ratings === 1 ? '' : 's'}` : 'Be the first'}</span>
+                            </div>
+                            <div class="text-[11px] font-semibold text-rose-300">🔥 ${t.usage_count.toLocaleString()} downloads</div>
+                            <button type="button" onclick="useCommunityTemplate(${t.id})"
+                                class="mt-1.5 w-full text-[11px] font-black py-2 rounded-lg bg-stone-800 hover:bg-amber-500 hover:text-stone-900 text-stone-100 transition">Use this design</button>
+                        </div>
+                    </article>`;
+                }).join('');
+                highlightActiveCard();
+            } catch (err) {
+                console.error(err);
+                box.innerHTML = `<div class="w-full text-center py-6 text-xs text-red-300">Couldn't load community designs. <button class="underline font-bold" onclick="loadCommunityTemplates()">Try again</button></div>`;
+            }
+        }
+
+        function highlightActiveCard() {
+            document.querySelectorAll('[data-card]').forEach(c =>
+                c.classList.toggle('active', Number(c.dataset.card) === activeTemplateId));
+        }
+
+        async function useCommunityTemplate(id) {
+            const meta = communityTemplates.get(id);
+            const btn = document.querySelector(`[data-card="${id}"] button`);
+            const original = btn ? btn.textContent : '';
+            if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
+            try {
+                const res = await fetch(`/design/render-template/${id}?product_id=${encodeURIComponent(PRODUCT_ID)}`);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Could not load that design.');
+
+                const creator = data.creator_name || (meta && meta.creator_name) || 'a community seller';
+                const mine = !!(meta && meta.is_mine);
+                activeTemplateId = id;
+                currentCommunityTemplateId = mine ? null : id;     // your own designs are never gated
+                currentCommunityCreator = creator;
+                mountFlyer(data.preview_html, { name: data.name, creator, gated: !mine });
+                showMessage(mine ? 'Loaded your design.' : `Loaded "${data.name}". Rate it when you download to support ${creator}.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage(err.message || 'Could not load that design.', 'error');
+            } finally {
+                if (btn) { btn.textContent = original; btn.disabled = false; }
+            }
+        }
+
+        // ====================================================================
+        // Rate-to-Download modal
+        // ====================================================================
+        function buildStarRow() {
+            $('starRow').innerHTML = [1, 2, 3, 4, 5].map(n =>
+                `<button type="button" role="radio" aria-checked="false" aria-label="${n} star${n > 1 ? 's' : ''}: ${STAR_LABELS[n - 1]}" data-star="${n}" class="star-btn text-4xl leading-none">★</button>`).join('');
+            const row = $('starRow');
+            row.addEventListener('click', e => { const b = e.target.closest('[data-star]'); if (b) setStars(Number(b.dataset.star)); });
+            row.addEventListener('mouseover', e => { const b = e.target.closest('[data-star]'); if (b) paintStars(Number(b.dataset.star)); });
+            row.addEventListener('mouseleave', () => paintStars(starValue));
+            row.addEventListener('keydown', e => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setStars(Math.min(5, (starValue || 0) + 1)); }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setStars(Math.max(1, (starValue || 2) - 1)); }
+            });
+        }
+
+        function paintStars(n) {
+            document.querySelectorAll('#starRow [data-star]').forEach(b => {
+                const v = Number(b.dataset.star);
+                b.classList.toggle('on', v <= n);
+                b.setAttribute('aria-checked', String(v === starValue));
+            });
+            $('starLabel').textContent = n ? STAR_LABELS[n - 1] : 'Tap a star';
+            $('starLabel').className = `text-[11px] font-semibold ${n ? 'text-amber-300' : 'text-stone-500'}`;
+        }
+
+        function setStars(n) {
+            starValue = n;
+            paintStars(n);
+            $('ratingSubmit').disabled = false;
+            $('ratingError').classList.add('hidden');
+        }
+
+        function syncScale() {
+            const el = $('scaleInput');
+            $('scaleValue').textContent = el.value;
+            el.style.setProperty('--pct', ((el.value - 1) / 9) * 100 + '%');
+        }
+
+        function openRatingModal() {
+            starValue = 0;
+            paintStars(0);
+            $('scaleInput').value = 7;
+            syncScale();
+            $('ratingSubmit').disabled = true;
+            $('ratingSubmit').textContent = 'Submit & Download';
+            $('ratingError').classList.add('hidden');
+            $('ratingCreator').textContent = currentCommunityCreator || 'this seller';
+            $('ratingModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            const first = document.querySelector('#starRow [data-star]');
+            if (first) first.focus();
+        }
+
+        function closeRatingModal() {
+            $('ratingModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            pendingFormat = null;
+        }
+
+        async function submitRatingAndDownload() {
+            if (!starValue || !currentCommunityTemplateId) return;
+            const submit = $('ratingSubmit');
+            const err = $('ratingError');
+            submit.disabled = true;
+            submit.textContent = 'Saving your rating…';
+            err.classList.add('hidden');
+
+            try {
+                const res = await fetch('/design/rate-and-download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_id: currentCommunityTemplateId,
+                        star_rating: starValue,
+                        scale_rating: Number($('scaleInput').value)
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Could not save your rating.');
+
+                const format = pendingFormat || 'png';
+                $('ratingModal').classList.add('hidden');
+                document.body.style.overflow = '';
+                pendingFormat = null;
+                currentCommunityTemplateId = null;           // unlocked: later downloads of this view are free
+                $('infoSub').textContent = `Community design by ${currentCommunityCreator}. Thanks for rating!`;
+
+                await performDownload(format, null);
+                loadCommunityTemplates();                    // refresh the social proof numbers
+            } catch (e) {
+                console.error(e);
+                err.textContent = e.message || 'Something went wrong. Please try again.';
+                err.classList.remove('hidden');
+                submit.disabled = false;
+                submit.textContent = 'Submit & Download';
+            }
+        }
+
+        // ====================================================================
+        // downloadPreview(format): gated for community designs
+        // ====================================================================
+        async function downloadPreview(format, btn) {
+            if (currentCommunityTemplateId) {                // community design: rate first
+                pendingFormat = format;
+                openRatingModal();
+                return;
+            }
+            await performDownload(format, btn);
+        }
+
         function waitForImages(root) {
             return Promise.all([...root.querySelectorAll('img')].map(img =>
                 img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = r; })));
@@ -424,44 +670,38 @@
             }
         }
 
-        async function downloadPreview(btn, format) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'PROCESSING…';
-            btn.disabled = true;
+        async function performDownload(format, btn) {
+            const original = btn ? btn.innerHTML : '';
+            if (btn) { btn.innerHTML = 'Processing…'; btn.disabled = true; }
 
-            // Pick the live element to export and its logical size
+            // What is currently inside #previewTarget?
             let source, w, h, ratio;
-            if (isAiGenerated) {
-                source = document.querySelector('#aiScale .ai-flyer-scope');
-                w = FLYER_W; h = FLYER_H; ratio = 2;
-            } else {
-                source = document.getElementById('flyerCard');
-                w = source.offsetWidth; h = source.offsetHeight; ratio = 3;
-            }
-            if (!source) { btn.innerHTML = originalText; btn.disabled = false; return; }
+            const aiRoot = document.querySelector('#previewTarget .ai-flyer-scope');
+            if (aiRoot) { source = aiRoot; w = FLYER_W; h = FLYER_H; ratio = 2; }
+            else { source = $('flyerCard'); w = source.offsetWidth; h = source.offsetHeight; ratio = 3; }
 
-            // Render an unscaled clone off-screen so the preview scaling never leaks into the export
+            // Unscaled off-screen clone so the preview's scale() never leaks into the export
             const holder = document.createElement('div');
             holder.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px;z-index:-99999;pointer-events:none;`;
             const clone = source.cloneNode(true);
-            clone.style.width = w + 'px';
             clone.style.margin = '0';
+            clone.style.width = w + 'px';
             holder.appendChild(clone);
             document.body.appendChild(holder);
 
             try {
                 await document.fonts.ready;
                 await waitForImages(clone);
-                await new Promise(r => setTimeout(r, 150));   // let Tailwind's CDN generate classes for the clone
+                await new Promise(r => setTimeout(r, 150));   // let the Tailwind CDN style the clone
 
                 const dataUrl = await renderToPng(clone, w, h, ratio);
                 const safeName = PRODUCT_NAME.replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || 'product';
 
                 if (format === 'png') {
-                    const link = document.createElement('a');
-                    link.download = `Flyer_${safeName}.png`;
-                    link.href = dataUrl;
-                    link.click();
+                    const a = document.createElement('a');
+                    a.download = `Flyer_${safeName}.png`;
+                    a.href = dataUrl;
+                    a.click();
                 } else {
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF({ orientation: w > h ? 'l' : 'p', unit: 'px', format: [w, h], hotfixes: ['px_scaling'] });
@@ -470,11 +710,10 @@
                 }
             } catch (err) {
                 console.error('Export failed:', err);
-                showMessage('Export failed. If your product photo is hosted on another site, it may block downloads: re-upload it to your store and try again.', 'error');
+                showMessage('Export failed. If your product photo is hosted on another site it may block downloads: re-upload it to your store and try again.', 'error');
             } finally {
                 document.body.removeChild(holder);
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                if (btn) { btn.innerHTML = original; btn.disabled = false; }
             }
         }
     </script>
