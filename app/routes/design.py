@@ -1,8 +1,10 @@
 import json
-from flask import Blueprint, render_template_string, request, jsonify
+import os
+from flask import Blueprint, request, jsonify, render_template_string
 from flask_login import login_required, current_user
 from app import db
 from app.models import FlyerTemplate, Product
+from app.utils.ai_builder import query_openrouter
 from datetime import datetime
 
 design_bp = Blueprint('design', __name__, url_prefix='/design')
@@ -24,9 +26,11 @@ def generate_flyer():
     if not product:
         return jsonify({"status": "error", "message": "Product not found."}), 404
 
+    # 1. Get API Key (adjust if you store it differently in your config)
+    api_key = os.environ.get('OPENROUTER_API_KEY') or 'your_fallback_api_key_here'
+
     # 2. The "Magic" System Prompt
-    # Notice the quadruple braces {{{{...}}}}. Python f-strings turn {{ into {, 
-    # so {{{{ becomes {{, which is exactly what we want the AI to see for Jinja!
+    # Quadruple braces {{{{...}}}} become {{...}} in the final string sent to the AI
     system_prompt = (
         "You are an expert UI/UX designer specializing in high-converting digital flyers.\n"
         f"The user wants a flyer for a product named \"{product.name}\" in the \"{category}\" category.\n\n"
@@ -41,12 +45,16 @@ def generate_flyer():
     )
 
     user_prompt = f"Design request: {prompt}"
+    full_prompt = system_prompt + "\n\n" + user_prompt
 
     try:
-        # 3. Call your AI API (Replace 'call_ai_api' with your actual function!)
-        ai_response = call_ai_api(system_prompt, user_prompt) 
+        # 3. Call YOUR existing AI function!
+        ai_response = query_openrouter(full_prompt, api_key)
         
-        # Clean up the response
+        if not ai_response:
+            return jsonify({"status": "error", "message": "AI API failed to respond."}), 500
+
+        # Clean up the response in case the AI adds markdown formatting
         clean_response = ai_response.strip().replace("```json", "").replace("```", "")
         template_data = json.loads(clean_response)
 
@@ -62,15 +70,15 @@ def generate_flyer():
         db.session.add(new_template)
         db.session.commit()
 
-        # 5. Render the Preview using Jinja!
-        # This is much safer than .replace(). Jinja will inject the variables directly.
+        # 5. Render the Preview using Jinja's native engine!
+        # This safely injects the real product data into the {{PLACEHOLDERS}}
         preview_html = render_template_string(
             new_template.html,
             PRODUCT_IMAGE=product.image_url,
             PRODUCT_NAME=product.name,
             PRICE=f"₦{product.price:,.2f}",
             STORE_NAME=store.name if store else "Marketplace",
-            DESCRIPTION=product.description or "Premium quality."
+            DESCRIPTION=product.description or "Premium quality product."
         )
 
         return jsonify({
@@ -81,7 +89,8 @@ def generate_flyer():
         })
 
     except json.JSONDecodeError:
-        return jsonify({"status": "error", "message": "AI returned invalid JSON. Please try again."}), 500
+        return jsonify({"status": "error", "message": "AI returned invalid JSON. Please try a simpler prompt."}), 500
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"Flyer Generation Error: {str(e)}")
+        return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
