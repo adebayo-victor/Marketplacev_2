@@ -89,7 +89,7 @@ def generate_flyer():
         })
 
     except json.JSONDecodeError as e:
-        return jsonify({"status": "error", "message": f"AI returned invalid JSON. Please try a simpler prompt. => {e}"}), 500
+        return jsonify({"status": "error", "message": "AI returned invalid JSON. Please try a simpler prompt."}), 500
     except Exception as e:
         db.session.rollback()
         print(f"Flyer Generation Error: {str(e)}")
