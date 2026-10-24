@@ -217,39 +217,27 @@ class FlyerTemplate(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     
-    # --- Identity & Context ---
+    # 👇 ADD THIS LINE RIGHT HERE 👇
+    task_id = db.Column(db.String(36), unique=True, nullable=True, index=True)
+    
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     creator_name = db.Column(db.String(100), nullable=False)
-    
-    # THE RESTORED COLUMN: Links to the store, but safely becomes NULL if the store is deleted
     creator_store_id = db.Column(db.Integer, db.ForeignKey('stores.id', ondelete='SET NULL'), nullable=True)
-    
     original_context = db.Column(db.String(255), nullable=True)
-    
-    # --- The Core Asset ---
-    html = db.Column(db.Text, nullable=False) 
-    
-    # --- Visibility ---
+    html = db.Column(db.Text, nullable=False)
     is_official = db.Column(db.Boolean, default=False)
-    
-    # --- Social Proof & Metrics ---
     usage_count = db.Column(db.Integer, default=0)
     last_used_at = db.Column(db.DateTime, nullable=True)
     likes_count = db.Column(db.Integer, default=0)
-    
-    # --- Dual Rating System Aggregates ---
     avg_star_rating = db.Column(db.Float, default=0.0)
     avg_scale_rating = db.Column(db.Float, default=0.0)
     total_ratings = db.Column(db.Integer, default=0)
-    
-    # --- Metadata ---
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
     store = db.relationship('Store', backref=db.backref('created_templates', lazy='dynamic'))
     reviews = db.relationship('TemplateReview', backref='template', lazy='dynamic', cascade='all, delete-orphan')
-
 
 class TemplateReview(db.Model):
     __tablename__ = 'template_reviews'
