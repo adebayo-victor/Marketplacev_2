@@ -221,6 +221,10 @@ class FlyerTemplate(db.Model):
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     creator_name = db.Column(db.String(100), nullable=False)
+    
+    # THE RESTORED COLUMN: Links to the store, but safely becomes NULL if the store is deleted
+    creator_store_id = db.Column(db.Integer, db.ForeignKey('stores.id', ondelete='SET NULL'), nullable=True)
+    
     original_context = db.Column(db.String(255), nullable=True)
     
     # --- The Core Asset ---
@@ -242,7 +246,8 @@ class FlyerTemplate(db.Model):
     # --- Metadata ---
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationship to reviews
+    # Relationships
+    store = db.relationship('Store', backref=db.backref('created_templates', lazy='dynamic'))
     reviews = db.relationship('TemplateReview', backref='template', lazy='dynamic', cascade='all, delete-orphan')
 
 
