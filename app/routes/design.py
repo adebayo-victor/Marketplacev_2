@@ -502,25 +502,38 @@ def worker_callback():
     task_id = data.get('task_id')
     task_type = data.get('task_type')
     status = data.get('status')
-    html = data.get('html', '')
+    
+    # 1. Get the raw response from the worker
+    raw_html = data.get('html', '')
 
     if task_type != 'flyer':
-        current_app.logger.warning(f"Received {task_type} task at the flyer callback route!")
-        return jsonify({'status': 'error', 'message': 'Invalid task type for this route'}), 400
+        return jsonify({'status': 'error', 'message': 'Invalid task type'}), 400
 
-    if status != 'success' or not html:
-        current_app.logger.error(f"Worker callback failed for task {task_id}: {data.get('message')}")
+    if status != 'success' or not raw_html:
         return jsonify({'status': 'error', 'message': 'Worker reported failure'}), 400
 
+    # 2. THE FIX: Parse the JSON to extract the real HTML
+    final_html = raw_html
+    try:
+        # Try to parse the string as JSON
+        parsed_data = json.loads(raw_html)
+        # If it's a dictionary and has an 'html' key, use that value instead
+        if isinstance(parsed_data, dict) and 'html' in parsed_data:
+            final_html = parsed_data['html']
+            # Optional: You can also grab the name if you want
+            # template.name = parsed_data.get('name', 'Custom Design')
+    except (json.JSONDecodeError, TypeError):
+        # If it's not JSON, it's already raw HTML, so we keep it as is
+        pass
+
+    # 3. Find the template and save the CLEANED HTML
     template = FlyerTemplate.query.filter_by(task_id=task_id).first()
     if not template:
-        current_app.logger.error(f"Pending template not found for task_id: {task_id}")
         return jsonify({'status': 'error', 'message': 'Template not found'}), 404
 
     try:
-        clean_html = _neutralize_jinja(_sanitize(html))
+        clean_html = _neutralize_jinja(_sanitize(final_html))
         template.html = clean_html
-        template.name = "Custom Design"
         
         db.session.commit()
         current_app.logger.info(f"✅ Successfully saved generated flyer for task {task_id}")
@@ -529,7 +542,6 @@ def worker_callback():
         
     except Exception as e:
         db.session.rollback()
-        current_app.logger.exception(f"Failed to process callback for task {task_id}")
         return jsonify({'status': 'error', 'message': 'Server error processing HTML'}), 500
 
 # ============================================================================
