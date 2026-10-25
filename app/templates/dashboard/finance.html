@@ -1,0 +1,107 @@
+{% extends "dashboard/layout.html" %} <!-- Or "base.html" depending on your setup -->
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+    
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold font-ui text-dark-oak">Finance & Rewards</h1>
+        <p class="text-sm text-gray-500 mt-1 font-ui">Manage your coin balance, track transactions, and redeem rewards.</p>
+    </div>
+
+    <!-- Hero Balance Card -->
+    <div class="bg-gradient-to-r from-dark-oak to-clay p-8 rounded-2xl shadow-lg text-white mb-8 relative overflow-hidden">
+        <div class="relative z-10">
+            <span class="text-xs font-bold uppercase tracking-wider opacity-80 font-ui">Current Balance</span>
+            <div class="text-5xl font-black mt-2 font-ui">{{ wallet.balance }} <span class="text-2xl opacity-80">Coins</span></div>
+        </div>
+        <!-- Decorative circle -->
+        <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Transaction Ledger -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-bold text-sm font-ui text-dark-oak">Transaction History</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm font-ui">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
+                        <tr>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Type</th>
+                            <th class="p-4">Description</th>
+                            <th class="p-4 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for tx in transactions %}
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4 text-gray-600 whitespace-nowrap">{{ tx.created_at.strftime('%b %d, %Y') }}</td>
+                            <td class="p-4">
+                                {% if tx.type == 'credit' %}
+                                    <span class="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded border border-green-100">🟢 Credit</span>
+                                {% else %}
+                                    <span class="text-red-600 font-bold text-xs bg-red-50 px-2 py-1 rounded border border-red-100">🔴 Debit</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-gray-800 font-medium">{{ tx.description }}</td>
+                            <td class="p-4 text-right font-bold {% if tx.type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="p-8 text-center text-gray-500 font-ui">No transactions yet. Start referring friends to earn coins!</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: Rewards Shop (Tasks) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
+            <h3 class="font-bold text-sm font-ui text-dark-oak mb-4 flex items-center gap-2">
+                🎁 Redeem Coins
+            </h3>
+            
+            <div class="space-y-4">
+                {% for task in tasks %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:border-clay hover:shadow-md transition bg-gray-50/50">
+                    <div class="font-bold text-sm font-ui text-dark-oak">{{ task.name }}</div>
+                    <div class="text-xs text-gray-500 mt-1 font-ui leading-relaxed">{{ task.description }}</div>
+                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+                        <span class="font-black text-clay font-ui text-lg">{{ task.price }} <span class="text-xs font-normal text-gray-500">Coins</span></span>
+                        
+                        <!-- Redeem Button (Phase 4 will make this functional) -->
+                        <button type="button" onclick="redeemTask({{ task.id }}, {{ task.price }})" 
+                                class="text-xs font-bold bg-dark-oak text-white px-4 py-2 rounded-lg hover:bg-clay transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                {% if wallet.balance < task.price %}disabled{% endif %}>
+                            {% if wallet.balance < task.price %}Locked{% else %}Redeem{% endif %}
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 font-ui text-center py-4">No rewards available at the moment.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function redeemTask(taskId, price) {
+    if (!confirm(`Are you sure you want to redeem this reward for ${price} coins?`)) {
+        return;
+    }
+    
+    // Phase 4: We will add the fetch call here to POST to /finance/redeem
+    alert("Redemption logic coming in Phase 4!");
+}
+</script>
+{% endblock %}
