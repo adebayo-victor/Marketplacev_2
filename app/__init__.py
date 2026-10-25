@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -67,6 +67,14 @@ def create_app(config_class=Config):
                 conn.commit()
         except Exception as e:
             print(f"Auto-migration notice: {e}")
+
+    # ==============================================================================
+    # GLOBAL ERROR HANDLERS
+    # ==============================================================================
+    @app.errorhandler(404)
+    def not_found_error(error):
+        """Render the custom 404 page for any missing routes."""
+        return render_template('errors/404.html'), 404
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
