@@ -254,3 +254,51 @@ class TemplateReview(db.Model):
     __table_args__ = (
         db.UniqueConstraint('template_id', 'store_id', name='uq_template_store_review'),
     )
+
+
+class Wallet(db.Model):
+    __tablename__ = 'wallets'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=False)
+    balance = db.Column(db.Integer, default=0, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = db.relationship('User', backref=db.backref('wallet', uselist=False))
+    transactions = db.relationship('Transaction', backref='wallet', lazy='dynamic')
+
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type = db.Column(db.String(10), nullable=False) # 'credit' or 'debit'
+    amount = db.Column(db.Integer, nullable=False)
+    reward_id = db.Column(db.Integer, nullable=True)
+    inventory_id = db.Column(db.Integer, nullable=True)
+    reference_id = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type = db.Column(db.String(10), nullable=False) 
+    amount = db.Column(db.Integer, nullable=False)
+    reward_id = db.Column(db.Integer, nullable=True)
+    task_id = db.Column(db.Integer, nullable=True) # <-- Make sure this is here!
+    reference_id = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Task(db.Model):
+    __tablename__ = 'task'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
