@@ -50,7 +50,6 @@
             margin: 0; letter-spacing: -1px; 
         }
 
-        /* 📱 FLUID 280px MINIMUM (FITS ALL PHONE SCREENS) */
         .kiosk-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -118,7 +117,6 @@
             .btn-add-kiosk { display: inline-block; width: auto; margin-top: 40px; padding: 18px 35px; }
         }
 
-        /* 📱 RESPONSIVE MODAL PREVIEW */
         .preview-modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
             z-index: 1000; display: none; align-items: center; justify-content: center; padding: 10px;
@@ -142,10 +140,16 @@
 
     <div class="nav-bar">
         <a href="/" class="brand-logo" style="text-decoration: none;">MARKETPLACE.</a>
-        <div style="font-family: 'Montserrat'; font-size: 0.75rem; display: flex; align-items: center;">
-            <span style="color: var(--clay); font-weight: 600; margin-right: 12px; font-size: 0.7rem;">{{ current_user.username }}</span>
+        <div style="font-family: 'Montserrat'; font-size: 0.75rem; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span style="color: var(--clay); font-weight: 600; margin-right: 4px; font-size: 0.7rem;">{{ current_user.username }}</span>
+            
+            <!-- 👇 NEW LINKS ADDED HERE 👇 -->
+            <a href="/dashboard/referrals" style="color: #4b5563; text-decoration: none; font-weight: 600; font-size: 0.7rem;" onmouseover="this.style.color='var(--clay)'" onmouseout="this.style.color='#4b5563'">Referrals</a>
+            <a href="/dashboard/finance" style="color: #4b5563; text-decoration: none; font-weight: 600; font-size: 0.7rem;" onmouseover="this.style.color='var(--clay)'" onmouseout="this.style.color='#4b5563'">Finance</a>
+            <!-- 👆 END NEW LINKS 👆 -->
+
             {% if current_user.is_admin %}
-                <a href="/admin" style="color: #f59e0b; text-decoration: none; font-weight: 600; margin-right: 12px; font-size: 0.7rem;">Admin</a>
+                <a href="/admin" style="color: #f59e0b; text-decoration: none; font-weight: 600; font-size: 0.7rem;">Admin</a>
             {% endif %}
             <a href="/logout" style="color: #b33a3a; text-decoration: none; font-weight: 600; font-size: 0.7rem;">Log Out</a>
         </div>
@@ -171,11 +175,30 @@
                 <p style="font-style: italic; opacity: 0.6; margin: 4px 0 0 0; font-size: 0.85rem;">Your collection of active storefronts.</p>
             </div>
             
-            <!-- 🔍 SEARCH BAR (100% FLUID ON MOBILE) -->
             <input type="text" id="kioskSearchHub" onkeyup="filterKiosksHub(this.value)" 
                    placeholder="Search your storefronts..." 
                    style="padding: 10px 14px; border: 1px solid #ddd; background: white; font-family: 'Montserrat'; font-size: 0.75rem; width: 100%; max-width: 320px; outline: none; border-radius: 8px;">
         </div>
+
+        <!-- 👇 QUICK FINANCE & REFERRAL SHORTCUTS ADDED HERE 👇 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <a href="/dashboard/referrals" style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s;" onmouseover="this.style.borderColor='var(--clay)'" onmouseout="this.style.borderColor='#eee'">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(141, 91, 62, 0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🤝</div>
+                <div>
+                    <div style="font-family: 'Montserrat'; font-weight: 600; font-size: 0.9rem; color: var(--dark-oak);">Invite Friends</div>
+                    <div style="font-family: 'Montserrat'; font-size: 0.75rem; color: #888; margin-top: 4px;">Share your link and grow your network.</div>
+                </div>
+            </a>
+            
+            <a href="/dashboard/finance" style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; text-decoration: none; color: inherit; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.2s;" onmouseover="this.style.borderColor='var(--clay)'" onmouseout="this.style.borderColor='#eee'">
+                <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(22, 163, 74, 0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">💰</div>
+                <div>
+                    <div style="font-family: 'Montserrat'; font-weight: 600; font-size: 0.9rem; color: var(--dark-oak);">Finance & Rewards</div>
+                    <div style="font-family: 'Montserrat'; font-size: 0.75rem; color: #888; margin-top: 4px;">Balance: <strong style="color: var(--clay);">{{ current_user.wallet.balance if current_user.wallet else 0 }} Coins</strong></div>
+                </div>
+            </a>
+        </div>
+        <!-- 👆 END SHORTCUTS 👆 -->
 
         <div class="kiosk-grid" id="kiosksGrid">
             {% for kiosk in kiosks %}
