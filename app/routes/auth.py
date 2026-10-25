@@ -73,7 +73,7 @@ def register():
             
             # Get the reward amount (defaults to 500 if not found in DB)
             reward = Reward.query.filter_by(name='Referral Signup', is_active=True).first()
-            amount = reward.value if reward else 500
+            amount = reward.value if reward else 1000
             
             # Add coins to the referrer
             wallet.balance += amount
