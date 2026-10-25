@@ -224,7 +224,7 @@ class FlyerTemplate(db.Model):
     category = db.Column(db.String(50), nullable=False)
     creator_name = db.Column(db.String(100), nullable=False)
     creator_store_id = db.Column(db.Integer, db.ForeignKey('stores.id', ondelete='SET NULL'), nullable=True)
-    original_context = db.Column(db.String(255), nullable=True)
+    original_context = db.Column(db.Text, nullable=True)
     html = db.Column(db.Text, nullable=False)
     is_official = db.Column(db.Boolean, default=False)
     usage_count = db.Column(db.Integer, default=0)
