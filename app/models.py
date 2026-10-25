@@ -13,8 +13,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Referral tracking
+    referral_code = db.Column(db.String(20), unique=True, nullable=True)
+    referred_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
 
     stores = db.relationship('Store', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
+    referred_users = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -32,10 +37,8 @@ class Store(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
     
-    # ⏳ Background Build Status: 'building' or 'ready'
     build_status = db.Column(db.String(20), default='ready')
     
-    # 🔒 Go-Live Status (Paystack)
     is_active = db.Column(db.Boolean, default=False)
     has_ever_activated = db.Column(db.Boolean, default=False)
     
@@ -208,6 +211,7 @@ class PasswordResetTicket(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     resolved_at = db.Column(db.DateTime, nullable=True)
 
+
 # ==============================================================================
 # AI FLYER DESIGN STUDIO MODELS
 # ==============================================================================
@@ -216,8 +220,6 @@ class FlyerTemplate(db.Model):
     __tablename__ = 'flyer_templates'
 
     id = db.Column(db.Integer, primary_key=True)
-    
-    # 👇 ADD THIS LINE RIGHT HERE 👇
     task_id = db.Column(db.String(36), unique=True, nullable=True, index=True)
     
     name = db.Column(db.String(100), nullable=False)
@@ -235,9 +237,9 @@ class FlyerTemplate(db.Model):
     total_ratings = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     store = db.relationship('Store', backref=db.backref('created_templates', lazy='dynamic'))
     reviews = db.relationship('TemplateReview', backref='template', lazy='dynamic', cascade='all, delete-orphan')
+
 
 class TemplateReview(db.Model):
     __tablename__ = 'template_reviews'
@@ -250,11 +252,14 @@ class TemplateReview(db.Model):
     scale_rating = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Prevent a store from reviewing the same template multiple times
     __table_args__ = (
         db.UniqueConstraint('template_id', 'store_id', name='uq_template_store_review'),
     )
 
+
+# ==============================================================================
+# COIN ECONOMY MODELS
+# ==============================================================================
 
 class Wallet(db.Model):
     __tablename__ = 'wallets'
@@ -264,7 +269,6 @@ class Wallet(db.Model):
     balance = db.Column(db.Integer, default=0, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationship
     user = db.relationship('User', backref=db.backref('wallet', uselist=False))
     transactions = db.relationship('Transaction', backref='wallet', lazy='dynamic')
 
@@ -275,28 +279,27 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    type = db.Column(db.String(10), nullable=False) # 'credit' or 'debit'
+    type = db.Column(db.String(10), nullable=False)  # 'credit' or 'debit'
     amount = db.Column(db.Integer, nullable=False)
     reward_id = db.Column(db.Integer, nullable=True)
-    inventory_id = db.Column(db.Integer, nullable=True)
+    task_id = db.Column(db.Integer, nullable=True)
     reference_id = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class Transaction(db.Model):
-    __tablename__ = 'transactions'
+class Reward(db.Model):
+    __tablename__ = 'rewards'
+    
     id = db.Column(db.Integer, primary_key=True)
-    wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    type = db.Column(db.String(10), nullable=False) 
-    amount = db.Column(db.Integer, nullable=False)
-    reward_id = db.Column(db.Integer, nullable=True)
-    task_id = db.Column(db.Integer, nullable=True) # <-- Make sure this is here!
-    reference_id = db.Column(db.Integer, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    value = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+
 
 class Task(db.Model):
     __tablename__ = 'task'
+    
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
     price = db.Column(db.Integer, nullable=False)
