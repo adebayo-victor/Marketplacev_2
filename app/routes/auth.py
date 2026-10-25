@@ -1,3 +1,5 @@
+import random
+import string
 import os
 import re
 import uuid
@@ -8,6 +10,12 @@ from app.models import User, PasswordResetTicket
 
 auth_bp = Blueprint('auth', __name__)
 
+def generate_referral_code(username):
+    """Generates a unique referral code (e.g., VICT1234)"""
+    prefix = username[:4].upper()
+    suffix = ''.join(random.choices(string.digits, k=4))
+    return f"{prefix}{suffix}"
+
 def slugify(text: str) -> str:
     text = text.lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)
@@ -17,33 +25,79 @@ def slugify(text: str) -> str:
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.overview'))
-
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip().lower()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '').strip()
-
+        
         if not username or not email or not password:
             flash('Please fill in all required fields.', 'danger')
             return render_template('auth/register.html')
-
+            
         if User.query.filter_by(username=username).first():
             flash('That username is already taken. Please choose another.', 'warning')
             return render_template('auth/register.html')
-
+            
         if User.query.filter_by(email=email).first():
             flash('That email address is already registered. Please log in.', 'warning')
             return render_template('auth/register.html')
-
-        user = User(username=username, email=email)
+            
+        # --- REFERRAL LOGIC START ---
+        # 1. Generate a unique referral code for this NEW user
+        ref_code = generate_referral_code(username)
+        
+        # 2. Check if they came from a referral link (?ref=CODE in URL or hidden form field)
+        referrer_code = request.args.get('ref') or request.form.get('ref')
+        referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
+        
+        # 3. Create the user with the new referral fields
+        user = User(
+            username=username, 
+            email=email,
+            referral_code=ref_code,
+            referred_by_id=referrer.id if referrer else None
+        )
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
-
+        
+        # 4. THE PAYOUT: If they were invited, reward the referrer
+        if referrer:
+            # Get or create the referrer's wallet
+            wallet = Wallet.query.filter_by(user_id=referrer.id).first()
+            if not wallet:
+                wallet = Wallet(user_id=referrer.id, balance=0)
+                db.session.add(wallet)
+                db.session.flush() # Get the wallet ID without committing yet
+            
+            # Get the reward amount (defaults to 500 if not found in DB)
+            reward = Reward.query.filter_by(name='Referral Signup', is_active=True).first()
+            amount = reward.value if reward else 500
+            
+            # Add coins to the referrer
+            wallet.balance += amount
+            
+            # Log the transaction for the audit trail
+            tx = Transaction(
+                wallet_id=wallet.id,
+                user_id=referrer.id,
+                type='credit',
+                amount=amount,
+                reward_id=reward.id if reward else None,
+                reference_id=user.id, # Links to the new user who signed up
+                description=f"Referral bonus for {username}"
+            )
+            db.session.add(tx)
+            db.session.commit()
+            
+            flash(f'Welcome! You were successfully referred by {referrer.username}.', 'success')
+        # --- REFERRAL LOGIC END ---
+        
         login_user(user)
         flash(f'Welcome, {username}! Your merchant account is ready.', 'success')
         return redirect(url_for('dashboard.overview'))
-
+        
     return render_template('auth/register.html')
 
 
@@ -176,3 +230,4 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
+
