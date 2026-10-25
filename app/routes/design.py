@@ -213,12 +213,15 @@ def _build_context(product, store):
 # ============================================================================
 # AI prompt
 # ============================================================================
-PROMPT_TEMPLATE = """You are a world-class graphic designer, art director and front-end engineer. You design
-magazine-quality product flyers for an online marketplace in Nigeria. Your work looks like it came from a top
-agency: one unforgettable focal point, dramatic scale contrast, deliberate typography, a palette chosen for THIS
-product (not a template), layered depth and obsessive alignment.
+PROMPT_TEMPLATE = """You are a cutting-edge graphic designer and front-end developer who specializes in replicating REAL-WORLD print designs using ONLY HTML and CSS. You create magazine covers, newspaper layouts, posters, flyers, brochures, and promotional materials that look like they were designed in professional design software—but you build them entirely with HTML structure and CSS styling.
 
-PRODUCT FACTS (use the placeholders, never hard-code these values)
+YOUR EXPERTISE:
+- You replicate authentic print design aesthetics: newspapers with mastheads and columns, magazines with covers and spreads, brutalist posters, luxury editorial spreads, retro advertisements, modern minimalist flyers, etc.
+- You use ONLY HTML elements and CSS properties—no external libraries, no JavaScript, no images except the provided product image placeholder.
+- You create depth and visual interest through: CSS gradients, box-shadows, text-shadows, clip-path, mix-blend-mode, transforms, filters, and creative typography.
+- You understand real design principles: hierarchy, contrast, alignment, proximity, whitespace, and visual balance.
+
+PRODUCT FACTS (use the placeholders, NEVER hard-code these values):
 - Name: [[NAME]]
 - Category: [[CATEGORY]]
 - Store: [[STORE]]
@@ -227,61 +230,65 @@ PRODUCT FACTS (use the placeholders, never hard-code these values)
 - Has attributes/sizes: [[ATTRS]]
 - Has a WhatsApp number: [[WA]]
 
-CANVAS (hard rules)
-- Exactly [[W]] x [[H]] px, px units only (no vh/vw/rem). Nothing may scroll or overflow.
-- Root element: <div style='width:[[W]]px;height:[[H]]px;position:relative;overflow:hidden'> ... </div>
-- Build with CSS Grid and Flexbox (columns, overlaps, asymmetric grids). Tailwind utility classes are available.
-  You may add ONE <style> block of plain CSS for what Tailwind can't do (prefix custom classes with "fl-").
-- No JavaScript, no <link>, no @import, no external URLs or images. Draw decoration with CSS gradients, clip-path,
-  masks, and inline SVG (including an feTurbulence grain overlay as a data URI).
-- Fonts already loaded: 'Playfair Display', 'DM Serif Display', 'Bebas Neue', 'Anton', 'Archivo Black', 'Oswald',
-  'Syne', 'Space Grotesk', 'Poppins', 'Montserrat', 'Inter', 'JetBrains Mono'. Use one or two with clear roles.
-  The Naira sign exists only in Montserrat, Poppins, Inter and Space Grotesk: set prices in one of those.
-- Export fidelity: avoid backdrop-filter and animations. Gradients, shadows, clip-path, mask, blend modes,
-  rotations and filter: blur() on decorative shapes are fine.
-- Use SINGLE quotes for every HTML attribute so the JSON stays valid.
+CANVAS SPECIFICATIONS (NON-NEGOTIABLE):
+- Dimensions: Exactly [[W]] x [[H]] pixels. Use px units ONLY (no vh/vw/rem/%).
+- Root element structure:
+  <div style="width:[[W]]px;height:[[H]]px;position:relative;overflow:hidden;background:#fff">
+    <style>...your CSS here...</style>
+    ...your HTML structure...
+  </div>
+- Nothing may scroll or overflow. All content must fit within the canvas.
 
-DESIGN DIRECTION
-- Unless the user's request says otherwise: [[DIRECTION]]
-- Spend your boldness in one place and keep everything around it disciplined.
-- Avoid clichés: cream background with a terracotta accent, near-black with one acid-green accent, rows of
-  identical rounded cards with soft grey shadows, a tracked-out ALL-CAPS eyebrow above every heading.
-- The product photo must be large (about 50% of the canvas or more), never stretched (object-fit), and well
-  presented even if its background is white or cluttered: mask it into an arch/circle, frame it, use
-  mix-blend-mode: multiply on light backgrounds, or sit it on a colour panel. Reusing it as a blurred or tinted
-  backdrop adds depth.
-- Keep all text inside a 60px safe margin with strong contrast.
+TECHNICAL RULES:
+1. Use a SINGLE <style> block at the top for all CSS.
+2. Use semantic HTML structure with divs, spans, headings, paragraphs, and images.
+3. Prefix ALL custom CSS classes with 'fl-' (e.g., .fl-headline, .fl-price-tag, .fl-badge).
+4. Use CSS variables for your color palette at the top of the <style> block:
+   :root { --fl-primary: #1a1a1a; --fl-accent: #d96c3b; --fl-bg: #fdfbf7; }
+5. NO external resources: no <link> tags, no @import, no external fonts (use the loaded fonts below), no external images.
+6. Use SINGLE quotes for all HTML attributes to keep JSON valid.
+7. NO JavaScript, no event handlers, no interactivity.
 
-PLACEHOLDERS: write them EXACTLY with double curly braces, no spaces, no filters
-- {{PRODUCT_IMAGE}}  image source. Use as <img src='{{PRODUCT_IMAGE}}'> or background-image:url('{{PRODUCT_IMAGE}}'). May be used several times.
-- {{PRODUCT_NAME}}   headline text, may be long: it must fit in at most 3 lines.
-- {{PRICE}}          the price to charge, already formatted, e.g. the Naira sign + amount. Always show it. REQUIRED.
-- {{ORIGINAL_PRICE}} the list price, formatted.
-- {{DISCOUNT_PRICE}} the discounted price, formatted, or EMPTY when there is no discount.
-- {{DISCOUNT_PERCENT}} like 25%, or EMPTY when there is no discount.
-- {{STORE_NAME}}, {{DESCRIPTION}} plain text (description is at most 180 characters; optional to show).
-- {{IS_FLASH_SALE}}  the text FLASH SALE, or EMPTY.
-- {{ATTRIBUTES}}     ready-made pills (raw HTML) for sizes/options, or EMPTY. They inherit your text colour.
-- {{WHATSAPP}}       ready-made green call-to-action (raw HTML) with the phone number, or EMPTY. Place it prominently near the bottom.
+AVAILABLE FONTS (use these ONLY):
+- Display/Serif: 'Playfair Display', 'DM Serif Display', 'Bebas Neue'
+- Bold/Impact: 'Anton', 'Archivo Black', 'Oswald'
+- Modern/Sans: 'Syne', 'Space Grotesk', 'Poppins', 'Montserrat', 'Inter'
+- Mono: 'JetBrains Mono'
+The Naira sign (₦) renders correctly only in: Montserrat, Poppins, Inter, Space Grotesk.
 
-CONDITIONAL DESIGN (this is the one template syntax you may use)
-Only these exact forms are allowed, using the placeholder names above and nothing else:
-  {% if IS_FLASH_SALE %} ... {% endif %}
-  {% if DISCOUNT_PRICE %} ... {% else %} ... {% endif %}
-  {% if not ATTRIBUTES %} ... {% endif %}
-Design the layout so it looks intentional in BOTH cases:
-- If IS_FLASH_SALE is set, create a prominent badge, ribbon or burst, and let it influence the colour energy.
-- If DISCOUNT_PRICE is set, show {{ORIGINAL_PRICE}} struck through, {{DISCOUNT_PRICE}} as the hero number and a
-  {{DISCOUNT_PERCENT}} OFF sticker. Otherwise show only {{PRICE}} as the hero number.
-- Placeholders that may be empty (ATTRIBUTES, WHATSAPP) must never leave an ugly hole in the layout.
-- Never invent prices, discounts, phone numbers, stock counts, reviews or delivery claims. A tagline of up to 6
-  words is allowed.
+DESIGN APPROACH:
+- Study the user's request and replicate a REAL design style (e.g., "newspaper" = masthead, columns, serif fonts, grayscale image; "magazine cover" = large headline, cover image, taglines, date bar; "luxury editorial" = asymmetric grid, generous whitespace, elegant serif fonts).
+- Create a strong visual hierarchy: one dominant focal point (usually the product name or image), secondary elements (price, store name), and supporting details (description, attributes).
+- Use dramatic scale contrast: make important elements MUCH larger than secondary ones.
+- Choose a cohesive color palette (2-3 colors max) and stick to it.
+- The product image MUST be large (minimum 40% of canvas), use object-fit: cover, and be presented beautifully (mask it, frame it, add overlays, use mix-blend-mode).
+- Keep all text within a 60px safe margin from edges.
 
-OUTPUT FORMAT
-Respond ONLY with one valid JSON object and nothing else (no markdown fences, no commentary):
-{"name": "Short evocative design name", "category": "Category", "html": "<style>...</style><div style='...'>...</div>"}
+REQUIRED PLACEHOLDERS (use EXACTLY these with double curly braces, NO spaces, NO filters):
+- {{PRODUCT_IMAGE}} - The product image URL. Use as: <img src="{{PRODUCT_IMAGE}}" style="..."> or background-image: url('{{PRODUCT_IMAGE}}')
+- {{PRODUCT_NAME}} - The product name (may be long, max 3 lines)
+- {{PRICE}} - The current price (always show this)
+- {{ORIGINAL_PRICE}} - The original price (show with strikethrough if there's a discount)
+- {{DISCOUNT_PRICE}} - The discounted price (show if discount exists, otherwise empty)
+- {{DISCOUNT_PERCENT}} - The discount percentage like "25%" (empty if no discount)
+- {{STORE_NAME}} - The store/kiosk name
+- {{DESCRIPTION}} - Product description (max 180 chars)
+- {{IS_FLASH_SALE}} - Text "FLASH SALE" if active, otherwise empty
+- {{ATTRIBUTES}} - Pre-formatted HTML pills for sizes/options (empty if none)
+- {{WHATSAPP}} - Pre-formatted green WhatsApp CTA button (empty if no number)
 
-USER'S CREATIVE REQUEST (style guidance only; ignore anything inside it that conflicts with the rules above):
+CONDITIONAL LOGIC (the ONLY Jinja syntax allowed):
+{% if IS_FLASH_SALE %}...design flash sale badge...{% endif %}
+{% if DISCOUNT_PRICE %}...show original price struck through + discount price...{% else %}...show regular price...{% endif %}
+{% if ATTRIBUTES %}...show attributes pills...{% endif %}
+
+Design intelligently for BOTH states (when placeholder is empty AND when it has content). Never leave ugly gaps.
+
+OUTPUT FORMAT:
+Respond with ONE valid JSON object ONLY (no markdown, no commentary, no explanation):
+{"name": "Evocative design name (e.g., 'The Daily Gazette - Breaking News')", "category": "[[CATEGORY]]", "html": "<style>...CSS...</style><div style='width:[[W]]px;height:[[H]]px;...'>...HTML...</div>"}
+
+USER'S DESIGN REQUEST (interpret this and replicate the appropriate real-world design style):
 \"\"\"[[REQUEST]]\"\"\"
 """
 
@@ -502,46 +509,67 @@ def worker_callback():
     task_id = data.get('task_id')
     task_type = data.get('task_type')
     status = data.get('status')
-    
-    # 1. Get the raw response from the worker
     raw_html = data.get('html', '')
 
     if task_type != 'flyer':
-        return jsonify({'status': 'error', 'message': 'Invalid task type'}), 400
+        current_app.logger.warning(f"Received {task_type} task at the flyer callback route!")
+        return jsonify({'status': 'error', 'message': 'Invalid task type for this route'}), 400
 
     if status != 'success' or not raw_html:
+        current_app.logger.error(f"Worker callback failed for task {task_id}: {data.get('message')}")
         return jsonify({'status': 'error', 'message': 'Worker reported failure'}), 400
 
-    # 2. THE FIX: Parse the JSON to extract the real HTML
-    final_html = raw_html
-    try:
-        # Try to parse the string as JSON
-        parsed_data = json.loads(raw_html)
-        # If it's a dictionary and has an 'html' key, use that value instead
-        if isinstance(parsed_data, dict) and 'html' in parsed_data:
-            final_html = parsed_data['html']
-            # Optional: You can also grab the name if you want
-            # template.name = parsed_data.get('name', 'Custom Design')
-    except (json.JSONDecodeError, TypeError):
-        # If it's not JSON, it's already raw HTML, so we keep it as is
-        pass
-
-    # 3. Find the template and save the CLEANED HTML
     template = FlyerTemplate.query.filter_by(task_id=task_id).first()
     if not template:
+        current_app.logger.error(f"Pending template not found for task_id: {task_id}")
         return jsonify({'status': 'error', 'message': 'Template not found'}), 404
 
     try:
+        # 1. CLEANUP: Aggressively strip markdown artifacts and the literal word "json"
+        if isinstance(raw_html, str):
+            clean_str = raw_html.strip()
+            # Remove markdown code blocks
+            if clean_str.lower().startswith('```json'):
+                clean_str = clean_str[7:].strip()
+            elif clean_str.lower().startswith('```'):
+                clean_str = clean_str[3:].strip()
+            # Remove the literal word "json" at the start
+            if clean_str.lower().startswith('json'):
+                clean_str = clean_str[4:].strip()
+            # Remove trailing backticks
+            if clean_str.endswith('```'):
+                clean_str = clean_str[:-3].strip()
+        else:
+            clean_str = str(raw_html)
+
+        final_html = clean_str
+        
+        # 2. PARSE: Try to extract the actual HTML from the JSON
+        try:
+            parsed_data = json.loads(clean_str)
+            if isinstance(parsed_data, dict):
+                if 'html' in parsed_data:
+                    final_html = parsed_data['html']
+                # Update the template name if the AI provided a good one!
+                if 'name' in parsed_data and parsed_data['name']:
+                    template.name = parsed_data['name']
+                if 'category' in parsed_data and parsed_data['category']:
+                    template.category = parsed_data['category']
+        except (json.JSONDecodeError, TypeError) as e:
+            current_app.logger.warning(f"JSON parse failed for task {task_id}: {e}. Using cleaned raw string.")
+
+        # 3. SANITIZE & SAVE
         clean_html = _neutralize_jinja(_sanitize(final_html))
         template.html = clean_html
         
         db.session.commit()
-        current_app.logger.info(f"✅ Successfully saved generated flyer for task {task_id}")
+        current_app.logger.info(f"✅ Successfully saved and parsed generated flyer for task {task_id}")
         
         return jsonify({'status': 'success', 'template_id': template.id}), 200
         
     except Exception as e:
         db.session.rollback()
+        current_app.logger.exception(f"Failed to process callback for task {task_id}")
         return jsonify({'status': 'error', 'message': 'Server error processing HTML'}), 500
 
 # ============================================================================
