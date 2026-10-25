@@ -130,6 +130,25 @@ def new_kiosk():
 
     return render_template('dashboard/kiosk_new.html')
 
+# -------------------------------------------------------------
+#  🔗 A referral route
+# -------------------------------------------------------------
+
+@dashboard_bp.route('/referrals')
+@login_required
+def referrals():
+    # Get everyone who signed up using this user's code
+    referred_users = User.query.filter_by(referred_by_id=current_user.id).order_by(User.created_at.desc()).all()
+    
+    # Generate their unique, full referral link
+    host_url = request.host_url.rstrip('/')
+    referral_link = f"{host_url}/register?ref={current_user.referral_code}"
+    
+    return render_template('dashboard/referrals.html', 
+                           referred_users=referred_users, 
+                           referral_link=referral_link,
+                           total_invites=len(referred_users))
+
 
 # -------------------------------------------------------------
 # ⚡ STATUS CHECKER (Fast non-blocking response for frontend polling)
