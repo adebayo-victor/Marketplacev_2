@@ -5,7 +5,7 @@ import urllib.request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from app import db
-from app.models import Store, Product, StoreAd, Order, OrderItem
+from app.models import Store, Product, StoreAd, Order, OrderItem, User, Wallet, Transaction, Task
 from app.utils.media import upload_image, delete_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
@@ -148,6 +148,31 @@ def referrals():
                            referred_users=referred_users, 
                            referral_link=referral_link,
                            total_invites=len(referred_users))
+
+
+# -------------------------------------------------------------
+# 💰 FINANCE DASHBOARD (Balance, Ledger, Rewards Shop)
+# -------------------------------------------------------------
+@dashboard_bp.route('/finance')
+@login_required
+def finance():
+    # Get or create the user's wallet
+    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+    if not wallet:
+        wallet = Wallet(user_id=current_user.id, balance=0)
+        db.session.add(wallet)
+        db.session.commit()
+
+    # Get transaction history (newest first)
+    transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.created_at.desc()).all()
+    
+    # Get available tasks/rewards to redeem
+    tasks = Task.query.filter_by(is_active=True).all()
+
+    return render_template('dashboard/finance.html', 
+                           wallet=wallet, 
+                           transactions=transactions, 
+                           tasks=tasks)
 
 
 # -------------------------------------------------------------
