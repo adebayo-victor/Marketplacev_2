@@ -246,7 +246,7 @@ TECHNICAL RULES:
 4. Use CSS variables for your color palette at the top of the <style> block:
    :root { --fl-primary: #1a1a1a; --fl-accent: #d96c3b; --fl-bg: #fdfbf7; }
 5. NO external resources: no <link> tags, no @import, no external fonts (use the loaded fonts below), no external images.
-6. Use SINGLE quotes for all HTML attributes to keep JSON valid.
+6. CRITICAL JSON RULE: Your HTML will be placed inside a JSON string. You MUST use single quotes (') for ALL HTML attributes (e.g., <div class='fl-root'>). NEVER use double quotes inside the HTML, or the JSON will break.
 7. NO JavaScript, no event handlers, no interactivity.
 
 AVAILABLE FONTS (use these ONLY):
@@ -265,7 +265,7 @@ DESIGN APPROACH:
 - Keep all text within a 60px safe margin from edges.
 
 REQUIRED PLACEHOLDERS (use EXACTLY these with double curly braces, NO spaces, NO filters):
-- {{PRODUCT_IMAGE}} - The product image URL. Use as: <img src="{{PRODUCT_IMAGE}}" style="..."> or background-image: url('{{PRODUCT_IMAGE}}')
+- {{PRODUCT_IMAGE}} - The product image URL. Use as: <img src='{{PRODUCT_IMAGE}}' style="..."> or background-image: url('{{PRODUCT_IMAGE}}')
 - {{PRODUCT_NAME}} - The product name (may be long, max 3 lines)
 - {{PRICE}} - The current price (always show this)
 - {{ORIGINAL_PRICE}} - The original price (show with strikethrough if there's a discount)
