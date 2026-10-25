@@ -318,12 +318,13 @@
         // ====================================================================
         let isAiGenerated = false;
         let originalFlyerHTML = '';
-        let currentCommunityTemplateId = null;   // set only while a *community* design is on screen
+        let currentCommunityTemplateId = null;
         let currentCommunityCreator = '';
         let activeTemplateId = null;
         let communityTemplates = new Map();
         let pendingFormat = null;
         let starValue = 0;
+        let pollInterval = null; // <-- ADDED FOR POLLING
 
         const $ = id => document.getElementById(id);
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -367,7 +368,7 @@
         function resetToDefault() {
             isAiGenerated = false;
             activeTemplateId = null;
-            currentCommunityTemplateId = null;       // default theme => free download
+            currentCommunityTemplateId = null;
             currentCommunityCreator = '';
             $('previewInfo').classList.add('hidden');
             $('previewTarget').innerHTML = originalFlyerHTML;
@@ -401,7 +402,7 @@
         }
 
         // ====================================================================
-        // generateFlyer()
+        // Loading State & Smart Polling
         // ====================================================================
         const LOADING_STEPS = ['Reading your product…', 'Choosing a layout…', 'Setting the type…', 'Adding depth and colour…', 'Polishing details…'];
         let loadingTimer = null;
@@ -419,6 +420,50 @@
             }
         }
 
+        function startPolling(templateId) {
+            if (pollInterval) clearInterval(pollInterval);
+            
+            // Show a premium loading placeholder in the preview area
+            $('previewTarget').innerHTML = `
+                <div class="flex flex-col items-center justify-center p-12 text-stone-400">
+                    <svg class="animate-spin h-10 w-10 text-amber-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-sm font-medium animate-pulse">AI is crafting your design... (This may take 10-20 seconds)</p>
+                </div>
+            `;
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/design/render-template/${templateId}?product_id=${encodeURIComponent(PRODUCT_ID)}`);
+                    const data = await res.json().catch(() => ({}));
+
+                    if (data.status === 'success') {
+                        clearInterval(pollInterval);
+                        currentCommunityTemplateId = null;
+                        currentCommunityCreator = '';
+                        activeTemplateId = data.template_id;
+                        mountFlyer(data.preview_html, { name: data.name, creator: data.creator_name || '', gated: false });
+                        showMessage('Design ready. Download it, or try another vibe.', 'success');
+                        loadCommunityTemplates();
+                        setLoading(false);
+                    } else if (data.status === 'pending') {
+                        // Still generating, keep polling
+                    } else {
+                        clearInterval(pollInterval);
+                        showMessage(data.message || 'Generation failed.', 'error');
+                        setLoading(false);
+                    }
+                } catch (err) {
+                    clearInterval(pollInterval);
+                    console.error('Polling error:', err);
+                    showMessage('Network error while checking generation status.', 'error');
+                    setLoading(false);
+                }
+            }, 2500); // Poll every 2.5 seconds
+        }
+
         async function generateFlyer() {
             const prompt = $('promptInput').value.trim();
             if (!prompt) return showMessage('Please describe the look you want first.', 'error');
@@ -433,20 +478,26 @@
                 });
                 const data = await res.json().catch(() => ({}));
 
-                if (res.ok && data.status === 'success') {
-                    currentCommunityTemplateId = null;      // your own generation => free download
+                if (res.status === 202 && data.status === 'accepted') {
+                    // Start polling for the result
+                    showMessage('Dispatched to AI worker. Crafting your design...', 'success');
+                    startPolling(data.template_id);
+                } else if (res.ok && data.status === 'success') {
+                    // Fallback for immediate success (if worker is super fast or local)
+                    currentCommunityTemplateId = null;
                     currentCommunityCreator = '';
                     activeTemplateId = data.template_id;
                     mountFlyer(data.preview_html, { name: data.name, creator: '', gated: false });
                     showMessage('Design ready. Download it, or try another vibe.', 'success');
                     loadCommunityTemplates();
+                    setLoading(false);
                 } else {
                     showMessage(data.message || 'Failed to generate design.', 'error');
+                    setLoading(false);
                 }
             } catch (err) {
                 console.error(err);
                 showMessage('Network error. Please check your connection and try again.', 'error');
-            } finally {
                 setLoading(false);
             }
         }
@@ -532,7 +583,7 @@
                 const creator = data.creator_name || (meta && meta.creator_name) || 'a community seller';
                 const mine = !!(meta && meta.is_mine);
                 activeTemplateId = id;
-                currentCommunityTemplateId = mine ? null : id;     // your own designs are never gated
+                currentCommunityTemplateId = mine ? null : id;
                 currentCommunityCreator = creator;
                 mountFlyer(data.preview_html, { name: data.name, creator, gated: !mine });
                 showMessage(mine ? 'Loaded your design.' : `Loaded "${data.name}". Rate it when you download to support ${creator}.`, 'success');
@@ -629,11 +680,11 @@
                 $('ratingModal').classList.add('hidden');
                 document.body.style.overflow = '';
                 pendingFormat = null;
-                currentCommunityTemplateId = null;           // unlocked: later downloads of this view are free
+                currentCommunityTemplateId = null;
                 $('infoSub').textContent = `Community design by ${currentCommunityCreator}. Thanks for rating!`;
 
                 await performDownload(format, null);
-                loadCommunityTemplates();                    // refresh the social proof numbers
+                loadCommunityTemplates();
             } catch (e) {
                 console.error(e);
                 err.textContent = e.message || 'Something went wrong. Please try again.';
@@ -647,7 +698,7 @@
         // downloadPreview(format): gated for community designs
         // ====================================================================
         async function downloadPreview(format, btn) {
-            if (currentCommunityTemplateId) {                // community design: rate first
+            if (currentCommunityTemplateId) {
                 pendingFormat = format;
                 openRatingModal();
                 return;
@@ -674,13 +725,11 @@
             const original = btn ? btn.innerHTML : '';
             if (btn) { btn.innerHTML = 'Processing…'; btn.disabled = true; }
 
-            // What is currently inside #previewTarget?
             let source, w, h, ratio;
             const aiRoot = document.querySelector('#previewTarget .ai-flyer-scope');
             if (aiRoot) { source = aiRoot; w = FLYER_W; h = FLYER_H; ratio = 2; }
             else { source = $('flyerCard'); w = source.offsetWidth; h = source.offsetHeight; ratio = 3; }
 
-            // Unscaled off-screen clone so the preview's scale() never leaks into the export
             const holder = document.createElement('div');
             holder.style.cssText = `position:fixed;left:0;top:0;width:${w}px;height:${h}px;z-index:-99999;pointer-events:none;`;
             const clone = source.cloneNode(true);
@@ -692,7 +741,7 @@
             try {
                 await document.fonts.ready;
                 await waitForImages(clone);
-                await new Promise(r => setTimeout(r, 150));   // let the Tailwind CDN style the clone
+                await new Promise(r => setTimeout(r, 150));
 
                 const dataUrl = await renderToPng(clone, w, h, ratio);
                 const safeName = PRODUCT_NAME.replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '') || 'product';
