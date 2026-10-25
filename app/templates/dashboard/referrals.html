@@ -1,0 +1,91 @@
+{% extends "base.html" %} <!-- Adjust if your base template is named differently -->
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold font-ui text-dark-oak">Invite Friends</h1>
+        <p class="text-sm text-gray-500 mt-1 font-ui">Share your unique link. When they join the marketplace, you both win.</p>
+    </div>
+
+    <!-- Link Sharing Card -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 font-ui mb-2">Your Unique Referral Link</label>
+        <div class="flex gap-2">
+            <input type="text" id="refLinkInput" value="{{ referral_link }}" readonly 
+                   class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono text-gray-700 outline-none focus:border-clay focus:ring-1 focus:ring-clay transition">
+            <button onclick="copyReferralLink()" class="px-6 py-3 bg-clay text-white rounded-lg font-semibold text-sm hover:opacity-90 transition flex items-center gap-2">
+                <span id="copyBtnText">Copy Link</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Growth Stats (NO prices/coins mentioned here!) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 font-ui">Total Friends Invited</span>
+            <div class="text-4xl font-black text-dark-oak mt-2 font-ui">{{ total_invites }}</div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 font-ui">Community Impact</span>
+            <div class="text-sm font-semibold text-dark-oak mt-2 font-ui">Helping build a stronger marketplace network.</div>
+        </div>
+    </div>
+
+    <!-- Referral Network List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-sm font-ui text-dark-oak">Your Referral Network</h3>
+        </div>
+        
+        {% if referred_users %}
+        <div class="divide-y divide-gray-100">
+            {% for user in referred_users %}
+            <div class="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-clay/10 flex items-center justify-center text-clay font-bold text-xs font-ui">
+                        {{ user.username[:2].upper() }}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-sm font-ui text-dark-oak">@{{ user.username }}</div>
+                        <div class="text-xs text-gray-500 font-ui mt-0.5">Joined {{ user.created_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                </div>
+                <div class="text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full font-ui border border-green-100">
+                    ✅ Active
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-10 text-center">
+            <div class="text-4xl mb-3">🤝</div>
+            <p class="text-gray-500 text-sm font-ui font-medium">You haven't invited anyone yet.</p>
+            <p class="text-gray-400 text-xs font-ui mt-1">Copy your link above and share it with your network!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyReferralLink() {
+    const copyText = document.getElementById("refLinkInput");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); // For mobile devices
+    
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        const btnText = document.getElementById("copyBtnText");
+        const originalText = btnText.innerText;
+        
+        btnText.innerText = "Copied!";
+        copyText.classList.add("border-green-500", "bg-green-50");
+        
+        setTimeout(() => {
+            btnText.innerText = originalText;
+            copyText.classList.remove("border-green-500", "bg-green-50");
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
