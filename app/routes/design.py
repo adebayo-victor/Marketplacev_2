@@ -10,6 +10,7 @@ import os
 import random
 import re
 import socket
+import urllib.request
 import uuid
 import requests
 from datetime import datetime, timedelta
@@ -80,12 +81,24 @@ def _product_store(product):
     return None
 
 def _user_owns_product(product, store):
-    if store is None:
+    # 1. Direct ID match (Fastest)
+    if store is not None:
+        if getattr(product, 'store_id', None) == store.id:
+            return True
+        if getattr(product, 'kiosk_id', None) == store.id:
+            return True
+
+    # 2. The Bulletproof Check: Does the logged-in user actually own the product's store?
+    # This fixes the bug where users with multiple kiosks get blocked!
+    product_store = getattr(product, 'store', None)
+    if product_store and product_store.user_id == current_user.id:
         return True
-    for fk in ('store_id', 'kiosk_id'):
-        if hasattr(product, fk):
-            return getattr(product, fk) == store.id
-    return True
+
+    # 3. Admin bypass (Just in case)
+    if getattr(current_user, 'is_admin', False):
+        return True
+
+    return False
 
 def _money(currency, amount):
     amount = float(amount or 0)
