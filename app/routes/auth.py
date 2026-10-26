@@ -3,7 +3,7 @@ import string
 import os
 import re
 import uuid
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
 from app.models import User, PasswordResetTicket, Wallet, Transaction, Reward
@@ -177,6 +177,11 @@ def forgot_password():
 # -------------------------------------------------------------
 @auth_bp.route('/login/google')
 def google_login():
+    # 👇 SAVE THE REFERRAL CODE IN SESSION BEFORE REDIRECTING TO GOOGLE
+    ref_code = request.args.get('ref')
+    if ref_code:
+        session['referral_code'] = ref_code
+
     google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
     if not google_client_id:
         flash('Google Sign-In is not configured yet.', 'warning')
@@ -192,13 +197,16 @@ def google_login():
 @auth_bp.route('/login/google/callback')
 def google_callback():
     try:
+        # 👇 RETRIEVE AND CLEAR THE REFERRAL CODE FROM SESSION
+        referrer_code = session.pop('referral_code', None)
+        referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
+
         token = oauth.google.authorize_access_token()
         user_info = token.get('userinfo') or oauth.google.userinfo()
         email = user_info['email'].lower()
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            # Extract actual Name from Google
             google_name = user_info.get('given_name') or user_info.get('name')
             base_username = slugify(google_name) if google_name else slugify(email.split('@')[0])
 
@@ -208,26 +216,20 @@ def google_callback():
                 username = f"{base_username}{count}"
                 count += 1
 
-            # --- REFERRAL LOGIC FOR GOOGLE SIGNUP ---
-            # 1. Check for referral code in the URL (?ref=CODE)
-            referrer_code = request.args.get('ref')
-            referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
-            
-            # 2. Generate a referral code for this new Google user
+            # Generate code for the new user
             ref_code = generate_referral_code(username)
 
-            # 3. Create the user
             user = User(
                 username=username, 
                 email=email,
                 referral_code=ref_code,
-                referred_by_id=referrer.id if referrer else None
+                referred_by_id=referrer.id if referrer else None # 👈 THIS WILL NOW WORK!
             )
             user.set_password(os.urandom(16).hex())
             db.session.add(user)
             db.session.commit()
 
-            # 4. THE PAYOUT: Reward the referrer
+            # THE PAYOUT LOGIC
             if referrer:
                 wallet = Wallet.query.filter_by(user_id=referrer.id).first()
                 if not wallet:
@@ -253,7 +255,6 @@ def google_callback():
                 db.session.commit()
                 
                 flash(f'Welcome! You were successfully referred by {referrer.username}.', 'success')
-            # ------------------------------------------
 
             flash(f'Account created via Google! Welcome, {user.username}.', 'success')
         else:
