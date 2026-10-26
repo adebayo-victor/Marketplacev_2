@@ -6,7 +6,7 @@ import uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db, oauth
-from app.models import User, PasswordResetTicket
+from app.models import User, PasswordResetTicket, Wallet, Transaction, Reward
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -198,7 +198,7 @@ def google_callback():
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            # Extract actual Name from Google (e.g. "Victor" or "Victor Adebayo")
+            # Extract actual Name from Google
             google_name = user_info.get('given_name') or user_info.get('name')
             base_username = slugify(google_name) if google_name else slugify(email.split('@')[0])
 
@@ -208,10 +208,53 @@ def google_callback():
                 username = f"{base_username}{count}"
                 count += 1
 
-            user = User(username=username, email=email)
+            # --- REFERRAL LOGIC FOR GOOGLE SIGNUP ---
+            # 1. Check for referral code in the URL (?ref=CODE)
+            referrer_code = request.args.get('ref')
+            referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
+            
+            # 2. Generate a referral code for this new Google user
+            ref_code = generate_referral_code(username)
+
+            # 3. Create the user
+            user = User(
+                username=username, 
+                email=email,
+                referral_code=ref_code,
+                referred_by_id=referrer.id if referrer else None
+            )
             user.set_password(os.urandom(16).hex())
             db.session.add(user)
             db.session.commit()
+
+            # 4. THE PAYOUT: Reward the referrer
+            if referrer:
+                wallet = Wallet.query.filter_by(user_id=referrer.id).first()
+                if not wallet:
+                    wallet = Wallet(user_id=referrer.id, balance=0)
+                    db.session.add(wallet)
+                    db.session.flush()
+                
+                reward = Reward.query.filter_by(name='Referral Signup', is_active=True).first()
+                amount = reward.value if reward else 1000
+                
+                wallet.balance += amount
+                
+                tx = Transaction(
+                    wallet_id=wallet.id,
+                    user_id=referrer.id,
+                    type='credit',
+                    amount=amount,
+                    reward_id=reward.id if reward else None,
+                    reference_id=user.id,
+                    description=f"Referral bonus for {username} (Google)"
+                )
+                db.session.add(tx)
+                db.session.commit()
+                
+                flash(f'Welcome! You were successfully referred by {referrer.username}.', 'success')
+            # ------------------------------------------
+
             flash(f'Account created via Google! Welcome, {user.username}.', 'success')
         else:
             flash(f'Signed in with Google as {user.username}.', 'success')
