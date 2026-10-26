@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, session
 from flask_login import login_required, current_user, login_user
 from app import db
-from sqlalchemy import func, _or
+from sqlalchemy import func, or_
 from app.models import User, Store, Order, PasswordResetTicket, Wallet, Transaction, Task, Reward
 admin_bp = Blueprint('admin', __name__)
 
