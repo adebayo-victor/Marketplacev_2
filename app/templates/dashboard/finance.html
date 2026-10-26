@@ -120,13 +120,54 @@
     </div>
 
     <script>
-    function redeemTask(taskId, price) {
-        if (!confirm(`Are you sure you want to redeem this reward for ${price} coins?`)) {
-            return;
+        function redeemTask(taskId, price) {
+            if (!confirm(`Are you sure you want to redeem this reward for ${price} coins? This action cannot be undone.`)) {
+                return;
+            }
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            
+            // Show loading state
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+        
+            fetch('/finance/redeem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ task_id: taskId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    
+                    // Dynamically update the balance on the page without reloading
+                    const balanceDisplay = document.querySelector('.font-ui[style*="font-size: 3rem"]');
+                    if (balanceDisplay) {
+                        balanceDisplay.innerHTML = `${data.new_balance} <span style="font-size: 1.25rem; font-weight: 600; opacity: 0.8;">Coins</span>`;
+                    }
+                    
+                    // Reload the page after a short delay to refresh the transaction table and button states
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                    
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Redemption error:', error);
+                alert('An unexpected error occurred. Please try again.');
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
         }
-        // Phase 4: We will add the fetch call here to POST to /finance/redeem
-        alert("Redemption logic coming in Phase 4! For now, this is a demo.");
-    }
     </script>
 </body>
 </html>
