@@ -176,6 +176,54 @@ def finance():
 
 
 # -------------------------------------------------------------
+# 💸 REDEEM REWARD LOGIC (Debits coins and logs transaction)
+# -------------------------------------------------------------
+@dashboard_bp.route('/finance/redeem', methods=['POST'])
+@login_required
+def redeem_task():
+    data = request.get_json()
+    task_id = data.get('task_id')
+    
+    if not task_id:
+        return jsonify({'status': 'error', 'message': 'Invalid task ID.'}), 400
+        
+    # 1. Fetch the task
+    task = Task.query.get(task_id)
+    if not task or not task.is_active:
+        return jsonify({'status': 'error', 'message': 'Reward not found or inactive.'}), 404
+        
+    # 2. Fetch the user's wallet
+    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+    if not wallet:
+        return jsonify({'status': 'error', 'message': 'Wallet not found.'}), 404
+        
+    # 3. Check if they have enough coins
+    if wallet.balance < task.price:
+        return jsonify({'status': 'error', 'message': 'Insufficient coin balance.'}), 400
+        
+    # 4. Perform the debit (Deduct coins)
+    wallet.balance -= task.price
+    
+    # 5. Log the transaction for the audit trail
+    tx = Transaction(
+        wallet_id=wallet.id,
+        user_id=current_user.id,
+        type='debit',
+        amount=task.price,
+        task_id=task.id,
+        description=f"Redeemed: {task.name}"
+    )
+    
+    db.session.add(tx)
+    db.session.commit()
+    
+    return jsonify({
+        'status': 'success', 
+        'message': f'Successfully redeemed "{task.name}"!',
+        'new_balance': wallet.balance
+    }), 200
+
+# -------------------------------------------------------------
 # ⚡ STATUS CHECKER (Fast non-blocking response for frontend polling)
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/build-worker', methods=['GET', 'POST'])
