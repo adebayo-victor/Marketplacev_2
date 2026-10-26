@@ -110,12 +110,13 @@
             <h3 class="font-ui text-xl font-normal lowercase tracking-tight m-0 text-white">master command.</h3>
             
             <nav>
-                <a href="{{ url_for('admin.overview') }}">• Platform Analytics</a>
-                <a href="{{ url_for('admin.reset_tickets') }}">• Password Reset Tickets 🎫</a>
-                <a href="{{ url_for('admin.env_manager') }}">• Secrets & .env Keys</a>
-                <a href="{{ url_for('dashboard.overview') }}" style="margin-top: 30px; color: #f59e0b;">
-                    &larr; Switch to Merchant View
-                </a>
+              <a href="{{ url_for('admin.overview') }}">• Platform Analytics</a>
+              <a href="{{ url_for('admin.reset_tickets') }}">• Password Reset Tickets 🎫</a>
+              <a href="{{ url_for('admin.economy') }}" style="color: #fbbf24;">• Economy & Rewards 💰</a> <!-- 👈 ADD THIS LINE -->
+              <a href="{{ url_for('admin.env_manager') }}">• Secrets & .env Keys</a>
+              <a href="{{ url_for('dashboard.overview') }}" style="margin-top: 30px; color: #f59e0b;">
+                &larr; Switch to Merchant View
+              </a>
             </nav>
         </div>
 
