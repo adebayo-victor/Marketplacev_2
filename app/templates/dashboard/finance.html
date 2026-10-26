@@ -62,8 +62,8 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
                             <span class="font-ui" style="font-weight: 900; color: var(--clay); font-size: 1.1rem;">{{ task.price }} <span style="font-size: 0.7rem; font-weight: 600; color: #888;">Coins</span></span>
                             
-                            <!-- Phase 4: We will wire this button to a POST route -->
-                            <button type="button" onclick="redeemTask({{ task.id }}, {{ task.price }})" 
+                            <!-- UPDATED BUTTON: Passes task name to the modal -->
+                            <button type="button" onclick="openRedeemModal({{ task.id }}, {{ task.price }}, '{{ task.name }}')" 
                                     class="btn-clay {% if wallet.balance < task.price %}btn-disabled{% endif %}"
                                     {% if wallet.balance < task.price %}disabled{% endif %}>
                                 {% if wallet.balance < task.price %}Locked{% else %}Redeem{% endif %}
@@ -114,60 +114,135 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div.>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REDEMPTION MODAL -->
+    <div id="redeemModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: white; border-radius: 16px; padding: 32px; max-width: 450px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative;">
+            <button onclick="closeRedeemModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+            
+            <h3 id="modalTitle" class="font-ui" style="font-size: 1.25rem; font-weight: 700; color: var(--dark-oak); margin: 0 0 8px 0;">Confirm Redemption</h3>
+            <p id="modalDesc" class="font-ui" style="color: #666; font-size: 0.9rem; margin-bottom: 24px;">Select the kiosk you want to activate.</p>
+            
+            <div id="kioskSelectContainer">
+                <label class="font-ui" style="display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 8px;">Choose a Kiosk</label>
+                <select id="kioskDropdown" class="font-ui" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; background: #fafafa; color: var(--dark-oak); outline: none;">
+                    <!-- Options injected by JS -->
+                </select>
+            </div>
+
+            <div id="noKiosksMessage" style="display: none; text-align: center; padding: 20px; background: #fff9f5; border-radius: 8px; border: 1px solid #fde68a;">
+                <p class="font-ui" style="color: #b45309; font-weight: 600; margin: 0;">You have no inactive kiosks to unlock!</p>
+                <p class="font-ui" style="color: #888; font-size: 0.85rem; margin-top: 4px;">Go build a new storefront first.</p>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button onclick="closeRedeemModal()" class="font-ui" style="flex: 1; padding: 12px; background: #f3f4f6; color: #4b5563; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Cancel</button>
+                <button id="confirmRedeemBtn" onclick="confirmRedeem()" class="font-ui" style="flex: 1; padding: 12px; background: var(--clay); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Confirm & Pay</button>
             </div>
         </div>
     </div>
 
     <script>
-        function redeemTask(taskId, price) {
-            if (!confirm(`Are you sure you want to redeem this reward for ${price} coins? This action cannot be undone.`)) {
-                return;
-            }
-            
-            const btn = event.target;
-            const originalText = btn.innerText;
-            
-            // Show loading state
-            btn.innerText = "Processing...";
-            btn.disabled = true;
+    let currentTaskId = null;
+    let currentTaskPrice = 0;
+    let currentTaskName = '';
+
+    // Data passed from Flask
+    const inactiveKiosks = {{ inactive_kiosks | tojson }};
+
+    function openRedeemModal(taskId, price, taskName) {
+        currentTaskId = taskId;
+        currentTaskPrice = price;
+        currentTaskName = taskName;
+
+        document.getElementById('modalTitle').innerText = `Redeem: ${taskName}`;
+        document.getElementById('modalDesc').innerText = `This will deduct ${price} coins from your balance.`;
         
-            fetch('/finance/redeem', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ task_id: taskId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    
-                    // Dynamically update the balance on the page without reloading
-                    const balanceDisplay = document.querySelector('.font-ui[style*="font-size: 3rem"]');
-                    if (balanceDisplay) {
-                        balanceDisplay.innerHTML = `${data.new_balance} <span style="font-size: 1.25rem; font-weight: 600; opacity: 0.8;">Coins</span>`;
-                    }
-                    
-                    // Reload the page after a short delay to refresh the transaction table and button states
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                    
-                } else {
-                    alert('Error: ' + data.message);
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Redemption error:', error);
-                alert('An unexpected error occurred. Please try again.');
+        const dropdown = document.getElementById('kioskDropdown');
+        const selectContainer = document.getElementById('kioskSelectContainer');
+        const noKiosksMsg = document.getElementById('noKiosksMessage');
+        const confirmBtn = document.getElementById('confirmRedeemBtn');
+
+        dropdown.innerHTML = ''; // Clear existing options
+
+        if (taskName === 'Kiosk Creation') {
+            if (inactiveKiosks.length === 0) {
+                selectContainer.style.display = 'none';
+                noKiosksMsg.style.display = 'block';
+                confirmBtn.disabled = true;
+                confirmBtn.style.opacity = '0.5';
+                confirmBtn.style.cursor = 'not-allowed';
+            } else {
+                selectContainer.style.display = 'block';
+                noKiosksMsg.style.display = 'none';
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+                confirmBtn.style.cursor = 'pointer';
+                
+                // Populate dropdown
+                inactiveKiosks.forEach(kiosk => {
+                    const option = document.createElement('option');
+                    option.value = kiosk.id;
+                    option.innerText = kiosk.name;
+                    dropdown.appendChild(option);
+                });
+            }
+        } else {
+            // For other tasks, just show a simple confirmation
+            selectContainer.style.display = 'none';
+            noKiosksMsg.style.display = 'none';
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = '1';
+        }
+
+        document.getElementById('redeemModal').style.display = 'flex';
+    }
+
+    function closeRedeemModal() {
+        document.getElementById('redeemModal').style.display = 'none';
+    }
+
+    function confirmRedeem() {
+        const btn = document.getElementById('confirmRedeemBtn');
+        const originalText = btn.innerText;
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        let payload = { task_id: currentTaskId };
+        
+        // If it's a kiosk, add the selected ID
+        if (currentTaskName === 'Kiosk Creation') {
+            payload.kiosk_id = document.getElementById('kioskDropdown').value;
+        }
+
+        fetch('/finance/redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                closeRedeemModal();
+                setTimeout(() => { window.location.reload(); }, 1000);
+            } else {
+                alert('Error: ' + data.message);
                 btn.innerText = originalText;
                 btn.disabled = false;
-            });
-        }
+            }
+        })
+        .catch(error => {
+            console.error('Redemption error:', error);
+            alert('An unexpected error occurred.');
+            btn.innerText = originalText;
+            btn.disabled = false;
+        });
+    }
     </script>
 </body>
 </html>
