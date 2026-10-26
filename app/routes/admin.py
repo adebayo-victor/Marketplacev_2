@@ -295,7 +295,7 @@ def economy():
 import random
 import string
 
-@admin_bp.route('/admin/fix-referral-codes')
+@admin_bp.route('/fix-referral-codes')
 @admin_required
 def fix_referral_codes():
     # Find all users who don't have a code yet
