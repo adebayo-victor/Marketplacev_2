@@ -6,8 +6,8 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, session
 from flask_login import login_required, current_user, login_user
 from app import db
-from app.models import User, Store, PasswordResetTicket
-
+from sqlalchemy import func
+from app.models import User, Store, Order, PasswordResetTicket, Wallet, Transaction, Task
 admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
@@ -198,3 +198,45 @@ def claim_master():
             flash('Invalid claim passphrase.', 'danger')
 
     return render_template('admin/claim_master.html')
+
+
+
+# -------------------------------------------------------------
+# 💰 ADMIN ECONOMY CONTROL (Summaries + Pricing)
+# -------------------------------------------------------------
+@admin_bp.route('/economy', methods=['GET', 'POST'])
+@admin_required
+def economy():
+    # 1. Economic Summaries
+    total_referrals = User.query.filter(User.referred_by_id.isnot(None)).count()
+    total_earned = db.session.query(func.sum(Transaction.amount)).filter(Transaction.type == 'credit').scalar() or 0
+    total_spent = db.session.query(func.sum(Transaction.amount)).filter(Transaction.type == 'debit').scalar() or 0
+    coins_in_circulation = total_earned - total_spent
+    active_wallets = Wallet.query.filter(Wallet.balance > 0).count()
+    
+    # 2. Handle Form Submission (Update Prices/Active Status)
+    if request.method == 'POST':
+        task_ids = request.form.getlist('task_id')
+        for task_id in task_ids:
+            task = Task.query.get(task_id)
+            if task:
+                new_price = request.form.get(f'price_{task_id}')
+                if new_price and new_price.isdigit():
+                    task.price = int(new_price)
+                task.is_active = request.form.get(f'active_{task_id}') == 'on'
+        db.session.commit()
+        flash('Economy settings updated successfully!', 'success')
+        return redirect(url_for('admin.economy'))
+        
+    # 3. Fetch tasks for the table
+    tasks = Task.query.order_by(Task.price.asc()).all()
+    
+    return render_template(
+        'admin/economy.html',
+        total_referrals=total_referrals,
+        total_earned=total_earned,
+        total_spent=total_spent,
+        coins_in_circulation=coins_in_circulation,
+        active_wallets=active_wallets,
+        tasks=tasks
+    )
