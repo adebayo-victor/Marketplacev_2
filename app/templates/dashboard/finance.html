@@ -1,107 +1,132 @@
-{% extends "dashboard/layout.html" %} <!-- Or "base.html" depending on your setup -->
-
-{% block content %}
-<div class="max-w-5xl mx-auto p-6">
-    
-    <!-- Header -->
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold font-ui text-dark-oak">Finance & Rewards</h1>
-        <p class="text-sm text-gray-500 mt-1 font-ui">Manage your coin balance, track transactions, and redeem rewards.</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Finance // Marketplace</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700;900&display=swap');
+        :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
+        * { box-sizing: border-box; }
+        body { 
+            background-color: var(--cream); color: var(--dark-oak); font-family: 'Georgia', serif; margin: 0; 
+            background-image: linear-gradient(rgba(249, 245, 240, 0.95), rgba(249, 245, 240, 0.95)), url('/static/images/marketplace_bg.jpg');
+            background-attachment: fixed; background-size: cover; background-position: center; min-height: 100vh;
+        }
+        .nav-bar { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); padding: 15px 4%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .container { padding: 30px 4%; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .card { background: white; border-radius: 12px; border: 1px solid #eee; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
+        .btn-clay { background: var(--clay); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-family: 'Montserrat'; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
+        .btn-clay:hover { opacity: 0.9; }
+        .btn-disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed !important; }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/dashboard" class="brand-logo font-ui" style="text-decoration: none; color: var(--dark-oak); font-weight: 700; font-size: 1.1rem;">MARKETPLACE.</a>
+        <div class="font-ui" style="font-size: 0.75rem; display: flex; align-items: center; gap: 12px;">
+            <span style="color: var(--clay); font-weight: 600;">{{ current_user.username }}</span>
+            <a href="/dashboard" style="color: #4b5563; text-decoration: none; font-weight: 600;">Back to Hub</a>
+            <a href="/logout" style="color: #b33a3a; text-decoration: none; font-weight: 600;">Log Out</a>
+        </div>
     </div>
 
-    <!-- Hero Balance Card -->
-    <div class="bg-gradient-to-r from-dark-oak to-clay p-8 rounded-2xl shadow-lg text-white mb-8 relative overflow-hidden">
-        <div class="relative z-10">
-            <span class="text-xs font-bold uppercase tracking-wider opacity-80 font-ui">Current Balance</span>
-            <div class="text-5xl font-black mt-2 font-ui">{{ wallet.balance }} <span class="text-2xl opacity-80">Coins</span></div>
-        </div>
-        <!-- Decorative circle -->
-        <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Left: Transaction Ledger -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 class="font-bold text-sm font-ui text-dark-oak">Transaction History</h3>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm font-ui">
-                    <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-                        <tr>
-                            <th class="p-4">Date</th>
-                            <th class="p-4">Type</th>
-                            <th class="p-4">Description</th>
-                            <th class="p-4 text-right">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for tx in transactions %}
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 text-gray-600 whitespace-nowrap">{{ tx.created_at.strftime('%b %d, %Y') }}</td>
-                            <td class="p-4">
-                                {% if tx.type == 'credit' %}
-                                    <span class="text-green-600 font-bold text-xs bg-green-50 px-2 py-1 rounded border border-green-100">🟢 Credit</span>
-                                {% else %}
-                                    <span class="text-red-600 font-bold text-xs bg-red-50 px-2 py-1 rounded border border-red-100">🔴 Debit</span>
-                                {% endif %}
-                            </td>
-                            <td class="p-4 text-gray-800 font-medium">{{ tx.description }}</td>
-                            <td class="p-4 text-right font-bold {% if tx.type == 'credit' %}text-green-600{% else %}text-red-600{% endif %}">
-                                {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="p-8 text-center text-gray-500 font-ui">No transactions yet. Start referring friends to earn coins!</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div class="container">
+        <div style="margin-bottom: 30px;">
+            <h1 class="font-ui" style="font-size: 1.75rem; font-weight: 700; color: var(--dark-oak); margin: 0;">Finance & Rewards</h1>
+            <p class="font-ui" style="color: #666; margin-top: 8px; font-size: 0.9rem;">Manage your coin balance, track transactions, and redeem rewards.</p>
         </div>
 
-        <!-- Right: Rewards Shop (Tasks) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit">
-            <h3 class="font-bold text-sm font-ui text-dark-oak mb-4 flex items-center gap-2">
-                🎁 Redeem Coins
-            </h3>
-            
-            <div class="space-y-4">
-                {% for task in tasks %}
-                <div class="border border-gray-200 rounded-lg p-4 hover:border-clay hover:shadow-md transition bg-gray-50/50">
-                    <div class="font-bold text-sm font-ui text-dark-oak">{{ task.name }}</div>
-                    <div class="text-xs text-gray-500 mt-1 font-ui leading-relaxed">{{ task.description }}</div>
-                    <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
-                        <span class="font-black text-clay font-ui text-lg">{{ task.price }} <span class="text-xs font-normal text-gray-500">Coins</span></span>
-                        
-                        <!-- Redeem Button (Phase 4 will make this functional) -->
-                        <button type="button" onclick="redeemTask({{ task.id }}, {{ task.price }})" 
-                                class="text-xs font-bold bg-dark-oak text-white px-4 py-2 rounded-lg hover:bg-clay transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                {% if wallet.balance < task.price %}disabled{% endif %}>
-                            {% if wallet.balance < task.price %}Locked{% else %}Redeem{% endif %}
-                        </button>
+        <!-- Hero Balance Card -->
+        <div class="card" style="background: linear-gradient(135deg, var(--dark-oak), var(--clay)); color: white; padding: 32px; margin-bottom: 30px; position: relative; overflow: hidden;">
+            <div style="position: relative; z-index: 2;">
+                <span class="font-ui" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8;">Current Balance</span>
+                <div class="font-ui" style="font-size: 3rem; font-weight: 900; margin-top: 8px;">{{ wallet.balance }} <span style="font-size: 1.25rem; font-weight: 600; opacity: 0.8;">Coins</span></div>
+            </div>
+            <div style="position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 30px;">
+            {% if tasks %}
+            <!-- Rewards Shop (Tasks) -->
+            <div class="card" style="padding: 24px;">
+                <h3 class="font-ui" style="font-size: 1rem; font-weight: 700; color: var(--dark-oak); margin: 0 0 20px 0; display: flex; align-items: center; gap: 8px;">
+                    🎁 Redeem Coins
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                    {% for task in tasks %}
+                    <div style="border: 1px solid #eee; border-radius: 8px; padding: 16px; background: #fafafa;">
+                        <div class="font-ui" style="font-weight: 700; font-size: 0.9rem; color: var(--dark-oak);">{{ task.name }}</div>
+                        <div class="font-ui" style="font-size: 0.8rem; color: #666; margin-top: 4px; line-height: 1.4;">{{ task.description }}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                            <span class="font-ui" style="font-weight: 900; color: var(--clay); font-size: 1.1rem;">{{ task.price }} <span style="font-size: 0.7rem; font-weight: 600; color: #888;">Coins</span></span>
+                            
+                            <!-- Phase 4: We will wire this button to a POST route -->
+                            <button type="button" onclick="redeemTask({{ task.id }}, {{ task.price }})" 
+                                    class="btn-clay {% if wallet.balance < task.price %}btn-disabled{% endif %}"
+                                    {% if wallet.balance < task.price %}disabled{% endif %}>
+                                {% if wallet.balance < task.price %}Locked{% else %}Redeem{% endif %}
+                            </button>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% else %}
-                <p class="text-sm text-gray-500 font-ui text-center py-4">No rewards available at the moment.</p>
-                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Transaction Ledger -->
+            <div class="card" style="overflow: hidden;">
+                <div style="padding: 16px 24px; border-bottom: 1px solid #eee; background: #fafafa;">
+                    <h3 class="font-ui" style="font-size: 0.85rem; font-weight: 700; color: var(--dark-oak); margin: 0;">Transaction History</h3>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; text-align: left; font-size: 0.85rem;" class="font-ui">
+                        <thead style="background: #f9fafb; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280;">
+                            <tr>
+                                <th style="padding: 12px 24px; font-weight: 600;">Date</th>
+                                <th style="padding: 12px 24px; font-weight: 600;">Type</th>
+                                <th style="padding: 12px 24px; font-weight: 600;">Description</th>
+                                <th style="padding: 12px 24px; font-weight: 600; text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody style="divide: 1px solid #f3f4f6;">
+                            {% for tx in transactions %}
+                            <tr style="border-bottom: 1px solid #f3f4f6;">
+                                <td style="padding: 16px 24px; color: #4b5563; white-space: nowrap;">{{ tx.created_at.strftime('%b %d, %Y') }}</td>
+                                <td style="padding: 16px 24px;">
+                                    {% if tx.type == 'credit' %}
+                                        <span style="color: #16a34a; font-weight: 700; font-size: 0.7rem; background: #ebfeef; padding: 4px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">🟢 Credit</span>
+                                    {% else %}
+                                        <span style="color: #b33a3a; font-weight: 700; font-size: 0.7rem; background: #ffebeb; padding: 4px 8px; border-radius: 4px; border: 1px solid #fecaca;">🔴 Debit</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 16px 24px; color: var(--dark-oak); font-weight: 500;">{{ tx.description }}</td>
+                                <td style="padding: 16px 24px; text-align: right; font-weight: 700; {% if tx.type == 'credit' %}color: #16a34a{% else %}color: #b33a3a{% endif %}">
+                                    {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" style="padding: 40px; text-align: center; color: #6b7280; font-style: italic;">No transactions yet. Start referring friends to earn coins!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div.>
             </div>
         </div>
-
     </div>
-</div>
 
-<script>
-function redeemTask(taskId, price) {
-    if (!confirm(`Are you sure you want to redeem this reward for ${price} coins?`)) {
-        return;
+    <script>
+    function redeemTask(taskId, price) {
+        if (!confirm(`Are you sure you want to redeem this reward for ${price} coins?`)) {
+            return;
+        }
+        // Phase 4: We will add the fetch call here to POST to /finance/redeem
+        alert("Redemption logic coming in Phase 4! For now, this is a demo.");
     }
-    
-    // Phase 4: We will add the fetch call here to POST to /finance/redeem
-    alert("Redemption logic coming in Phase 4!");
-}
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
