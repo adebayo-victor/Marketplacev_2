@@ -279,11 +279,12 @@ class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     wallet_id = db.Column(db.Integer, db.ForeignKey('wallets.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    type = db.Column(db.String(10), nullable=False)  # 'credit' or 'debit'
+    type = db.Column(db.String(10), nullable=False) 
     amount = db.Column(db.Integer, nullable=False)
     reward_id = db.Column(db.Integer, nullable=True)
-    task_id = db.Column(db.Integer, nullable=True)
+    task_id = db.Column(db.Integer, nullable=True) 
     reference_id = db.Column(db.Integer, nullable=True)
+    description = db.Column(db.String(255), nullable=True) # 👈 ADD THIS LINE!
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
