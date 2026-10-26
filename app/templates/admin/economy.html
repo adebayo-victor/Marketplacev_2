@@ -1,0 +1,101 @@
+{% extends "admin/layout.html" %}
+
+{% block admin_content %}
+
+<div class="mb-10 flex flex-wrap justify-between items-center gap-4">
+    <div>
+        <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">
+            economy control.
+        </h1>
+        <p class="font-serif italic text-stone-500 mt-1">Platform coin circulation, referral metrics, and reward pricing.</p>
+    </div>
+    <a href="{{ url_for('admin.overview') }}" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition no-underline">
+        &larr; Back to Vitals
+    </a>
+</div>
+
+<!-- Economy Vitals Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+    <div class="section-box mb-0 p-6 border-l-4 border-l-clay">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Referrals</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ total_referrals }}</h2>
+        <p class="font-ui text-[0.6rem] text-clay mt-1">Users invited</p>
+    </div>
+
+    <div class="section-box mb-0 p-6 border-l-4 border-l-[#16a34a]">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Coins Earned</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ "{:,}".format(total_earned) }}</h2>
+        <p class="font-ui text-[0.6rem] text-[#16a34a] mt-1">All-time credits</p>
+    </div>
+
+    <div class="section-box mb-0 p-6 border-l-4 border-l-rose-500">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Total Coins Spent</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ "{:,}".format(total_spent) }}</h2>
+        <p class="font-ui text-[0.6rem] text-rose-500 mt-1">All-time debits</p>
+    </div>
+
+    <div class="section-box mb-0 p-6 border-l-4 border-l-amber-500">
+        <p class="font-ui text-[0.65rem] text-stone-400 uppercase tracking-wider m-0">Coins in Circulation</p>
+        <h2 class="font-ui text-3xl font-semibold m-0 mt-2 text-dark-oak">{{ "{:,}".format(coins_in_circulation) }}</h2>
+        <p class="font-ui text-[0.6rem] text-amber-600 mt-1">{{ active_wallets }} active wallets</p>
+    </div>
+</div>
+
+<!-- Reward Management Table -->
+<div class="section-box mb-10 p-6">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">reward pricing & availability</h2>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Update coin costs or toggle items on/off instantly.</p>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="bg-green-50 border border-green-200 text-green-800 font-ui text-xs px-4 py-3 rounded-lg mb-4">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('admin.economy') }}">
+        <table class="w-full text-left font-ui text-xs border-collapse">
+            <thead>
+                <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
+                    <th class="py-3">Reward Name</th>
+                    <th class="py-3">Description</th>
+                    <th class="py-3">Price (Coins)</th>
+                    <th class="py-3 text-center">Active</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr class="border-b border-stone-100 hover:bg-stone-50 transition">
+                    <td class="py-4 font-semibold text-dark-oak">
+                        {{ task.name }}
+                        <input type="hidden" name="task_id" value="{{ task.id }}">
+                    </td>
+                    <td class="py-4 text-stone-600 italic">{{ task.description }}</td>
+                    <td class="py-4">
+                        <input type="number" name="price_{{ task.id }}" value="{{ task.price }}" 
+                               class="w-28 p-2 border border-stone-300 rounded-lg font-ui font-bold text-dark-oak outline-none focus:border-clay bg-white" required min="0">
+                    </td>
+                    <td class="py-4 text-center">
+                        <input type="checkbox" name="active_{{ task.id }}" class="w-5 h-5 accent-clay cursor-pointer" {% if task.is_active %}checked{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="mt-6 flex justify-end">
+            <button type="submit" class="bg-clay hover:bg-[#7a4e34] text-white font-ui font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow transition">
+                Save Economy Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
