@@ -54,14 +54,14 @@ ART_DIRECTIONS = [
 # Helpers: user / store / product
 # ============================================================================
 def _current_store():
-    # 1. Look for 'stores' (plural), which is what we named it in models.py
+    # Check the plural 'stores' relationship (which is what we use in models.py)
     user_stores = getattr(current_user, 'stores', None)
     if user_stores is not None:
-        first_store = user_stores.first()
+        first_store = user_stores.first()  # .first() works on SQLAlchemy query objects
         if first_store is not None:
             return first_store
             
-    # 2. Fallback: just in case we ever use 'store' or 'kiosk' in the future
+    # Fallback to singular 'store' or 'kiosk' just in case
     for attr in ('store', 'kiosk'):
         obj = getattr(current_user, attr, None)
         if obj is not None and not isinstance(obj, (list, tuple)):
