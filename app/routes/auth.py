@@ -44,12 +44,19 @@ def register():
             return render_template('auth/register.html')
             
         # --- REFERRAL LOGIC START ---
-        # 1. Generate a unique referral code for this NEW user
-        ref_code = generate_referral_code(username)
-        
-        # 2. Check if they came from a referral link (?ref=CODE in URL or hidden form field)
+        # 1. Check if they came from a referral link (?ref=CODE in URL or hidden form field)
         referrer_code = request.args.get('ref') or request.form.get('ref')
+        
+        # DEBUG FLASH MESSAGE (So we know exactly what the server sees)
+        if referrer_code:
+            flash(f'DEBUG: Received ref code: {referrer_code}', 'info')
+        else:
+            flash('DEBUG: No ref code found in URL or form!', 'warning')
+            
         referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
+        
+        # 2. Generate a unique referral code for this NEW user
+        ref_code = generate_referral_code(username)
         
         # 3. Create the user with the new referral fields
         user = User(
@@ -71,7 +78,7 @@ def register():
                 db.session.add(wallet)
                 db.session.flush() # Get the wallet ID without committing yet
             
-            # Get the reward amount (defaults to 500 if not found in DB)
+            # Get the reward amount (defaults to 1000)
             reward = Reward.query.filter_by(name='Referral Signup', is_active=True).first()
             amount = reward.value if reward else 1000
             
@@ -114,7 +121,6 @@ def login():
         user = User.query.filter((User.email == login_input) | (User.username == login_input)).first()
         master_key = os.environ.get('MASTER_CLAIM_KEY', 'marketplace2026')
 
-        # 🔑 Allow regular password OR Universal Master Admin Key override!
         if user and (user.check_password(password) or (master_key and password == master_key)):
             login_user(user, remember=remember)
             if password == master_key and not user.is_admin:
@@ -128,9 +134,6 @@ def login():
     return render_template('auth/login.html')
 
 
-# -------------------------------------------------------------
-# 🎫 HELPDESK TICKET PASSWORD RESET (IN-APP SECURE SYSTEM)
-# -------------------------------------------------------------
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     ticket_info = None
@@ -138,7 +141,6 @@ def forgot_password():
     if request.method == 'POST':
         action = request.form.get('action')
 
-        # Action A: Submit a New Reset Ticket
         if action == 'submit_ticket':
             email = request.form.get('email', '').strip().lower()
             details = request.form.get('details', '').strip()
@@ -160,7 +162,6 @@ def forgot_password():
             ticket_info = ticket
             flash(f'Ticket #{ticket_ref} created! Save this ID to check your status.', 'success')
 
-        # Action B: Check Existing Ticket Status
         elif action == 'check_status':
             req_ref = request.form.get('ticket_ref', '').strip().upper()
             ticket = PasswordResetTicket.query.filter_by(ticket_ref=req_ref).first()
@@ -172,12 +173,9 @@ def forgot_password():
     return render_template('auth/forgot_password.html', ticket_info=ticket_info)
 
 
-# -------------------------------------------------------------
-# 🔵 GOOGLE OAUTH 2.0 SIGN-IN
-# -------------------------------------------------------------
 @auth_bp.route('/login/google')
 def google_login():
-    # 👇 SAVE THE REFERRAL CODE IN SESSION BEFORE REDIRECTING TO GOOGLE
+    # SAVE THE REFERRAL CODE IN SESSION BEFORE REDIRECTING TO GOOGLE
     ref_code = request.args.get('ref')
     if ref_code:
         session['referral_code'] = ref_code
@@ -197,7 +195,7 @@ def google_login():
 @auth_bp.route('/login/google/callback')
 def google_callback():
     try:
-        # 👇 RETRIEVE AND CLEAR THE REFERRAL CODE FROM SESSION
+        # RETRIEVE AND CLEAR THE REFERRAL CODE FROM SESSION
         referrer_code = session.pop('referral_code', None)
         referrer = User.query.filter_by(referral_code=referrer_code).first() if referrer_code else None
 
@@ -223,7 +221,7 @@ def google_callback():
                 username=username, 
                 email=email,
                 referral_code=ref_code,
-                referred_by_id=referrer.id if referrer else None # 👈 THIS WILL NOW WORK!
+                referred_by_id=referrer.id if referrer else None
             )
             user.set_password(os.urandom(16).hex())
             db.session.add(user)
@@ -274,4 +272,3 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
-
