@@ -156,23 +156,23 @@ def referrals():
 @dashboard_bp.route('/finance')
 @login_required
 def finance():
-    # Get or create the user's wallet
     wallet = Wallet.query.filter_by(user_id=current_user.id).first()
     if not wallet:
         wallet = Wallet(user_id=current_user.id, balance=0)
         db.session.add(wallet)
         db.session.commit()
 
-    # Get transaction history (newest first)
     transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.created_at.desc()).all()
-    
-    # Get available tasks/rewards to redeem
     tasks = Task.query.filter_by(is_active=True).all()
+    
+    # 👇 ADD THIS LINE: Get kiosks that are built but not yet active
+    inactive_kiosks = Store.query.filter_by(user_id=current_user.id, is_active=False, build_status='ready').all()
 
     return render_template('dashboard/finance.html', 
                            wallet=wallet, 
                            transactions=transactions, 
-                           tasks=tasks)
+                           tasks=tasks,
+                           inactive_kiosks=inactive_kiosks) # 👇 PASS IT HERE
 
 
 # -------------------------------------------------------------
@@ -183,35 +183,48 @@ def finance():
 def redeem_task():
     data = request.get_json()
     task_id = data.get('task_id')
+    kiosk_id = data.get('kiosk_id') # NEW: We use ID instead of slug
     
     if not task_id:
         return jsonify({'status': 'error', 'message': 'Invalid task ID.'}), 400
         
-    # 1. Fetch the task
     task = Task.query.get(task_id)
     if not task or not task.is_active:
         return jsonify({'status': 'error', 'message': 'Reward not found or inactive.'}), 404
         
-    # 2. Fetch the user's wallet
     wallet = Wallet.query.filter_by(user_id=current_user.id).first()
     if not wallet:
         return jsonify({'status': 'error', 'message': 'Wallet not found.'}), 404
         
-    # 3. Check if they have enough coins
     if wallet.balance < task.price:
         return jsonify({'status': 'error', 'message': 'Insufficient coin balance.'}), 400
         
-    # 4. Perform the debit (Deduct coins)
+    # SPECIAL LOGIC: If redeeming a Kiosk, unlock it!
+    if task.name == 'Kiosk Creation':
+        if not kiosk_id:
+            return jsonify({'status': 'error', 'message': 'Please select a kiosk to unlock.'}), 400
+            
+        # Securely find the kiosk and ensure it belongs to this user
+        kiosk = Store.query.filter_by(id=kiosk_id, user_id=current_user.id).first()
+        if not kiosk:
+            return jsonify({'status': 'error', 'message': 'Kiosk not found or not yours.'}), 404
+            
+        if kiosk.is_active:
+            return jsonify({'status': 'error', 'message': 'This kiosk is already active!'}), 400
+            
+        kiosk.is_active = True
+        kiosk.has_ever_activated = True
+
+    # Perform the debit
     wallet.balance -= task.price
     
-    # 5. Log the transaction for the audit trail
     tx = Transaction(
         wallet_id=wallet.id,
         user_id=current_user.id,
         type='debit',
         amount=task.price,
         task_id=task.id,
-        description=f"Redeemed: {task.name}"
+        description=f"Redeemed: {task.name}" + (f" for {kiosk.name}" if task.name == 'Kiosk Creation' and kiosk else "")
     )
     
     db.session.add(tx)
@@ -219,7 +232,7 @@ def redeem_task():
     
     return jsonify({
         'status': 'success', 
-        'message': f'Successfully redeemed "{task.name}"!',
+        'message': f'Successfully redeemed "{task.name}"! Kiosk unlocked.',
         'new_balance': wallet.balance
     }), 200
 
