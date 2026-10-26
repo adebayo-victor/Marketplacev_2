@@ -6,8 +6,8 @@ from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, session
 from flask_login import login_required, current_user, login_user
 from app import db
-from sqlalchemy import func
-from app.models import User, Store, Order, PasswordResetTicket, Wallet, Transaction, Task
+from sqlalchemy import func, _or
+from app.models import User, Store, Order, PasswordResetTicket, Wallet, Transaction, Task, Reward
 admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
@@ -201,8 +201,10 @@ def claim_master():
 
 
 
+
+
 # -------------------------------------------------------------
-# 💰 ADMIN ECONOMY CONTROL (Summaries + Pricing)
+# 💰 ADMIN ECONOMY COMMAND CENTER (Summaries, Pricing, & Ledger Search)
 # -------------------------------------------------------------
 @admin_bp.route('/economy', methods=['GET', 'POST'])
 @admin_required
@@ -213,24 +215,69 @@ def economy():
     total_spent = db.session.query(func.sum(Transaction.amount)).filter(Transaction.type == 'debit').scalar() or 0
     coins_in_circulation = total_earned - total_spent
     active_wallets = Wallet.query.filter(Wallet.balance > 0).count()
-    
-    # 2. Handle Form Submission (Update Prices/Active Status)
+
+    # 2. Handle Form Submission (Update BOTH Rewards and Tasks)
     if request.method == 'POST':
+        # Update Earning Rules (Rewards)
+        reward_ids = request.form.getlist('reward_id')
+        for r_id in reward_ids:
+            reward = Reward.query.get(r_id)
+            if reward:
+                new_value = request.form.get(f'reward_value_{r_id}')
+                if new_value and new_value.isdigit():
+                    reward.value = int(new_value)
+                reward.is_active = request.form.get(f'reward_active_{r_id}') == 'on'
+        
+        # Update Redemption Shop (Tasks)
         task_ids = request.form.getlist('task_id')
-        for task_id in task_ids:
-            task = Task.query.get(task_id)
+        for t_id in task_ids:
+            task = Task.query.get(t_id)
             if task:
-                new_price = request.form.get(f'price_{task_id}')
+                new_price = request.form.get(f'task_price_{t_id}')
                 if new_price and new_price.isdigit():
                     task.price = int(new_price)
-                task.is_active = request.form.get(f'active_{task_id}') == 'on'
+                task.is_active = request.form.get(f'task_active_{t_id}') == 'on'
+        
         db.session.commit()
         flash('Economy settings updated successfully!', 'success')
         return redirect(url_for('admin.economy'))
-        
-    # 3. Fetch tasks for the table
+
+    # 3. Fetch Pricing Tables
+    rewards = Reward.query.all()
     tasks = Task.query.order_by(Task.price.asc()).all()
+
+    # 4. Transaction Ledger Search & Filter ("Detailed searching typeshiii")
+    search_query = request.args.get('search', '').strip()
+    filter_type = request.args.get('type', 'all') # 'all', 'credit', 'debit'
+
+    # Join Transaction with User to allow searching by merchant username
+    ledger_query = db.session.query(Transaction, User.username).join(User, Transaction.user_id == User.id)
+
+    if filter_type != 'all':
+        ledger_query = ledger_query.filter(Transaction.type == filter_type)
     
+    if search_query:
+        # Search by merchant username OR transaction description (e.g., "Kiosk Creation")
+        ledger_query = ledger_query.filter(
+            or_(
+                User.username.ilike(f'%{search_query}%'),
+                Transaction.description.ilike(f'%{search_query}%')
+            )
+        )
+
+    # Get the latest 100 transactions matching the filter
+    ledger_results = ledger_query.order_by(Transaction.created_at.desc()).limit(100).all()
+    
+    # Format for the template
+    transactions = [{
+        'id': tx.id,
+        'username': username,
+        'type': tx.type,
+        'amount': tx.amount,
+        'description': tx.description,
+        'created_at': tx.created_at
+    } for tx, username in ledger_results]
+
     return render_template(
         'admin/economy.html',
         total_referrals=total_referrals,
@@ -238,5 +285,9 @@ def economy():
         total_spent=total_spent,
         coins_in_circulation=coins_in_circulation,
         active_wallets=active_wallets,
-        tasks=tasks
+        rewards=rewards,
+        tasks=tasks,
+        transactions=transactions,
+        search_query=search_query,
+        filter_type=filter_type
     )
