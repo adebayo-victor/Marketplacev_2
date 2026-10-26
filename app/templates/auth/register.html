@@ -1,84 +1,77 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register // Marketplace</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700&display=swap');
+        :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
+        * { box-sizing: border-box; }
+        body { 
+            background-color: var(--cream); color: var(--dark-oak); font-family: 'Georgia', serif; margin: 0; 
+            background-image: linear-gradient(rgba(249, 245, 240, 0.95), rgba(249, 245, 240, 0.95)), url('/static/images/marketplace_bg.jpg');
+            background-attachment: fixed; background-size: cover; background-position: center; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .auth-card { background: white; border-radius: 16px; border: 1px solid #eee; box-shadow: 0 10px 40px rgba(0,0,0,0.05); padding: 40px; width: 100%; max-width: 420px; }
+        .font-ui { font-family: 'Montserrat', sans-serif; }
+        .input-field { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.9rem; color: var(--dark-oak); outline: none; transition: 0.2s; margin-top: 6px; }
+        .input-field:focus { border-color: var(--clay); box-shadow: 0 0 0 3px rgba(141, 91, 62, 0.1); }
+        .btn-submit { width: 100%; padding: 14px; background: var(--clay); color: white; border: none; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-top: 20px; }
+        .btn-submit:hover { background: #7a4e34; }
+        .flash-msg { padding: 12px; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; margin-bottom: 20px; }
+        .flash-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .flash-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+        .flash-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .flash-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .auth-link { text-align: center; margin-top: 20px; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; color: #666; }
+        .auth-link a { color: var(--clay); text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <h1 class="font-ui" style="font-size: 1.5rem; font-weight: 700; color: var(--dark-oak); margin: 0 0 8px 0; text-align: center;">Create Account</h1>
+        <p class="font-ui" style="color: #666; font-size: 0.9rem; text-align: center; margin-bottom: 24px;">Join the marketplace and start selling today.</p>
 
-{% block title %}Join Marketplace{% endblock %}
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-{% block content %}
-<div class="min-h-[85vh] flex items-center justify-center p-4 py-12">
-    <div class="max-w-md w-full bg-white p-10 shadow-[0_10px_30px_rgba(0,0,0,0.03)] border-t-[5px] border-clay">
-        
-        <div class="mb-8">
-            <h1 class="font-ui text-3xl font-normal lowercase tracking-tight m-0 text-dark-oak">join as merchant.</h1>
-            <p class="font-serif italic text-sm text-stone-500 mt-1">Create your merchant account to launch and manage storefronts.</p>
-        </div>
+        <!-- CRITICAL: Form action includes the ref parameter -->
+        <form method="POST" action="{{ url_for('auth.register', ref=request.args.get('ref', '')) }}">
+            
+            <!-- CRITICAL: Hidden input to pass referral code during POST -->
+            {% if request.args.get('ref') %}
+                <input type="hidden" name="ref" value="{{ request.args.get('ref') }}">
+            {% endif %}
 
-        <!-- 🔵 GOOGLE 1-CLICK SIGN-IN BUTTON -->
-        <a href="{{ url_for('auth.google_login') }}" 
-           class="w-full py-3.5 px-4 border border-[#ddd] hover:border-clay bg-white text-dark-oak font-ui text-xs font-bold rounded-none flex items-center justify-center gap-3 transition shadow-sm mb-6 uppercase tracking-wider">
-            <svg class="w-4 h-4" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span>Sign Up with Google</span>
-        </a>
-
-        <div class="relative my-6 text-center">
-            <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-stone-200"></div></div>
-            <span class="relative bg-white px-3 font-ui text-[10px] text-stone-400 uppercase tracking-widest">or with email</span>
-        </div>
-
-        <form method="POST" action="{{ url_for('auth.register') }}" class="space-y-5">
             <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Username / Merchant Handle</label>
-                <input type="text" name="username" required 
-                       placeholder="e.g. victor"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+                <label class="font-ui" style="font-size: 0.8rem; font-weight: 600; color: var(--dark-oak);">Username</label>
+                <input type="text" name="username" class="input-field" required placeholder="e.g. victor_adebayo">
             </div>
 
-            <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Email Address</label>
-                <input type="email" name="email" required 
-                       placeholder="merchant@domain.com"
-                       class="w-full p-3.5 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
+            <div style="margin-top: 16px;">
+                <label class="font-ui" style="font-size: 0.8rem; font-weight: 600; color: var(--dark-oak);">Email Address</label>
+                <input type="email" name="email" class="input-field" required placeholder="you@example.com">
             </div>
 
-            <div>
-                <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-clay mb-2">Password</label>
-                <div class="relative flex items-center">
-                    <input type="password" name="password" id="regPassword" required 
-                           placeholder="••••••••"
-                           class="w-full p-3.5 pr-12 border border-[#eee] bg-[#fafafa] font-ui text-xs text-dark-oak outline-none focus:border-clay">
-                    <button type="button" onclick="togglePassword('regPassword', 'regEyeIcon')" 
-                            class="absolute right-3 text-stone-400 hover:text-dark-oak focus:outline-none p-1">
-                        <span id="regEyeIcon" class="font-ui text-[11px] font-bold uppercase tracking-wider text-clay">Show</span>
-                    </button>
-                </div>
+            <div style="margin-top: 16px;">
+                <label class="font-ui" style="font-size: 0.8rem; font-weight: 600; color: var(--dark-oak);">Password</label>
+                <input type="password" name="password" class="input-field" required placeholder="••••••••">
             </div>
 
-            <button type="submit" class="btn-clay w-full text-center block mt-2">
-                CREATE ACCOUNT &rarr;
-            </button>
+            <button type="submit" class="btn-submit">Create Account</button>
         </form>
 
-        <div class="text-center mt-8 pt-6 border-t border-stone-100 font-ui text-[0.7rem] text-stone-500">
-            Already have an account? 
-            <a href="{{ url_for('auth.login') }}" class="text-dark-oak font-bold hover:underline ml-1">Log in here</a>
+        <div class="auth-link">
+            Already have an account? <a href="{{ url_for('auth.login') }}">Log in here</a>
         </div>
     </div>
-</div>
-
-<script>
-function togglePassword(inputId, iconId) {
-    const input = document.getElementById(inputId);
-    const label = document.getElementById(iconId);
-    if (input.type === 'password') {
-        input.type = 'text';
-        label.innerText = 'Hide';
-    } else {
-        input.type = 'password';
-        label.innerText = 'Show';
-    }
-}
-</script>
-{% endblock %}
+</body>
+</html>
