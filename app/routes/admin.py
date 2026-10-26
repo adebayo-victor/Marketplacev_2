@@ -292,32 +292,3 @@ def economy():
         filter_type=filter_type
     )
 
-import random
-import string
-
-@admin_bp.route('/fix-referral-codes')
-@admin_required
-def fix_referral_codes():
-    # Find all users who don't have a code yet
-    users_without_codes = User.query.filter(User.referral_code.is_(None)).all()
-    
-    fixed_count = 0
-    
-    for user in users_without_codes:
-        # Generate code (First 4 letters of username + 4 random numbers)
-        prefix = user.username[:4].upper()
-        suffix = ''.join(random.choices(string.digits, k=4))
-        code = f"{prefix}{suffix}"
-        
-        # Safety check: Ensure the code isn't already taken by someone else
-        while User.query.filter_by(referral_code=code).first():
-            suffix = ''.join(random.choices(string.digits, k=4))
-            code = f"{prefix}{suffix}"
-            
-        # Save it
-        user.referral_code = code
-        fixed_count += 1
-        
-    db.session.commit()
-    
-    return f"✅ Success! Generated referral codes for {fixed_count} existing merchants."
