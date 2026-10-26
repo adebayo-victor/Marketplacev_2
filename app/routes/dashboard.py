@@ -165,14 +165,17 @@ def finance():
     transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.created_at.desc()).all()
     tasks = Task.query.filter_by(is_active=True).all()
     
-    # 👇 ADD THIS LINE: Get kiosks that are built but not yet active
-    inactive_kiosks = Store.query.filter_by(user_id=current_user.id, is_active=False, build_status='ready').all()
+    # 1. Get the raw database objects
+    inactive_kiosks_raw = Store.query.filter_by(user_id=current_user.id, is_active=False, build_status='ready').all()
+    
+    # 2. Convert them into a simple list of dictionaries (JSON serializable)
+    inactive_kiosks = [{"id": k.id, "name": k.name} for k in inactive_kiosks_raw]
 
     return render_template('dashboard/finance.html', 
                            wallet=wallet, 
                            transactions=transactions, 
                            tasks=tasks,
-                           inactive_kiosks=inactive_kiosks) # 👇 PASS IT HERE
+                           inactive_kiosks=inactive_kiosks) # Pass the list of dicts
 
 
 # -------------------------------------------------------------
