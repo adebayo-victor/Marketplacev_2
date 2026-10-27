@@ -188,15 +188,18 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div>
                         <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Logo</label>
-                        <input type="file" name="logo" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
+                        <!-- ✅ ADDED checkFileSize HERE -->
+                        <input type="file" name="logo" accept="image/*" onchange="checkFileSize(this)" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                     <div>
                         <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Hero Banner</label>
-                        <input type="file" name="hero_image" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
+                        <!-- ✅ ADDED checkFileSize HERE -->
+                        <input type="file" name="hero_image" accept="image/*" onchange="checkFileSize(this)" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                     <div>
                         <label class="ok-sub-label block font-ui text-[0.6rem] font-semibold uppercase mb-1">Background</label>
-                        <input type="file" name="background_image" accept="image/*" class="ok-file font-ui text-[0.65rem] w-full">
+                        <!-- ✅ ADDED checkFileSize HERE -->
+                        <input type="file" name="background_image" accept="image/*" onchange="checkFileSize(this)" class="ok-file font-ui text-[0.65rem] w-full">
                     </div>
                 </div>
             </div>
@@ -273,5 +276,21 @@
         }
         window.addEventListener('storage', applySoon);
     })();
+
+    // ====================================================================
+    // ✅ NEW: FILE SIZE CHECKER (Prevents Vercel 413 Payload Too Large)
+    // ====================================================================
+    function checkFileSize(input) {
+        const maxAllowedSize = 4 * 1024 * 1024; // 4 MB (Safe limit for Vercel's 4.5MB cap)
+        
+        if (input.files && input.files[0]) {
+            const fileSize = input.files[0].size;
+            
+            if (fileSize > maxAllowedSize) {
+                alert(`This image is too large (${(fileSize / 1024 / 1024).toFixed(1)}MB).\n\nPlease choose an image smaller than 4MB.\n\n💡 Tip: Take a screenshot of your photo in your gallery, and upload the screenshot instead!`);
+                input.value = ''; // Clears the input so they can try again
+            }
+        }
+    }
 </script>
 {% endblock %}
