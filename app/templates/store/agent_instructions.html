@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Agent Instructions</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=JetBrains+Mono&display=swap');
+        :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
+        body { background: var(--cream); color: var(--dark-oak); font-family: 'Montserrat', sans-serif; line-height: 1.6; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        h1 { font-size: 2rem; border-bottom: 3px solid var(--clay); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { font-size: 1.4rem; margin-top: 30px; color: var(--clay); }
+        h3 { font-size: 1.1rem; margin-top: 20px; color: var(--dark-oak); }
+        ul, ol { padding-left: 20px; }
+        li { margin-bottom: 10px; }
+        code { font-family: 'JetBrains Mono', monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        pre { background: #f3f4f6; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        
+        .copy-box {
+            background: var(--dark-oak); color: white; padding: 20px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;
+        }
+        .copy-box p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+        .copy-btn { 
+            background: var(--clay); color: white; border: none; padding: 12px 24px; 
+            border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .copy-btn:hover { background: #7a4e34; transform: translateY(-2px); }
+        .copied-msg { color: #4ade80; font-weight: 700; font-size: 0.85rem; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- COPY LINK SECTION -->
+        <div class="copy-box">
+            <p>🤖 <strong>For AI Agents & Chatbots:</strong> Copy the link below and paste it into your AI chatbot's system prompt or knowledge base. It contains everything the bot needs to know about Marketplace.</p>
+            <button class="copy-btn" onclick="copyLink()">
+                📋 Copy Agent Instructions Link
+            </button>
+            <span id="copyMsg" class="copied-msg">✅ Link copied to clipboard!</span>
+        </div>
+
+        <!-- DOCUMENTATION CONTENT -->
+        <div class="content">
+            <h1>Marketplace Platform Documentation</h1>
+            <p><em>Welcome to the comprehensive guide for the Marketplace platform. This document details every feature, button, and benefit for users and AI agents.</em></p>
+            
+            <!-- This renders the markdown file you created -->
+            <div style="white-space: pre-wrap; font-family: 'Montserrat', sans-serif;">{{ doc_content }}</div>
+        </div>
+    </div>
+
+    <script>
+    function copyLink() {
+        // We add ?format=raw so bots get clean text without HTML tags
+        const url = window.location.origin + '/agent-instructions?format=raw';
+        navigator.clipboard.writeText(url).then(() => {
+            const msg = document.getElementById('copyMsg');
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 3000);
+        });
+    }
+    </script>
+</body>
+</html>
