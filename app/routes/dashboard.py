@@ -651,19 +651,20 @@ def topup_wallet():
 # 💳 WALLET TOP-UP: Verify and Credit Wallet
 # -------------------------------------------------------------
 @dashboard_bp.route('/finance/topup/verify')
-@login_required
 def verify_topup():
     reference = request.args.get('reference')
+    
     if not reference:
         flash('No transaction reference provided.', 'danger')
-        return redirect(url_for('dashboard.finance'))
-        
+        return redirect(url_for('auth.login'))
+
     paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY', '').strip()
     url = f"https://api.paystack.co/transaction/verify/{reference}"
     
     req = urllib.request.Request(url, headers={
         "Authorization": f"Bearer {paystack_secret}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Marketplace/2.0 (Mozilla/5.0)" # Mirrored from working route
     })
     
     try:
@@ -674,27 +675,35 @@ def verify_topup():
                 paid_amount_kobo = res_data['data']['amount']
                 amount_naira = paid_amount_kobo / 100
                 
-                # Prevent double-crediting by checking if we already processed this exact reference
+                # 1. Find the user via the email Paystack gives us (Bypasses session cookie issues!)
+                customer_email = res_data['data']['customer']['email']
+                user = User.query.filter_by(email=customer_email).first()
+                
+                if not user:
+                    flash('Payment successful, but user account not found.', 'danger')
+                    return redirect(url_for('auth.login'))
+
+                # 2. Prevent double-crediting
                 desc = f"Wallet Top-up (Ref: {reference})"
-                if Transaction.query.filter_by(user_id=current_user.id, description=desc).first():
+                if Transaction.query.filter_by(user_id=user.id, description=desc).first():
                     flash('This transaction has already been processed.', 'info')
                     return redirect(url_for('dashboard.finance'))
-                
-                # Get or create wallet
-                wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+
+                # 3. Get or create wallet
+                wallet = Wallet.query.filter_by(user_id=user.id).first()
                 if not wallet:
-                    wallet = Wallet(user_id=current_user.id, balance=0)
+                    wallet = Wallet(user_id=user.id, balance=0)
                     db.session.add(wallet)
                     db.session.flush()
                     
-                # Credit the wallet (1 Naira = 1 Coin)
+                # 4. Credit the wallet (1 Naira = 1 Coin)
                 coins_to_add = int(amount_naira)
                 wallet.balance += coins_to_add
                 
-                # Log the transaction
+                # 5. Log the transaction
                 tx = Transaction(
                     wallet_id=wallet.id,
-                    user_id=current_user.id,
+                    user_id=user.id,
                     type='credit',
                     amount=coins_to_add,
                     description=desc
@@ -712,4 +721,7 @@ def verify_topup():
     except Exception as e:
         flash(f'Verification Error: {str(e)}', 'danger')
         
-    return redirect(url_for('dashboard.finance'))
+    # Redirect to finance if logged in, otherwise login
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard.finance'))
+    return redirect(url_for('auth.login'))
