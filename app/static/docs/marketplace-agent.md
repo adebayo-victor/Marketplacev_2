@@ -1,11 +1,35 @@
-Marketplace — The Complete User Guide
-Live app: https://marketplace-beryl-delta.vercel.app
-
-Marketplace helps small sellers (especially those selling through WhatsApp and Instagram) open an online store in about a minute, take orders straight into WhatsApp, design promo flyers, and send professional invoices and receipts. Customers shop for free and never need an account.
-
-*Last updated: November 2, 2026*
+# Marketplace — The Complete User Guide
+> **Live App:** [marketplace-beryl-delta.vercel.app](https://marketplace-beryl-delta.vercel.app)  
+> **Target Audience:** Small sellers (WhatsApp & Instagram vendors)  
+> **Last Updated:** November 2, 2026
 
 ---
+
+## 📌 Executive Overview
+Marketplace enables social commerce vendors to launch a professional online storefront in under 60 seconds, streamlining order management and marketing asset creation. 
+* **For Merchants:** Set up instantly, receive structured WhatsApp orders, design promo flyers, and issue invoices/receipts with 0% commission.
+* **For Customers:** Shop freely with no account creation required.
+
+---
+
+## 🛠️ Core Features & Capabilities
+* **Custom AI Website Builder:** Deploy vibe-matched storefront layouts rapidly by entering your business description.
+* **Direct WhatsApp Ordering:** Orders arrive in your WhatsApp DM with clean, itemized breakdowns.
+* **1-Click Status Flyer Studio:** Generate high-resolution PNG & PDF promotional flyers for social statuses using 12 brand themes.
+* **Invoices & Receipts:** Create formal invoices and stamp them "PAID IN FULL" upon payment verification across 4 professional themes.
+* **Made-to-Order Stock Mode & Lead Recovery:** Keep items available for food/service vendors and track cart abandonments to nudge potential buyers.
+
+---
+
+## 🚀 Getting Started & Pricing
+1. **Create Account / Onboard:** Sign up via Google or username, select your category, and upload photos.
+2. **Share Link:** Add your URL to your Instagram bio or WhatsApp status.
+3. **Pricing Tiers:**
+   * **Preview Mode (`₦0`):** Free testing, unlimited AI redesigns, and flyer generation.
+   * **Go Live (`₦5,000 / month`):** Public storefront link, live order intake, invoice/receipt exports, and 3 sponsor ad slots with 0% commission.
+
+🔗 Access the official AI agent instructions at [marketplace-beryl-delta.vercel.app/agent-instructions](https://vercel.app).
+
 
 ## Table of Contents
 
