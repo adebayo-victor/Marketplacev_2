@@ -347,6 +347,12 @@ def manage_kiosk(kiosk_slug):
     if kiosk.user_id != current_user.id and not current_user.is_admin:
         abort(403)
 
+    # 👇 ADD THIS EXPIRY CHECK 👇
+    if not check_kiosk_expiry(kiosk):
+        flash(f'⚠️ Your subscription for "{kiosk.name}" has expired. Please renew to manage your store.', 'warning')
+        return redirect(url_for('dashboard.overview'))
+    # 👆 END CHECK 👆
+
     if kiosk.build_status == 'building':
         flash(f'⏳ Hold on! Kiosk "{kiosk.name}" is still being assembled by the AI engine. You cannot open it until creation is finished.', 'warning')
         return redirect(url_for('dashboard.overview'))
