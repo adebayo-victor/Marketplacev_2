@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import markdown
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
@@ -14,6 +15,8 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
+
+
 @storefront_bp.route('/agent-instructions')
 def agent_instructions():
     """Serves the Marketplace Agent Documentation."""
@@ -21,16 +24,19 @@ def agent_instructions():
     
     try:
         with open(doc_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+            md_content = f.read()
+        
+        # Convert Markdown to HTML
+        html_content = markdown.markdown(md_content, extensions=['fenced_code', 'tables', 'toc'])
     except FileNotFoundError:
-        content = "# Documentation not found. Please ensure app/static/docs/marketplace-agent.md exists."
+        html_content = "<p>Documentation not found. Please ensure app/static/docs/marketplace-agent.md exists.</p>"
 
-    # If an AI bot requests it with ?format=raw, give them clean plain text without HTML
+    # If an AI bot requests it with ?format=raw, give them clean plain text
     if request.args.get('format') == 'raw':
-        return Response(content, mimetype='text/plain')
+        return Response(md_content, mimetype='text/plain')
 
     # Otherwise, show the nice HTML page for humans
-    return render_template('store/agent_instructions.html', doc_content=content)
+    return render_template('store/agent_instructions.html', doc_content=html_content)
 
 @storefront_bp.route('/<store_slug>')
 def store_catalog(store_slug):
