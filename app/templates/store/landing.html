@@ -168,8 +168,169 @@
     .mk-phone-sent { background: var(--mk-phone-sent); }
     .mk-phone-sent-bar { background: var(--mk-phone-sent-bar); }
     @media (prefers-reduced-motion: reduce) {
-        .mk-rise, .mk-phone { animation: none !important; opacity: 1; transform: none; }
+        .mk-rise, .mk-phone, .mk-orb, .mk-float-chip, .mk-marquee-track, .mk-ai-ring, .mk-chat-typing span { animation: none !important; opacity: 1; transform: none; }
+        .mk-reveal { opacity: 1 !important; transform: none !important; }
     }
+
+    /* ------------------------------------------------------------------
+       PREMIUM MOTION SYSTEM
+       Each effect has its own trigger/timing so the page feels alive rather
+       than every element moving at once. All motion is disabled accessibly
+       when the visitor requests reduced motion.
+       ------------------------------------------------------------------ */
+    .mk-page { isolation: isolate; }
+    .mk-page .mk-section-kicker { display:inline-flex; align-items:center; gap:.65rem; }
+    .mk-page .mk-section-kicker::before,
+    .mk-page .mk-section-kicker::after {
+        content:""; width:22px; height:1px; background:var(--mk-accent); opacity:.65;
+    }
+    .mk-page .mk-hero-grid {
+        background-image:linear-gradient(var(--mk-dot) 1px,transparent 1px),
+                         linear-gradient(90deg,var(--mk-dot) 1px,transparent 1px);
+        background-size:46px 46px;
+        -webkit-mask-image:linear-gradient(to bottom,#000,transparent 92%);
+        mask-image:linear-gradient(to bottom,#000,transparent 92%);
+        opacity:.42;
+    }
+    .mk-page .mk-orb {
+        position:absolute; border-radius:50%; pointer-events:none;
+        filter:blur(1px); opacity:.8; transform:translate3d(0,0,0);
+        animation:mkOrbDrift 11s ease-in-out infinite;
+    }
+    .mk-page .mk-orb-two { animation-duration:15s; animation-delay:-4s; }
+    .mk-page .mk-orb-three { animation-duration:18s; animation-delay:-8s; }
+    @keyframes mkOrbDrift {
+        0%,100% { transform:translate3d(0,0,0) scale(1); }
+        50% { transform:translate3d(18px,-24px,0) scale(1.08); }
+    }
+    .mk-page .mk-float-chip {
+        animation:mkChipFloat 5.5s ease-in-out infinite;
+        will-change:transform;
+    }
+    .mk-page .mk-float-chip:nth-child(2) { animation-delay:-1.7s; }
+    @keyframes mkChipFloat {
+        0%,100% { transform:translateY(0) rotate(-1deg); }
+        50% { transform:translateY(-9px) rotate(1deg); }
+    }
+    .mk-page .mk-reveal {
+        opacity:0; transform:translate3d(0,28px,0);
+        transition:opacity .8s cubic-bezier(.2,.7,.2,1),
+                   transform .8s cubic-bezier(.2,.7,.2,1);
+        transition-delay:var(--mk-delay,0ms);
+    }
+    .mk-page .mk-reveal.is-visible { opacity:1; transform:translate3d(0,0,0); }
+    .mk-page .mk-reveal-left { transform:translate3d(-34px,0,0); }
+    .mk-page .mk-reveal-right { transform:translate3d(34px,0,0); }
+    .mk-page .mk-reveal-scale { transform:scale(.94); }
+    .mk-page .mk-reveal-left.is-visible,
+    .mk-page .mk-reveal-right.is-visible { transform:translate3d(0,0,0); }
+    .mk-page .mk-reveal-scale.is-visible { transform:scale(1); }
+    .mk-page .mk-card,
+    .mk-page .mk-feature {
+        transform-style:preserve-3d;
+        backface-visibility:hidden;
+    }
+    .mk-page .mk-card-icon {
+        transition:transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease;
+    }
+    .mk-page .mk-card:hover .mk-card-icon {
+        transform:translateY(-5px) rotate(-8deg) scale(1.08);
+        box-shadow:0 12px 25px -14px var(--mk-accent);
+    }
+    .mk-page .mk-btn { transition:transform .25s ease,box-shadow .25s ease,background .25s ease; }
+    .mk-page .mk-btn:hover { transform:translateY(-4px) scale(1.015); box-shadow:0 18px 30px -16px rgba(141,91,62,.85); }
+    .mk-page .mk-btn:active { transform:translateY(-1px) scale(.985); }
+    .mk-page .mk-btn:focus-visible,
+    .mk-page .mk-copy-link:focus-visible { outline:3px solid var(--mk-green); outline-offset:4px; }
+    .mk-page .mk-pulse-dot { position:relative; }
+    .mk-page .mk-pulse-dot::after {
+        content:""; position:absolute; inset:-5px; border:1px solid currentColor;
+        border-radius:50%; opacity:0; animation:mkPing 2.4s ease-out infinite;
+    }
+    @keyframes mkPing {
+        0% { transform:scale(.65); opacity:.65; }
+        100% { transform:scale(1.9); opacity:0; }
+    }
+    .mk-page .mk-sheen {
+        background:linear-gradient(110deg,transparent 20%,rgba(255,255,255,.16) 45%,transparent 70%);
+        background-size:240% 100%; animation:mkSheen 7s ease-in-out infinite;
+    }
+    @keyframes mkSheen {
+        0%,55% { background-position:120% 0; }
+        85%,100% { background-position:-30% 0; }
+    }
+    .mk-page .mk-phone { animation:mkPhoneFloat 7s ease-in-out infinite; }
+    @keyframes mkPhoneFloat {
+        0%,100% { transform:translateY(0) rotate(1.5deg); }
+        50% { transform:translateY(-13px) rotate(-1deg); }
+    }
+    .mk-page .mk-phone-notification {
+        animation:mkNotificationIn .9s .9s cubic-bezier(.2,.8,.2,1) both;
+    }
+    @keyframes mkNotificationIn {
+        from { opacity:0; transform:translate3d(25px,12px,0) scale(.92); }
+        to { opacity:1; transform:translate3d(0,0,0) scale(1); }
+    }
+    .mk-page .mk-chat-typing span {
+        display:inline-block; width:5px; height:5px; margin:0 2px;
+        border-radius:50%; background:var(--mk-muted);
+        animation:mkTyping 1s ease-in-out infinite;
+    }
+    .mk-page .mk-chat-typing span:nth-child(2) { animation-delay:.15s; }
+    .mk-page .mk-chat-typing span:nth-child(3) { animation-delay:.3s; }
+    @keyframes mkTyping {
+        0%,60%,100% { transform:translateY(0); opacity:.45; }
+        30% { transform:translateY(-4px); opacity:1; }
+    }
+    .mk-page .mk-ai-link-card {
+        position:relative; overflow:hidden;
+        background:linear-gradient(135deg,var(--mk-card),var(--mk-card2));
+    }
+    .mk-page .mk-ai-link-card::before {
+        content:""; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(115deg,transparent 20%,rgba(141,91,62,.09) 48%,transparent 75%);
+        transform:translateX(-100%); animation:mkCardSweep 8s ease-in-out infinite;
+    }
+    @keyframes mkCardSweep {
+        0%,60% { transform:translateX(-100%); }
+        85%,100% { transform:translateX(100%); }
+    }
+    .mk-page .mk-ai-ring {
+        position:absolute; border:1px solid color-mix(in srgb,var(--mk-accent) 28%,transparent);
+        border-radius:50%; animation:mkRing 18s linear infinite;
+    }
+    .mk-page .mk-ai-ring:nth-child(2) { animation-direction:reverse; animation-duration:24s; }
+    @keyframes mkRing { to { transform:rotate(360deg); } }
+    .mk-page .mk-copy-link {
+        display:inline-flex; align-items:center; justify-content:center; gap:.55rem;
+        border:1px solid var(--mk-border2); border-radius:12px; padding:.85rem 1rem;
+        color:var(--mk-text); background:var(--mk-card); font-weight:700;
+        transition:all .2s ease; cursor:pointer;
+    }
+    .mk-page .mk-copy-link:hover { transform:translateY(-2px); border-color:var(--mk-accent); }
+    .mk-page .mk-copy-feedback { min-height:1.2rem; color:var(--mk-green); font-size:.75rem; }
+    .mk-page .mk-marquee { overflow:hidden; border-block:1px solid var(--mk-border); background:var(--mk-band); }
+    .mk-page .mk-marquee-track {
+        display:flex; width:max-content; gap:2.5rem; padding:1rem 0;
+        animation:mkMarquee 32s linear infinite;
+    }
+    .mk-page .mk-marquee:hover .mk-marquee-track { animation-play-state:paused; }
+    @keyframes mkMarquee { to { transform:translateX(-50%); } }
+    .mk-page .mk-step-num { transition:transform .35s ease,box-shadow .35s ease; }
+    .mk-page .mk-card:hover .mk-step-num { transform:translateY(-4px) scale(1.06); box-shadow:0 12px 25px -14px var(--mk-accent); }
+    .mk-page .mk-pricing-glow { animation:mkPricingGlow 5s ease-in-out infinite; }
+    @keyframes mkPricingGlow {
+        0%,100% { box-shadow:0 0 0 0 color-mix(in srgb,var(--mk-accent) 0%,transparent); }
+        50% { box-shadow:0 0 0 10px color-mix(in srgb,var(--mk-accent) 7%,transparent); }
+    }
+    @media (prefers-reduced-motion:reduce) {
+        .mk-page *, .mk-page *::before, .mk-page *::after {
+            animation-duration:.01ms !important; animation-iteration-count:1 !important;
+            scroll-behavior:auto !important; transition-duration:.01ms !important;
+        }
+        .mk-page .mk-reveal { opacity:1 !important; transform:none !important; }
+    }
+
 </style>
 
 <div class="mk-page relative overflow-hidden font-ui">
@@ -180,7 +341,10 @@
     <section class="relative">
         <div class="mk-glow mk-glow-a w-72 h-72 -top-10 -left-16"></div>
         <div class="mk-glow mk-glow-b w-80 h-80 top-40 -right-24"></div>
-        <div class="mk-dots absolute inset-0 z-0"></div>
+        <div class="mk-dots mk-hero-grid absolute inset-0 z-0"></div>
+        <span class="mk-orb w-24 h-24 bg-orange-200/50 -top-4 left-[12%]"></span>
+        <span class="mk-orb mk-orb-two w-16 h-16 bg-emerald-200/50 top-1/2 right-[8%]"></span>
+        <span class="mk-orb mk-orb-three w-10 h-10 bg-rose-200/40 bottom-10 left-[42%]"></span>
 
         <div class="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-14 items-center">
             <div class="lg:col-span-7 text-center lg:text-left">
@@ -188,18 +352,18 @@
                 <div class="mk-rise mk-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-7">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span class="mk-accent text-[11px] font-bold uppercase tracking-wider font-mono">
-                        Built for WhatsApp & Instagram Sellers • 0% Commission
+                        THE BUSINESS TOOLKIT FOR SOCIAL COMMERCE • 0% COMMISSION
                     </span>
                 </div>
 
                 <!-- Headline -->
                 <h1 class="mk-rise mk-d1 mk-text text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.1] mb-6">
-                    The Easiest Way to Set Up an Online Store and <span class="mk-accent mk-underline">Sell on WhatsApp</span>.
+                    Turn Your Social Media Hustle Into a <span class="mk-accent mk-underline">Real Online Store</span>.
                 </h1>
 
                 <!-- Subtitle in Plain English -->
                 <p class="mk-rise mk-d2 mk-body font-serif text-base sm:text-lg max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
-                    Get a tailored website for your business in 60 seconds. Take structured orders on WhatsApp, generate daily status flyers without Canva, and send professional receipts—with zero monthly fees.
+                    Launch a storefront that looks like your brand, collect organised orders through WhatsApp, create polished product flyers, and send professional receipts. Everything your business needs to look ready for its next customer.
                 </p>
 
                 <!-- Action Buttons -->
@@ -223,7 +387,7 @@
             <!-- Decorative phone (illustration only, no real data) -->
             <div class="lg:col-span-5 hidden md:flex justify-center mk-rise mk-d3" aria-hidden="true">
                 <div class="mk-phone relative w-[260px] rounded-[2.4rem] p-3">
-                    <div class="mk-phone-screen rounded-[1.9rem] overflow-hidden">
+                    <div class="mk-phone-screen rounded-[1.9rem] overflow-hidden relative">
                         <div class="bg-[#16a34a] text-white px-4 py-3 flex items-center gap-2">
                             <span class="w-7 h-7 rounded-full flex items-center justify-center text-sm" style="background:rgba(255,255,255,.25)">💬</span>
                             <span class="text-[11px] font-bold tracking-wide uppercase">New WhatsApp Order</span>
@@ -246,17 +410,31 @@
                             </div>
                         </div>
                     </div>
-                    <span class="mk-chip mk-green absolute -right-5 -bottom-4 rounded-2xl px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">✓ 0% commission</span>
+                    <span class="mk-chip mk-green mk-float-chip absolute -right-5 -bottom-4 rounded-2xl px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">✓ 0% commission</span>
+                    <span class="mk-phone-notification mk-chip absolute -left-14 top-14 rounded-2xl px-3 py-2 text-[10px] font-bold shadow-xl">✦ New order received</span>
                 </div>
             </div>
         </div>
     </section>
 
 
+
+    <div class="mk-marquee relative z-10" aria-label="Marketplace benefits">
+        <div class="mk-marquee-track" aria-hidden="true">
+            {% for _ in range(2) %}
+            <span class="mk-muted text-[10px] font-mono font-bold uppercase tracking-[.22em]">✦ Your store, your brand</span>
+            <span class="mk-accent text-[10px] font-mono font-bold uppercase tracking-[.22em]">✦ WhatsApp-ready orders</span>
+            <span class="mk-muted text-[10px] font-mono font-bold uppercase tracking-[.22em]">✦ Flyers in one click</span>
+            <span class="mk-green text-[10px] font-mono font-bold uppercase tracking-[.22em]">✦ 0% transaction commission</span>
+            <span class="mk-muted text-[10px] font-mono font-bold uppercase tracking-[.22em]">✦ Professional receipts</span>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- ========================================== -->
     <!-- 2. THE REAL PROBLEMS WE SOLVE              -->
     <!-- ========================================== -->
-    <section class="mk-sec">
+    <section class="mk-sec mk-observe">
         <div class="max-w-5xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
                 <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">The Daily Struggle</span>
@@ -266,7 +444,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
                     <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">1</span>
-                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">💬</span>
+                    <span class="mk-card-icon mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">💬</span>
                     <h3 class="mk-text font-bold text-base mb-2">Answering "How Much?" All Day</h3>
                     <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Typing prices, sizes, and account numbers over and over in DMs drains your energy and makes customers wait.
@@ -275,7 +453,7 @@
 
                 <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
                     <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">2</span>
-                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">🎨</span>
+                    <span class="mk-card-icon mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">🎨</span>
                     <h3 class="mk-text font-bold text-base mb-2">Fighting Canva Every Morning</h3>
                     <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Wasting 1 to 2 hours every single morning trying to design status flyers with product photos and prices.
@@ -284,7 +462,7 @@
 
                 <div class="mk-card mk-card-soft mk-edge-rose relative p-7 rounded-2xl overflow-hidden">
                     <span class="mk-bignum-rose absolute -top-3 right-3 font-mono text-7xl font-black select-none">3</span>
-                    <span class="mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">👻</span>
+                    <span class="mk-card-icon mk-tile mk-tile-rose text-2xl w-12 h-12 flex items-center justify-center rounded-2xl mb-4">👻</span>
                     <h3 class="mk-text font-bold text-base mb-2">Customers Ghosting at Checkout</h3>
                     <p class="mk-body font-serif text-xs leading-relaxed m-0">
                         Buyers who say "I'll get back to you" because there was no clear catalog, order total, or simple checkout.
@@ -298,7 +476,7 @@
     <!-- ========================================== -->
     <!-- 3. ALL THE FEATURES (NO JARGON)            -->
     <!-- ========================================== -->
-    <section id="features" class="mk-sec-band relative">
+    <section id="features" class="mk-sec-band relative mk-observe">
         <div class="max-w-6xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
                 <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Built-in Features</span>
@@ -326,7 +504,7 @@
                 <!-- Feature 2: WhatsApp Orders -->
                 <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">💬</div>
+                        <div class="mk-card-icon mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">💬</div>
                         <h3 class="mk-text font-bold text-lg mb-2">Direct WhatsApp Orders</h3>
                         <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Customers view your catalog, pick their size, color, or portion, and click checkout. You receive a clean, itemized order directly in your WhatsApp DM with zero transaction fees.
@@ -340,7 +518,7 @@
                 <!-- Feature 3: Status Flyer Studio -->
                 <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📸</div>
+                        <div class="mk-card-icon mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📸</div>
                         <h3 class="mk-text font-bold text-lg mb-2">1-Click Status Flyer Studio</h3>
                         <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Turn any product in your inventory into a high-res graphic flyer for your WhatsApp Status or Instagram Story in one tap. Choose from 12 brand themes with prices and WhatsApp button included.
@@ -355,7 +533,7 @@
                 <div class="mk-card lg:col-span-2 p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
                     <div class="mk-bar-clay absolute top-0 left-0 h-full w-1.5"></div>
                     <div>
-                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📄</div>
+                        <div class="mk-card-icon mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">📄</div>
                         <h3 class="mk-text font-bold text-xl mb-2">Invoices & "PAID" Receipts</h3>
                         <p class="mk-body font-serif text-xs leading-relaxed mb-4 max-w-xl">
                             Send a formal Commercial Invoice before payment with your bank details so buyers know where to pay. Once payment enters, switch it to an official Receipt stamped "PAID IN FULL" with 1-click PDF export.
@@ -369,7 +547,7 @@
                 <!-- Feature 5: Unlimited Made-to-Order Stock -->
                 <div class="mk-card p-8 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div class="mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🍲</div>
+                        <div class="mk-card-icon mk-tile mk-tile-clay w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🍲</div>
                         <h3 class="mk-text font-bold text-lg mb-2">Made-to-Order Stock Mode</h3>
                         <p class="mk-body font-serif text-xs leading-relaxed mb-4">
                             Selling cooked meals, cakes, digital code, or services? Toggle "Always in Stock" so your items never get marked "OUT OF STOCK" when units hit zero. Perfect for restaurants and bakers.
@@ -384,7 +562,7 @@
                 <div class="mk-card lg:col-span-2 p-8 rounded-3xl flex flex-col justify-between relative overflow-hidden">
                     <div class="mk-bar-green absolute top-0 left-0 h-full w-1.5"></div>
                     <div>
-                        <div class="mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🎯</div>
+                        <div class="mk-card-icon mk-tile mk-tile-green w-11 h-11 rounded-2xl flex items-center justify-center text-lg mb-4">🎯</div>
                         <h3 class="mk-text font-bold text-xl mb-2">Lost Leads Recovery</h3>
                         <p class="mk-body font-serif text-xs leading-relaxed mb-4 max-w-xl">
                             If a customer fills in their name and phone number on your website but gets distracted before sending the WhatsApp message, our system saves them so you can send a 1-click reminder.
@@ -400,10 +578,87 @@
     </section>
 
 
+
+    <!-- ========================================== -->
+    <!-- AI SELF-SERVICE HELP                       -->
+    <!-- ========================================== -->
+    <section class="mk-sec-band relative overflow-hidden mk-observe" id="ai-help">
+        <div class="max-w-6xl mx-auto px-6 py-20">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div class="lg:col-span-6 mk-reveal mk-reveal-left">
+                    <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-3">Help, on your terms</span>
+                    <h2 class="mk-text text-3xl md:text-5xl font-black tracking-tight leading-[1.08] mb-5">
+                        Your AI assistant can explain <span class="mk-accent">Marketplace</span>.
+                    </h2>
+                    <p class="mk-body font-serif text-sm md:text-base leading-relaxed max-w-xl mb-7">
+                        Prefer asking ChatGPT, Gemini, or another AI assistant? Give it our official Marketplace guide. It can use the guide to answer questions about setting up your store, products, flyers, orders, payments, coins, and more.
+                    </p>
+                    <div class="flex flex-wrap gap-3 mb-5">
+                        <span class="mk-chip rounded-full px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">ChatGPT</span>
+                        <span class="mk-chip rounded-full px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">Gemini</span>
+                        <span class="mk-chip rounded-full px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider">Your preferred AI</span>
+                    </div>
+                    <a href="https://marketplace-beryl-delta.vercel.app/agent-instructions"
+                       target="_blank" rel="noopener noreferrer"
+                       class="mk-btn mk-btn-primary inline-flex items-center gap-2 px-6 py-4 text-xs tracking-wider">
+                        OPEN MARKETPLACE AI GUIDE <span aria-hidden="true">↗</span>
+                    </a>
+                </div>
+
+                <div class="lg:col-span-6 mk-reveal mk-reveal-right">
+                    <div class="mk-ai-link-card mk-card rounded-[2rem] p-6 md:p-8">
+                        <div class="absolute -right-16 -top-20 w-64 h-64 pointer-events-none" aria-hidden="true">
+                            <span class="mk-ai-ring inset-0"></span>
+                            <span class="mk-ai-ring inset-8"></span>
+                        </div>
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between gap-4 mb-7">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl mk-tile mk-tile-clay">✦</span>
+                                    <div>
+                                        <p class="mk-text font-bold text-sm m-0">Marketplace Knowledge Guide</p>
+                                        <p class="mk-muted text-[10px] font-mono uppercase tracking-wider mt-1">Official reference link</p>
+                                    </div>
+                                </div>
+                                <span class="mk-badge-green rounded-full px-3 py-1 text-[9px] font-mono font-bold uppercase">Public guide</span>
+                            </div>
+
+                            <p class="mk-muted text-[10px] font-mono uppercase tracking-wider mb-2">Copy this link into your AI chatbot</p>
+                            <div class="mk-code rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                                <code id="mkAgentGuideUrl" class="text-[11px] leading-relaxed break-all flex-1">https://marketplace-beryl-delta.vercel.app/agent-instructions</code>
+                                <button type="button" class="mk-copy-link text-xs shrink-0"
+                                        id="mkCopyAgentGuide" aria-label="Copy Marketplace AI guide link">
+                                    <span aria-hidden="true">▣</span> Copy link
+                                </button>
+                            </div>
+                            <p class="mk-copy-feedback mt-3" id="mkCopyFeedback" aria-live="polite"></p>
+
+                            <div class="mk-phone-bubble rounded-2xl p-4 mt-5 border mk-rule">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-7 h-7 rounded-full mk-tile mk-tile-green flex items-center justify-center text-xs">✦</span>
+                                    <span class="mk-text text-xs font-bold">Your AI chatbot</span>
+                                    <span class="mk-green text-[9px] ml-auto font-mono">GUIDE LOADED</span>
+                                </div>
+                                <p class="mk-body text-xs leading-relaxed mb-3">“How do I publish my store and start receiving WhatsApp orders?”</p>
+                                <div class="mk-chat-typing inline-flex items-center rounded-full mk-card-soft px-3 py-2" aria-label="Typing animation">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <p class="mk-muted text-[10px] mt-3 mb-0">Your chatbot can answer using the official guide as its reference.</p>
+                            </div>
+                            <p class="mk-muted text-[10px] leading-relaxed mt-4 mb-0">
+                                The guide explains Marketplace; it does not sign in to your account or perform account actions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ========================================== -->
     <!-- 4. HOW IT WORKS (3 SIMPLE STEPS)           -->
     <!-- ========================================== -->
-    <section class="mk-sec">
+    <section class="mk-sec mk-observe">
         <div class="max-w-5xl mx-auto px-6 py-20">
             <div class="text-center mb-16">
                 <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Easy Setup</span>
@@ -444,7 +699,7 @@
     <!-- ========================================== -->
     <!-- 5. HONEST, SIMPLE PRICING                  -->
     <!-- ========================================== -->
-    <section class="mk-sec-band">
+    <section class="mk-sec-band mk-observe">
         <div class="max-w-4xl mx-auto px-6 py-20">
             <div class="text-center mb-14">
                 <span class="mk-accent text-[10px] font-mono uppercase tracking-widest font-bold block mb-2">Clear Pricing</span>
@@ -473,9 +728,9 @@
                 </div>
 
                 <!-- Go Live -->
-                <div class="mk-card mk-card-pop p-8 rounded-3xl flex flex-col justify-between relative md:scale-[1.03]">
+                <div class="mk-card mk-card-pop mk-pricing-glow p-8 rounded-3xl flex flex-col justify-between relative md:scale-[1.03]">
                     <span class="mk-badge-green absolute -top-3 right-6 font-mono text-[9px] font-bold uppercase px-3 py-1 rounded-full">
-                        MONTHLY PAYMENT
+                        ONE-TIME PAYMENT
                     </span>
                     <div>
                         <span class="mk-accent text-[10px] font-mono font-bold uppercase tracking-wider">Public Store</span>
@@ -502,7 +757,7 @@
     <!-- ========================================== -->
     <!-- 6. FINAL CALL TO ACTION                    -->
     <!-- ========================================== -->
-    <section class="mk-sec">
+    <section class="mk-sec mk-observe">
         <div class="max-w-5xl mx-auto px-6 py-20 text-center">
             <div class="mk-cta p-10 md:p-16 rounded-3xl shadow-2xl relative overflow-hidden">
                 <div class="mk-glow mk-glow-a w-80 h-80 -top-24 -left-20" style="opacity:.45"></div>
@@ -528,6 +783,67 @@
 </div>
 
 <script>
+
+    /* Independent scroll reveals, staggered cards, gentle pointer tilt and
+       accessible copy interaction. No external animation library required. */
+    (function () {
+        const page = document.querySelector('.mk-page');
+        if (!page) return;
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        const revealTargets = page.querySelectorAll(
+            'section > div > .text-center, .mk-card, .mk-feature, .mk-ai-link-card, .mk-cta'
+        );
+        revealTargets.forEach((el, index) => {
+            el.classList.add('mk-reveal');
+            el.style.setProperty('--mk-delay', `${(index % 3) * 90}ms`);
+        });
+
+        if (!reduceMotion && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
+            revealTargets.forEach(el => observer.observe(el));
+        } else {
+            revealTargets.forEach(el => el.classList.add('is-visible'));
+        }
+
+        if (!reduceMotion && window.matchMedia('(pointer:fine)').matches) {
+            page.querySelectorAll('.mk-card, .mk-feature').forEach(card => {
+                card.addEventListener('pointermove', event => {
+                    const rect = card.getBoundingClientRect();
+                    const x = (event.clientX - rect.left) / rect.width - .5;
+                    const y = (event.clientY - rect.top) / rect.height - .5;
+                    card.style.transform = `translateY(-5px) perspective(900px) rotateX(${-y * 2.2}deg) rotateY(${x * 2.2}deg)`;
+                });
+                card.addEventListener('pointerleave', () => {
+                    card.style.transform = '';
+                });
+            });
+        }
+
+        const copyButton = page.querySelector('#mkCopyAgentGuide');
+        const guideUrl = page.querySelector('#mkAgentGuideUrl');
+        const feedback = page.querySelector('#mkCopyFeedback');
+        if (copyButton && guideUrl && feedback) {
+            copyButton.addEventListener('click', async () => {
+                const value = guideUrl.textContent.trim();
+                try {
+                    await navigator.clipboard.writeText(value);
+                    feedback.textContent = 'Copied. Paste the link into your preferred AI chatbot.';
+                    copyButton.innerHTML = '<span aria-hidden="true">✓</span> Copied';
+                } catch (error) {
+                    feedback.textContent = 'Copy was blocked by your browser. Select the link above and copy it manually.';
+                }
+            });
+        }
+    })();
+
     /* Theme sync: reads the site's real theme (class/attribute first, then the
        page's actual text colour) and follows the header sun/moon toggle. */
     (function () {
