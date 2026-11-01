@@ -36,25 +36,23 @@ class Store(db.Model):
     name = db.Column(db.String(100), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False, index=True)
     bio = db.Column(db.Text, default='Welcome to our official store!')
-    
     build_status = db.Column(db.String(20), default='ready')
-    
     is_active = db.Column(db.Boolean, default=False)
     has_ever_activated = db.Column(db.Boolean, default=False)
+    
+    # 👇 NEW: Monthly Subscription Expiry Date
+    expires_at = db.Column(db.DateTime, nullable=True) 
     
     logo = db.Column(db.String(500), default='default_logo.png')
     hero_image = db.Column(db.String(500), default='')
     background_image = db.Column(db.String(500), default='')
     receipt_theme = db.Column(db.String(50), default='classic')
     sections_config = db.Column(db.Text, default='{"hero": true, "flash_sales": true, "ads": true}')
-    
     whatsapp_number = db.Column(db.String(20), nullable=False)
     currency = db.Column(db.String(10), default='₦')
-    
     views_count = db.Column(db.Integer, default=0)
     show_public_stats = db.Column(db.Boolean, default=False)
     custom_html = db.Column(db.Text, default='')
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     products = db.relationship('Product', backref='store', lazy='dynamic', cascade="all, delete-orphan")
