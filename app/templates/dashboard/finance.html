@@ -291,7 +291,7 @@
         document.getElementById('topupModal').style.display = 'none';
     }
 
-    function processTopup() {
+        function processTopup() {
         const amount = document.getElementById('topupAmount').value;
         if (!amount || amount < 100) {
             alert('Please enter a valid amount (Minimum ₦100).');
@@ -307,14 +307,20 @@
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken // ✅ ADDED: CSRF Token Header
+                'X-CSRFToken': csrfToken 
             },
             body: JSON.stringify({ amount: amount })
         })
-        .then(response => response.json())
+        .then(async response => {
+            // 👇 THIS CATCHES THE EXACT FLASK ERROR MESSAGE (like the 403 reason)
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server Error ${response.status}: ${errorText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'success') {
-                // Redirect to Paystack secure checkout
                 window.location.href = data.authorization_url;
             } else {
                 alert('Error: ' + data.message);
@@ -323,8 +329,9 @@
             }
         })
         .catch(error => {
+            // 👇 THIS WILL POP UP ON YOUR TABLET WITH THE EXACT CAUSE
+            alert('DEBUG INFO:\n\n' + error.message);
             console.error('Top-up error:', error);
-            alert('An unexpected error occurred. Please try again.');
             btn.innerText = originalText;
             btn.disabled = false;
         });
