@@ -38,9 +38,51 @@
     </div>
 </div>
 
+<!-- ⚖️ 2. MANUAL BALANCE ADJUSTMENT (NEW) -->
+<div class="section-box mb-10 p-6 border-l-4 border-l-purple-600">
+    <div class="flex items-center gap-3 mb-6">
+        <span class="bg-purple-100 text-purple-700 font-ui font-bold text-xs px-3 py-1 rounded-full">⚖️ ADMIN OVERRIDE</span>
+        <div>
+            <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">manual balance adjustment</h2>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Add or remove coins from a specific merchant's wallet. This will be permanently logged in their transaction history.</p>
+        </div>
+    </div>
+    
+    <form method="POST" action="{{ url_for('admin.adjust_balance') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <div>
+            <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-stone-500 mb-1.5">User Email</label>
+            <input type="email" name="user_email" required class="w-full p-2.5 border border-stone-300 rounded-lg font-ui text-xs outline-none focus:border-purple-500 bg-white" placeholder="merchant@example.com">
+        </div>
+        
+        <div>
+            <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-stone-500 mb-1.5">Action</label>
+            <select name="action" class="w-full p-2.5 border border-stone-300 rounded-lg font-ui text-xs outline-none focus:border-purple-500 bg-white">
+                <option value="remove">🔴 Remove Coins</option>
+                <option value="add">🟢 Add Coins</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-stone-500 mb-1.5">Amount</label>
+            <input type="number" name="amount" min="1" required class="w-full p-2.5 border border-stone-300 rounded-lg font-ui text-xs outline-none focus:border-purple-500 bg-white" placeholder="e.g. 500">
+        </div>
+
+        <div>
+            <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-stone-500 mb-1.5">Reason (Required)</label>
+            <input type="text" name="reason" required class="w-full p-2.5 border border-stone-300 rounded-lg font-ui text-xs outline-none focus:border-purple-500 bg-white" placeholder="e.g. Refund, Policy violation">
+        </div>
+
+        <div class="md:col-span-2 lg:col-span-4 flex justify-end mt-2">
+            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-ui font-bold text-xs uppercase tracking-wider px-6 py-3 rounded-xl shadow transition flex items-center gap-2">
+                <span>⚡ Execute Adjustment</span>
+            </button>
+        </div>
+    </form>
+</div>
+
 <form method="POST" action="{{ url_for('admin.economy') }}">
 
-    <!-- 2. EARNING RULES (GIVES COINS) -->
+    <!-- 3. EARNING RULES (GIVES COINS) -->
     <div class="section-box mb-10 p-6">
         <div class="flex items-center gap-3 mb-6">
             <span class="bg-green-100 text-green-700 font-ui font-bold text-xs px-3 py-1 rounded-full">🟢 GIVES COINS</span>
@@ -80,7 +122,7 @@
         </table>
     </div>
 
-    <!-- 3. REDEMPTION SHOP (TAKES COINS) -->
+    <!-- 4. REDEMPTION SHOP (TAKES COINS) -->
     <div class="section-box mb-10 p-6">
         <div class="flex items-center gap-3 mb-6">
             <span class="bg-rose-100 text-rose-700 font-ui font-bold text-xs px-3 py-1 rounded-full">🔴 TAKES COINS</span>
@@ -119,83 +161,82 @@
             </tbody>
         </table>
 
-            <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
-                <button type="submit" style="background-color: #8d5b3e; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;" onmouseover="this.style.backgroundColor='#7a4e34'" onmouseout="this.style.backgroundColor='#8d5b3e'">
-                    Save All Economy Changes
-                </button>
-            </div>
-        </form> <!-- End of Pricing Form -->
+        <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+            <button type="submit" style="background-color: #8d5b3e; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;" onmouseover="this.style.backgroundColor='#7a4e34'" onmouseout="this.style.backgroundColor='#8d5b3e'">
+                Save All Economy Changes
+            </button>
         </div>
+    </div>
+</form> <!-- End of Pricing Form -->
 
-    <!-- 4. TRANSACTION LEDGER & SEARCH ("Detailed searching typeshiii") -->
-    <div class="section-box mb-10 p-6">
-        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
-            <div>
-                <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">merchant expenditure ledger</h2>
-                <p class="font-serif italic text-xs text-stone-500 mt-0.5">Search by merchant username or item purchased.</p>
-            </div>
-            
-            <!-- Search & Filter Controls -->
-            <form method="GET" action="{{ url_for('admin.economy') }}" class="flex gap-3">
-                <select name="type" class="p-2.5 border border-stone-300 text-xs font-ui outline-none rounded-lg bg-white focus:border-clay">
-                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Transactions</option>
-                    <option value="credit" {% if filter_type == 'credit' %}selected{% endif %}>🟢 Credits Only</option>
-                    <option value="debit" {% if filter_type == 'debit' %}selected{% endif %}>🔴 Debits Only</option>
-                </select>
-                <input type="text" name="search" value="{{ search_query }}" placeholder="Search username or item..." 
-                       class="p-2.5 border border-stone-300 text-xs font-ui outline-none w-64 rounded-lg bg-white focus:border-clay">
-                <button type="submit" class="bg-dark-oak hover:bg-black text-white font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg transition">
-                    Search
-                </button>
-                {% if search_query or filter_type != 'all' %}
-                <a href="{{ url_for('admin.economy') }}" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg transition no-underline flex items-center">
-                    Clear
-                </a>
-                {% endif %}
-            </form>
+<!-- 5. TRANSACTION LEDGER & SEARCH -->
+<div class="section-box mb-10 p-6">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <div>
+            <h2 class="font-ui text-xl font-normal lowercase tracking-tight m-0">merchant expenditure ledger</h2>
+            <p class="font-serif italic text-xs text-stone-500 mt-0.5">Search by merchant username or item purchased.</p>
         </div>
-
-        <table class="w-full text-left font-ui text-xs border-collapse">
-            <thead>
-                <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
-                    <th class="py-3">Date & Time</th>
-                    <th class="py-3">Merchant</th>
-                    <th class="py-3">Type</th>
-                    <th class="py-3">Description / Item</th>
-                    <th class="py-3 text-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tx in transactions %}
-                <tr class="border-b border-stone-100 hover:bg-stone-50 transition">
-                    <td class="py-4 text-stone-500 whitespace-nowrap">{{ tx.created_at.strftime('%d %b %Y, %H:%M') }}</td>
-                    <td class="py-4 font-semibold text-dark-oak">@{{ tx.username }}</td>
-                    <td class="py-4">
-                        {% if tx.type == 'credit' %}
-                            <span class="text-[#16a34a] font-bold text-[0.65rem] bg-green-50 px-2 py-1 rounded border border-green-200">🟢 CREDIT</span>
-                        {% else %}
-                            <span class="text-rose-600 font-bold text-[0.65rem] bg-rose-50 px-2 py-1 rounded border border-rose-200">🔴 DEBIT</span>
-                        {% endif %}
-                    </td>
-                    <td class="py-4 text-stone-700">{{ tx.description }}</td>
-                    <td class="py-4 text-right font-bold {% if tx.type == 'credit' %}text-[#16a34a]{% else %}text-rose-600{% endif %}">
-                        {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="py-10 text-center text-stone-500 italic font-serif">
-                        {% if search_query %}
-                            No transactions found matching "{{ search_query }}".
-                        {% else %}
-                            No transactions recorded yet.
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        
+        <!-- Search & Filter Controls -->
+        <form method="GET" action="{{ url_for('admin.economy') }}" class="flex gap-3">
+            <select name="type" class="p-2.5 border border-stone-300 text-xs font-ui outline-none rounded-lg bg-white focus:border-clay">
+                <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Transactions</option>
+                <option value="credit" {% if filter_type == 'credit' %}selected{% endif %}>🟢 Credits Only</option>
+                <option value="debit" {% if filter_type == 'debit' %}selected{% endif %}>🔴 Debits Only</option>
+            </select>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search username or item..." 
+                   class="p-2.5 border border-stone-300 text-xs font-ui outline-none w-64 rounded-lg bg-white focus:border-clay">
+            <button type="submit" class="bg-dark-oak hover:bg-black text-white font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg transition">
+                Search
+            </button>
+            {% if search_query or filter_type != 'all' %}
+            <a href="{{ url_for('admin.economy') }}" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-ui font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-lg transition no-underline flex items-center">
+                Clear
+            </a>
+            {% endif %}
+        </form>
     </div>
 
-</div> <!-- End Container -->
+    <table class="w-full text-left font-ui text-xs border-collapse">
+        <thead>
+            <tr class="border-b border-stone-200 text-stone-400 uppercase text-[0.65rem]">
+                <th class="py-3">Date & Time</th>
+                <th class="py-3">Merchant</th>
+                <th class="py-3">Type</th>
+                <th class="py-3">Description / Item</th>
+                <th class="py-3 text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transactions %}
+            <tr class="border-b border-stone-100 hover:bg-stone-50 transition">
+                <td class="py-4 text-stone-500 whitespace-nowrap">{{ tx.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                <td class="py-4 font-semibold text-dark-oak">@{{ tx.username }}</td>
+                <td class="py-4">
+                    {% if tx.type == 'credit' %}
+                        <span class="text-[#16a34a] font-bold text-[0.65rem] bg-green-50 px-2 py-1 rounded border border-green-200">🟢 CREDIT</span>
+                    {% else %}
+                        <span class="text-rose-600 font-bold text-[0.65rem] bg-rose-50 px-2 py-1 rounded border border-rose-200">🔴 DEBIT</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 text-stone-700">{{ tx.description }}</td>
+                <td class="py-4 text-right font-bold {% if tx.type == 'credit' %}text-[#16a34a]{% else %}text-rose-600{% endif %}">
+                    {{ '+' if tx.type == 'credit' else '-' }}{{ tx.amount }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="py-10 text-center text-stone-500 italic font-serif">
+                    {% if search_query %}
+                        No transactions found matching "{{ search_query }}".
+                    {% else %}
+                        No transactions recorded yet.
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 {% endblock %}
