@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Finance // Marketplace</title>
+    
+    <!-- ✅ ADDED: CSRF Token for secure POST requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700;900&display=swap');
         :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
@@ -175,6 +179,9 @@
     let currentTaskPrice = 0;
     let currentTaskName = '';
 
+    // ✅ ADDED: Grab the CSRF token from the meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+
     // Data passed from Flask
     const inactiveKiosks = {{ inactive_kiosks | tojson }};
 
@@ -245,7 +252,10 @@
 
         fetch('/finance/redeem', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // ✅ ADDED: CSRF Token Header
+            },
             body: JSON.stringify(payload)
         })
         .then(response => response.json())
@@ -295,7 +305,10 @@
 
         fetch('/finance/topup', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken // ✅ ADDED: CSRF Token Header
+            },
             body: JSON.stringify({ amount: amount })
         })
         .then(response => response.json())
