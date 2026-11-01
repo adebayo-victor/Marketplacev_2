@@ -1,6 +1,6 @@
 import uuid
 import json
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order, OrderItem
@@ -13,6 +13,23 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
+@storefront_bp.route('/agent-instructions')
+def agent_instructions():
+    """Serves the Marketplace Agent Documentation."""
+    doc_path = os.path.join(current_app.static_folder, 'docs', 'marketplace-agent.md')
+    
+    try:
+        with open(doc_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except FileNotFoundError:
+        content = "# Documentation not found. Please ensure app/static/docs/marketplace-agent.md exists."
+
+    # If an AI bot requests it with ?format=raw, give them clean plain text without HTML
+    if request.args.get('format') == 'raw':
+        return Response(content, mimetype='text/plain')
+
+    # Otherwise, show the nice HTML page for humans
+    return render_template('store/agent_instructions.html', doc_content=content)
 
 @storefront_bp.route('/<store_slug>')
 def store_catalog(store_slug):
