@@ -271,7 +271,7 @@ def execute_build_worker(kiosk_slug):
 
 
 # -------------------------------------------------------------
-# 💳 REAL PAYSTACK ACTIVATION (₦5,000 / 500,000 KOBO)
+# 💳 REAL PAYSTACK ACTIVATION / RENEWAL (₦5,000 / 500,000 KOBO)
 # -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/activate/verify')
 @login_required
@@ -298,6 +298,7 @@ def verify_kiosk_activation(kiosk_slug):
             "Content-Type": "application/json",
             "User-Agent": "Marketplace/2.0 (Mozilla/5.0)"
         })
+
         with urllib.request.urlopen(req, timeout=20) as res:
             res_data = json.loads(res.read().decode('utf-8'))
             
@@ -307,13 +308,26 @@ def verify_kiosk_activation(kiosk_slug):
                 if paid_amount >= 500000:
                     kiosk.is_active = True
                     kiosk.has_ever_activated = True
+                    
+                    # 🗓️ MONTHLY SUBSCRIPTION LOGIC
+                    now = datetime.utcnow()
+                    if kiosk.expires_at and kiosk.expires_at > now:
+                        # If they renew early, add 30 days to their CURRENT expiry
+                        kiosk.expires_at = kiosk.expires_at + timedelta(days=30)
+                    else:
+                        # If it's expired or new, start 30 days from NOW
+                        kiosk.expires_at = now + timedelta(days=30)
+                        
                     db.session.commit()
-                    flash(f'🎉 Real Paystack payment of ₦{paid_amount/100:,.2f} verified! Kiosk "{kiosk.name}" is now officially LIVE!', 'success')
+                    
+                    expiry_date = kiosk.expires_at.strftime('%b %d, %Y')
+                    flash(f'🎉 Payment verified! Kiosk "{kiosk.name}" is active until {expiry_date}.', 'success')
                 else:
                     flash(f'Payment rejected: Underpaid amount ({paid_amount/100} NGN). Required ₦5,000.', 'danger')
             else:
                 gateway_msg = res_data.get('data', {}).get('gateway_response', 'Transaction was declined.')
                 flash(f'Paystack Payment Failed: {gateway_msg}', 'danger')
+                
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
         flash(f'Paystack Verification Error: HTTP {e.code} - {error_body}', 'danger')
