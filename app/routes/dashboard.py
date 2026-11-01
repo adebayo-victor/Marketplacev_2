@@ -595,11 +595,6 @@ def delete_kiosk(kiosk_slug):
     flash(f'Kiosk "{name}" and media deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
 
-
-
-
-
-
 # -------------------------------------------------------------
 # 💳 WALLET TOP-UP: Initialize Paystack
 # -------------------------------------------------------------
@@ -616,29 +611,29 @@ def topup_wallet():
     if amount_naira < 100:
         return jsonify({'status': 'error', 'message': 'Minimum top-up amount is ₦100.'}), 400
         
-    # Generate a unique reference for this transaction
     ref = f"TOPUP_{current_user.id}_{int(time.time())}_{random.randint(1000, 9999)}"
-    
     paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY', '').strip()
+    
     if not paystack_secret:
         return jsonify({'status': 'error', 'message': 'Paystack secret key not configured.'}), 500
         
-    # Initialize Paystack Transaction
     url = "https://api.paystack.co/transaction/initialize"
     req_data = json.dumps({
         "email": current_user.email,
-        "amount": int(amount_naira * 100), # Paystack requires amount in kobo
+        "amount": int(amount_naira * 100),
         "reference": ref,
         "callback_url": request.host_url.rstrip('/') + "/finance/topup/verify"
     }).encode('utf-8')
     
+    # ✅ MIRRORED HEADERS FROM WORKING KIOSK ROUTE
     req = urllib.request.Request(url, data=req_data, headers={
         "Authorization": f"Bearer {paystack_secret}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "User-Agent": "Marketplace/2.0 (Mozilla/5.0)"  # 👈 THIS IS THE MISSING KEY!
     })
     
     try:
-        with urllib.request.urlopen(req, timeout=10) as res:
+        with urllib.request.urlopen(req, timeout=15) as res:
             res_data = json.loads(res.read().decode('utf-8'))
             if res_data.get('status'):
                 return jsonify({
