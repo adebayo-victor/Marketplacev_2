@@ -292,3 +292,66 @@ def economy():
         filter_type=filter_type
     )
 
+
+# -------------------------------------------------------------
+# ⚖️ ADMIN MANUAL BALANCE ADJUSTMENT
+# -------------------------------------------------------------
+@admin_bp.route('/adjust-balance', methods=['POST'])
+@admin_required
+def adjust_balance():
+    user_email = request.form.get('user_email', '').strip().lower()
+    action = request.form.get('action')  # 'remove' or 'add'
+    amount = request.form.get('amount', type=int)
+    reason = request.form.get('reason', '').strip()
+
+    # 1. Basic Validation
+    if not user_email or not amount or amount <= 0 or not reason:
+        flash('Please provide a valid email, amount, and reason.', 'danger')
+        return redirect(url_for('admin.economy'))
+
+    # 2. Find User
+    user = User.query.filter_by(email=user_email).first()
+    if not user:
+        flash('User with that email was not found.', 'danger')
+        return redirect(url_for('admin.economy'))
+
+    # 3. Get or Create Wallet
+    wallet = Wallet.query.filter_by(user_id=user.id).first()
+    if not wallet:
+        wallet = Wallet(user_id=user.id, balance=0)
+        db.session.add(wallet)
+        db.session.flush()
+
+    # 4. Execute Adjustment
+    if action == 'remove':
+        if wallet.balance < amount:
+            flash(f'Cannot remove {amount} coins. User only has {wallet.balance} coins.', 'danger')
+            return redirect(url_for('admin.economy'))
+        
+        wallet.balance -= amount
+        tx_type = 'debit'
+        # Exact phrasing you requested for the history
+        desc = f"Removed by Marketplace: {reason}"
+        
+    elif action == 'add':
+        wallet.balance += amount
+        tx_type = 'credit'
+        desc = f"Added by Marketplace: {reason}"
+        
+    else:
+        flash('Invalid action selected.', 'danger')
+        return redirect(url_for('admin.economy'))
+
+    # 5. Create Audit Trail Transaction
+    tx = Transaction(
+        wallet_id=wallet.id,
+        user_id=user.id,
+        type=tx_type,
+        amount=amount,
+        description=desc
+    )
+    db.session.add(tx)
+    db.session.commit()
+    
+    flash(f'Successfully {action}ed {amount} coins for {user.username}.', 'success')
+    return redirect(url_for('admin.economy'))
