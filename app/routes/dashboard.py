@@ -33,6 +33,17 @@ def overview():
     kiosks = current_user.stores.order_by(Store.created_at.desc()).all()
     return render_template('dashboard/overview.html', kiosks=kiosks)
 
+# -------------------------------------------------------------
+# Checks kisok for expiry, motherfucker, a human wrote some of this code, too, are u shocked, muahahahahaahahaha, [tears of joy] [devil], maybe i sold the code to u or ya my employee, who knows, anyways, i hope i am not making life hard for u and if i am i hope i am paying u enough.
+# -------------------------------------------------------------
+def check_kiosk_expiry(kiosk):
+    """Checks if a kiosk has expired and disables it if so."""
+    if kiosk.is_active and kiosk.expires_at:
+        if kiosk.expires_at < datetime.utcnow():
+            kiosk.is_active = False
+            db.session.commit()
+            return False
+    return kiosk.is_active
 
 # -------------------------------------------------------------
 # OPEN A NEW KIOSK (INSTANT ARRIVAL IN HUB)
