@@ -1,3 +1,6 @@
+
+import random
+import time
 import os
 import json
 import re
@@ -593,3 +596,127 @@ def delete_kiosk(kiosk_slug):
     db.session.commit()
     flash(f'Kiosk "{name}" and media deleted permanently.', 'info')
     return redirect(url_for('dashboard.overview'))
+
+
+
+
+
+
+# -------------------------------------------------------------
+# 💳 WALLET TOP-UP: Initialize Paystack
+# -------------------------------------------------------------
+@dashboard_bp.route('/finance/topup', methods=['POST'])
+@login_required
+def topup_wallet():
+    data = request.get_json()
+    amount_naira = data.get('amount')
+    
+    if not amount_naira:
+        return jsonify({'status': 'error', 'message': 'Amount is required.'}), 400
+        
+    amount_naira = float(amount_naira)
+    if amount_naira < 100:
+        return jsonify({'status': 'error', 'message': 'Minimum top-up amount is ₦100.'}), 400
+        
+    # Generate a unique reference for this transaction
+    ref = f"TOPUP_{current_user.id}_{int(time.time())}_{random.randint(1000, 9999)}"
+    
+    paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY', '').strip()
+    if not paystack_secret:
+        return jsonify({'status': 'error', 'message': 'Paystack secret key not configured.'}), 500
+        
+    # Initialize Paystack Transaction
+    url = "https://api.paystack.co/transaction/initialize"
+    req_data = json.dumps({
+        "email": current_user.email,
+        "amount": int(amount_naira * 100), # Paystack requires amount in kobo
+        "reference": ref,
+        "callback_url": request.host_url.rstrip('/') + "/finance/topup/verify"
+    }).encode('utf-8')
+    
+    req = urllib.request.Request(url, data=req_data, headers={
+        "Authorization": f"Bearer {paystack_secret}",
+        "Content-Type": "application/json"
+    })
+    
+    try:
+        with urllib.request.urlopen(req, timeout=10) as res:
+            res_data = json.loads(res.read().decode('utf-8'))
+            if res_data.get('status'):
+                return jsonify({
+                    'status': 'success',
+                    'authorization_url': res_data['data']['authorization_url'],
+                    'reference': ref
+                })
+            else:
+                return jsonify({'status': 'error', 'message': res_data.get('message', 'Paystack initialization failed')}), 400
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# -------------------------------------------------------------
+# 💳 WALLET TOP-UP: Verify and Credit Wallet
+# -------------------------------------------------------------
+@dashboard_bp.route('/finance/topup/verify')
+@login_required
+def verify_topup():
+    reference = request.args.get('reference')
+    if not reference:
+        flash('No transaction reference provided.', 'danger')
+        return redirect(url_for('dashboard.finance'))
+        
+    paystack_secret = os.environ.get('PAYSTACK_SECRET_KEY', '').strip()
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"Bearer {paystack_secret}",
+        "Content-Type": "application/json"
+    })
+    
+    try:
+        with urllib.request.urlopen(req, timeout=15) as res:
+            res_data = json.loads(res.read().decode('utf-8'))
+            
+            if res_data.get('status') and res_data.get('data', {}).get('status') == 'success':
+                paid_amount_kobo = res_data['data']['amount']
+                amount_naira = paid_amount_kobo / 100
+                
+                # Prevent double-crediting by checking if we already processed this exact reference
+                desc = f"Wallet Top-up (Ref: {reference})"
+                if Transaction.query.filter_by(user_id=current_user.id, description=desc).first():
+                    flash('This transaction has already been processed.', 'info')
+                    return redirect(url_for('dashboard.finance'))
+                
+                # Get or create wallet
+                wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+                if not wallet:
+                    wallet = Wallet(user_id=current_user.id, balance=0)
+                    db.session.add(wallet)
+                    db.session.flush()
+                    
+                # Credit the wallet (1 Naira = 1 Coin)
+                coins_to_add = int(amount_naira)
+                wallet.balance += coins_to_add
+                
+                # Log the transaction
+                tx = Transaction(
+                    wallet_id=wallet.id,
+                    user_id=current_user.id,
+                    type='credit',
+                    amount=coins_to_add,
+                    description=desc
+                )
+                db.session.add(tx)
+                db.session.commit()
+                
+                flash(f'🎉 Successfully topped up your wallet with ₦{amount_naira:,.2f} ({coins_to_add} Coins)!', 'success')
+            else:
+                gateway_msg = res_data.get('data', {}).get('gateway_response', 'Transaction was declined.')
+                flash(f'Payment Failed: {gateway_msg}', 'danger')
+                
+    except urllib.error.HTTPError as e:
+        flash(f'Verification Error: HTTP {e.code}', 'danger')
+    except Exception as e:
+        flash(f'Verification Error: {str(e)}', 'danger')
+        
+    return redirect(url_for('dashboard.finance'))
