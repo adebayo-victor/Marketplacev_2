@@ -8,27 +8,43 @@
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=JetBrains+Mono&display=swap');
         :root { --clay: #8d5b3e; --cream: #f9f5f0; --dark-oak: #2d1e14; }
         body { background: var(--cream); color: var(--dark-oak); font-family: 'Montserrat', sans-serif; line-height: 1.6; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        h1 { font-size: 2rem; border-bottom: 3px solid var(--clay); padding-bottom: 10px; margin-bottom: 20px; }
-        h2 { font-size: 1.4rem; margin-top: 30px; color: var(--clay); }
-        h3 { font-size: 1.1rem; margin-top: 20px; color: var(--dark-oak); }
-        ul, ol { padding-left: 20px; }
-        li { margin-bottom: 10px; }
-        code { font-family: 'JetBrains Mono', monospace; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        pre { background: #f3f4f6; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        h1 { font-size: 2.2rem; border-bottom: 3px solid var(--clay); padding-bottom: 10px; margin-bottom: 20px; color: var(--dark-oak); }
+        h2 { font-size: 1.6rem; margin-top: 40px; color: var(--clay); border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+        h3 { font-size: 1.25rem; margin-top: 25px; color: var(--dark-oak); }
+        h4 { font-size: 1.1rem; margin-top: 20px; color: #555; }
+        p { margin: 15px 0; line-height: 1.7; }
+        ul, ol { padding-left: 25px; margin: 15px 0; }
+        li { margin-bottom: 10px; line-height: 1.6; }
+        a { color: var(--clay); text-decoration: none; border-bottom: 1px solid transparent; transition: 0.2s; }
+        a:hover { border-bottom-color: var(--clay); }
+        code { font-family: 'JetBrains Mono', monospace; background: #f3f4f6; padding: 3px 8px; border-radius: 4px; font-size: 0.9em; color: #d96c3b; }
+        pre { background: #f3f4f6; padding: 20px; border-radius: 8px; overflow-x: auto; border-left: 4px solid var(--clay); }
+        pre code { background: none; padding: 0; color: var(--dark-oak); }
+        blockquote { border-left: 4px solid var(--clay); margin: 20px 0; padding: 15px 20px; background: #fff9f5; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background: #f9fafb; font-weight: 700; color: var(--dark-oak); }
+        hr { border: none; border-top: 2px solid #e5e7eb; margin: 40px 0; }
         
         .copy-box {
-            background: var(--dark-oak); color: white; padding: 20px; border-radius: 12px;
-            display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;
+            background: var(--dark-oak); color: white; padding: 25px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px;
         }
-        .copy-box p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+        .copy-box p { margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.6; }
         .copy-btn { 
-            background: var(--clay); color: white; border: none; padding: 12px 24px; 
+            background: var(--clay); color: white; border: none; padding: 14px 28px; 
             border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s;
             display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-family: 'Montserrat', sans-serif; font-size: 0.95rem;
         }
-        .copy-btn:hover { background: #7a4e34; transform: translateY(-2px); }
-        .copied-msg { color: #4ade80; font-weight: 700; font-size: 0.85rem; display: none; }
+        .copy-btn:hover { background: #a5633b; transform: translateY(-2px); }
+        .copied-msg { color: #4ade80; font-weight: 700; font-size: 0.9rem; display: none; }
+        
+        /* Table of Contents Styling */
+        .table-of-contents { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 25px 0; }
+        .table-of-contents ol { margin: 0; padding-left: 20px; }
+        .table-of-contents li { margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -42,13 +58,9 @@
             <span id="copyMsg" class="copied-msg">✅ Link copied to clipboard!</span>
         </div>
 
-        <!-- DOCUMENTATION CONTENT -->
+        <!-- DOCUMENTATION CONTENT (RENDERED AS HTML) -->
         <div class="content">
-            <h1>Marketplace Platform Documentation</h1>
-            <p><em>Welcome to the comprehensive guide for the Marketplace platform. This document details every feature, button, and benefit for users and AI agents.</em></p>
-            
-            <!-- This renders the markdown file you created -->
-            <div style="white-space: pre-wrap; font-family: 'Montserrat', sans-serif;">{{ doc_content }}</div>
+            {{ doc_content|safe }}
         </div>
     </div>
 
