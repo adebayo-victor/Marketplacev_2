@@ -6,6 +6,7 @@ import json
 import re
 import urllib.request
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
+from flask_wtf.csrf import generate_csrf
 from flask_login import login_required, current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order, OrderItem, User, Wallet, Transaction, Task
@@ -167,18 +168,15 @@ def finance():
 
     transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.created_at.desc()).all()
     tasks = Task.query.filter_by(is_active=True).all()
-    
-    # 1. Get the raw database objects
     inactive_kiosks_raw = Store.query.filter_by(user_id=current_user.id, is_active=False, build_status='ready').all()
-    
-    # 2. Convert them into a simple list of dictionaries (JSON serializable)
     inactive_kiosks = [{"id": k.id, "name": k.name} for k in inactive_kiosks_raw]
 
     return render_template('dashboard/finance.html', 
                            wallet=wallet, 
                            transactions=transactions, 
                            tasks=tasks,
-                           inactive_kiosks=inactive_kiosks) # Pass the list of dicts
+                           inactive_kiosks=inactive_kiosks,
+                           csrf_token=generate_csrf()) # 👈 ADD THIS LINE
 
 
 # -------------------------------------------------------------
