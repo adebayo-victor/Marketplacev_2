@@ -199,10 +199,6 @@
         </div>
 
         <!-- Section 2: Customer Leads & Orders -->
-        <div class="section-box" id="leads">
-            <h2>Customer Leads & Orders</h2>
-            <input type="text" class="search-input" onkeyup="searchTable('leadsTable', this.value)" placeholder="Search orders by name, phone, or ref (#)..." style="margin-bottom: 10px;">
-            
             <div class="table-responsive">
                 <table id="leadsTable">
                     <thead>
@@ -211,7 +207,16 @@
                     <tbody>
                         {% for l in leads %}
                         <tr>
-                            <td style="font-family: 'Montserrat'; font-weight: 600;">#{{ l.order_ref }}</td>
+                            <td style="font-family: 'Montserrat'; font-weight: 600;">
+                                #{{ l.order_ref }}
+                                <!-- 👇 CENTRAL HUB BADGE 👇 -->
+                                {% if l.checkout_method == 'central_hub' %}
+                                    <span style="display: inline-block; margin-left: 6px; padding: 3px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; background: #8d5b3e; color: white; vertical-align: middle; letter-spacing: 0.5px;">
+                                        🎓 Central Hub
+                                    </span>
+                                {% endif %}
+                                <!-- 👆 END BADGE 👆 -->
+                            </td>
                             <td>{{ l.customer_name }}</td>
                             <td><a href="https://wa.me/{{ l.customer_phone }}" target="_blank" style="color: var(--brand); font-family: 'Montserrat'; font-size: 0.8rem;">{{ l.customer_phone }} &nearr;</a></td>
                             <td style="font-family: 'Montserrat'; font-weight: 600;">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
