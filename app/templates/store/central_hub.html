@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Central Campus Hub // Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f9f5f0] py-10 px-4">
+    <div class="max-w-6xl mx-auto">
+        
+        <!-- Header & Smart Filter -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border-t-4 border-[#8d5b3e]">
+            <div>
+                <h1 class="font-ui text-2xl font-bold text-[#2d1e14] m-0">🎓 Central Campus Hub</h1>
+                <p class="font-serif italic text-xs text-[#78716c] mt-1">Exclusive marketplace for verified students.</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <label class="font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-[#8d5b3e]">Filter by Campus:</label>
+                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="flex gap-2">
+                    <select name="university" onchange="this.form.submit()" class="p-2 border border-[#e7e5e4] rounded-lg font-ui text-xs outline-none focus:border-[#8d5b3e] bg-white">
+                        <option value="All" {% if current_uni == 'All' %}selected{% endif %}>All Universities</option>
+                        {% for uni in universities %}
+                            <option value="{{ uni }}" {% if current_uni == uni %}selected{% endif %}>{{ uni }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e5e4] hover:shadow-md transition group">
+                <div class="aspect-square bg-[#f5f5f4] overflow-hidden relative">
+                    <img src="{{ product.image if product.image else '/static/images/default_product.png' }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    
+                    <div class="absolute top-2 left-2 bg-[#2d1e14] text-white text-[10px] font-ui font-bold px-2 py-1 rounded-full shadow">
+                        {{ product.store.name }}
+                    </div>
+                </div>
+
+                <div class="p-4">
+                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 truncate">{{ product.name }}</h3>
+                    <p class="font-serif text-[10px] text-[#78716c] mt-1 line-clamp-2 h-8">{{ product.description or 'No description' }}</p>
+                    
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#f5f5f4]">
+                        <span class="font-ui text-base font-black text-[#8d5b3e]">₦{{ "{:,.0f}".format(product.current_price) }}</span>
+                        
+                        <!-- Request Order Button -->
+                        <form action="{{ url_for('storefront.central_checkout', product_id=product.id) }}" method="POST" class="m-0">
+                            <button type="submit" class="font-ui text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] px-3 py-1.5 rounded-lg transition">
+                                Request Order
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-[#e7e5e4]">
+            <p class="font-ui text-lg text-[#78716c]">No products found in this campus yet.</p>
+            <p class="font-serif italic text-xs text-[#a8a29e] mt-2">Try changing the filter or check back soon!</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
