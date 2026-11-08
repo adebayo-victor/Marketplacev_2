@@ -466,7 +466,7 @@ def new_product(kiosk_slug):
             is_unlimited_stock=is_unlimited,
             stock=stock,
             image=image_name,
-            attributes_json=json.dumps(attributes_dict)
+            attributes_json=json.dumps(attributes_dict),
             show_in_hub=show_in_hub
         )
         db.session.add(product)
