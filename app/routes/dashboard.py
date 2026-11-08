@@ -421,6 +421,9 @@ def update_order_status(kiosk_slug, order_id):
 
 
 # Product CRUD
+# -------------------------------------------------------------
+# ADD NEW PRODUCT
+# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/product/new', methods=['GET', 'POST'])
 @login_required
 def new_product(kiosk_slug):
@@ -435,10 +438,11 @@ def new_product(kiosk_slug):
         discount_price = request.form.get('discount_price', '').strip()
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
-        show_in_hub = True if request.form.get('show_in_hub') else False
-        
         is_unlimited = True if request.form.get('is_unlimited_stock') else False
         stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
+        
+        # 👇 CAPTURE THE TOGGLE VALUE 👇
+        show_in_hub = True if request.form.get('show_in_hub') else False
 
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
@@ -449,7 +453,7 @@ def new_product(kiosk_slug):
             if clean_name and a_vals.strip():
                 opts = [v.strip() for v in a_vals.split(',') if v.strip()]
                 if len(opts) < 2:
-                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
+                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma.', 'danger')
                     return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
                 attributes_dict[clean_name] = opts
 
@@ -466,8 +470,8 @@ def new_product(kiosk_slug):
             is_unlimited_stock=is_unlimited,
             stock=stock,
             image=image_name,
-            attributes_json=json.dumps(attributes_dict),
-            show_in_hub=show_in_hub
+            show_in_hub=show_in_hub,  # 👈 SAVE THE TOGGLE VALUE
+            attributes_json=json.dumps(attributes_dict)
         )
         db.session.add(product)
         db.session.commit()
@@ -478,6 +482,9 @@ def new_product(kiosk_slug):
     return render_template('dashboard/product_form.html', kiosk=kiosk, product=None)
 
 
+# -------------------------------------------------------------
+# EDIT EXISTING PRODUCT
+# -------------------------------------------------------------
 @dashboard_bp.route('/<kiosk_slug>/product/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_product(kiosk_slug, id):
@@ -494,14 +501,15 @@ def edit_product(kiosk_slug, id):
         
         disc = request.form.get('discount_price', '').strip()
         product.discount_price = float(disc) if disc else None
-
-        show_in_hub = True if request.form.get('show_in_hub') else False
         
         is_unlimited = True if request.form.get('is_unlimited_stock') else False
         product.is_unlimited_stock = is_unlimited
         product.stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
         
         product.is_flash_sale = True if request.form.get('is_flash_sale') else False
+        
+        # 👇 UPDATE THE TOGGLE VALUE 👇
+        product.show_in_hub = True if request.form.get('show_in_hub') else False
 
         attr_names = request.form.getlist('attr_name[]')
         attr_values = request.form.getlist('attr_values[]')
@@ -512,7 +520,7 @@ def edit_product(kiosk_slug, id):
             if clean_name and a_vals.strip():
                 opts = [v.strip() for v in a_vals.split(',') if v.strip()]
                 if len(opts) < 2:
-                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma (e.g. 3000, 5000).', 'danger')
+                    flash(f'Validation Error: Feature "{clean_name}" must have at least 2 choices separated by comma.', 'danger')
                     return render_template('dashboard/product_form.html', kiosk=kiosk, product=product)
                 attributes_dict[clean_name] = opts
 
