@@ -435,6 +435,8 @@ def new_product(kiosk_slug):
         discount_price = request.form.get('discount_price', '').strip()
         is_flash_sale = True if request.form.get('is_flash_sale') else False
 
+        show_in_hub = True if request.form.get('show_in_hub') else False
+        
         is_unlimited = True if request.form.get('is_unlimited_stock') else False
         stock = 999999 if is_unlimited else int(request.form.get('stock', 1) or 1)
 
@@ -465,6 +467,7 @@ def new_product(kiosk_slug):
             stock=stock,
             image=image_name,
             attributes_json=json.dumps(attributes_dict)
+            show_in_hub=show_in_hub
         )
         db.session.add(product)
         db.session.commit()
@@ -491,6 +494,8 @@ def edit_product(kiosk_slug, id):
         
         disc = request.form.get('discount_price', '').strip()
         product.discount_price = float(disc) if disc else None
+
+        show_in_hub = True if request.form.get('show_in_hub') else False
         
         is_unlimited = True if request.form.get('is_unlimited_stock') else False
         product.is_unlimited_stock = is_unlimited
