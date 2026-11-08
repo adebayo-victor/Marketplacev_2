@@ -64,6 +64,39 @@ def central_hub():
         universities=universities, 
         current_uni=filter_uni
     ) 
+@storefront_bp.route('/central/checkout/<int:product_id>', methods=['POST'])
+@login_required
+def central_checkout(product_id):
+    if not current_user.is_student:
+        abort(403)
+
+    product = Product.query.get_or_404(product_id)
+    if not product.is_active or not product.store.is_active:
+        flash('This product or store is no longer available.', 'danger')
+        return redirect(url_for('storefront.central_hub'))
+
+    # Generate a unique order reference
+    order_ref = "CH-" + secrets.token_hex(6).upper()
+    
+    # Create the order with central_hub checkout method
+    new_order = Order(
+        store_id=product.store.id,
+        order_ref=order_ref,
+        customer_name=current_user.username, 
+        customer_phone="Student Account", 
+        delivery_address="Campus Delivery (Update in profile)",
+        status='pending',
+        total_amount=product.current_price,
+        items_summary=f"1x {product.name}",
+        checkout_method='central_hub' # 👈 THIS TRIGGERS THE 200 COIN REWARD!
+    )
+    
+    db.session.add(new_order)
+    db.session.commit()
+    
+    flash(f'🎉 Order requested successfully! The merchant will see this in their dashboard. Ref: {order_ref}', 'success')
+    return redirect(url_for('storefront.central_hub'))
+
 
 @storefront_bp.route('/agent-instructions')
 def agent_instructions():
