@@ -69,6 +69,21 @@
                 </label>
             </div>
 
+                        <!-- Show in Central Campus Hub Toggle -->
+            <div style="background: #fff9f5; border-left: 4px solid #8d5b3e; padding: 16px; margin-top: 20px;">
+                <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="show_in_hub" 
+                           {% if product and product.show_in_hub %}checked
+                           {% elif not product %}checked
+                           {% endif %} 
+                           style="accent-color: #8d5b3e; width: 18px; height: 18px;">
+                    <span> Show in Central Campus Hub</span>
+                </label>
+                <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: #888; margin: 6px 0 0 28px; line-height: 1.4;">
+                    Uncheck this to hide the product from the student-only Campus Hub. 
+                    Useful for bulk items or products not meant for campus sales.
+                </p>
+            </div>
             <!-- Custom Attributes Builder -->
             <div class="p-5 bg-[#fff9f5] border-l-4 border-clay my-4">
                 <div class="flex justify-between items-center mb-1">
