@@ -29,6 +29,11 @@ def landing():
 # -------------------------------------------------------------
 
 
+import secrets # Make sure this is at the top of your file with other imports
+
+# -------------------------------------------------------------
+# 🎓 CENTRAL CAMPUS HUB
+# -------------------------------------------------------------
 @storefront_bp.route('/central')
 @login_required
 def central_hub():
@@ -63,7 +68,9 @@ def central_hub():
         products=products, 
         universities=universities, 
         current_uni=filter_uni
-    ) 
+    )
+
+
 @storefront_bp.route('/central/checkout/<int:product_id>', methods=['POST'])
 @login_required
 def central_checkout(product_id):
