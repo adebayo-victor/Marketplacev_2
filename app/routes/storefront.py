@@ -53,9 +53,9 @@ def central_hub():
     default_uni = current_user.university_name if current_user.university_name else 'All'
     filter_uni = request.args.get('university', default_uni)
     
-    # Base query: Get all products from active stores owned by STUDENTS
+    # Base query: Get all products from active stores owned by STUDENTS that are ALLOWED in the hub
     query = Product.query.join(Store).join(User, Store.user_id == User.id)\
-        .filter(Store.is_active == True, User.is_student == True)
+        .filter(Store.is_active == True, User.is_student == True, Product.show_in_hub == True)
     
     # Apply filter if a specific university is selected (and it's not 'All')
     if filter_uni and filter_uni != 'All':
