@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account Settings // Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 flex justify-center w-full bg-[#f9f5f0]">
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8 border-t-4 border-[#8d5b3e]">
+        
+        <div class="mb-8">
+            <a href="/dashboard" class="text-[#78716c] font-ui text-xs font-semibold no-underline hover:text-[#2d1e14]">&larr; Back to Hub</a>
+            <h1 class="font-ui text-2xl font-normal lowercase tracking-tight m-0 mt-2 text-[#2d1e14]">my account settings.</h1>
+            <p class="text-[#78716c] font-serif italic text-xs mt-1">Manage your profile and unlock the Campus Hub.</p>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            
+            <!-- Student Mode Toggle -->
+            <div class="bg-[#fff9f5] p-5 rounded-xl border border-[#fde68a]">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0">🎓 Activate Student Mode</h3>
+                        <p class="font-serif italic text-[10px] text-[#78716c] mt-1">Unlock the Central Campus Hub to buy and sell with other students.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_student" class="sr-only peer" {% if current_user.is_student %}checked{% endif %} onchange="toggleUniversityInput(this)">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#8d5b3e]"></div>
+                    </label>
+                </div>
+
+                <div id="universityField" class="{% if not current_user.is_student %}hidden{% endif %}">
+                    <label class="block font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-[#8d5b3e] mb-1.5">University Name</label>
+                    <input type="text" name="university_name" value="{{ current_user.university_name or '' }}" 
+                           placeholder="e.g. University of Lagos"
+                           class="w-full p-3 border border-[#e7e5e4] rounded-lg font-ui text-xs outline-none focus:border-[#8d5b3e] bg-white">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white font-ui font-semibold text-sm rounded-lg transition cursor-pointer">
+                SAVE CHANGES
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleUniversityInput(checkbox) {
+        const field = document.getElementById('universityField');
+        if (checkbox.checked) {
+            field.classList.remove('hidden');
+        } else {
+            field.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}
