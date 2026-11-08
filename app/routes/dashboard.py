@@ -382,12 +382,42 @@ def update_order_status(kiosk_slug, order_id):
         order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
         new_status = request.form.get('status', 'pending').strip().lower()
 
+        # --- 🏆 TWO-TIER REWARD LOGIC START ---
+        # Only trigger if moving TO a rewarding status, and wasn't already rewarded
+        rewarding_statuses = ['paid', 'completed']
+        if new_status in rewarding_statuses and order.status not in rewarding_statuses:
+            
+            # Determine which reward to give based on checkout method
+            if order.checkout_method == 'central_hub':
+                reward_name = "Central Hub Sale Reward"
+            else:
+                reward_name = "Normal Sale Reward"
+            
+            # Fetch the configurable reward amount from the database
+            reward = Reward.query.filter_by(name=reward_name, is_active=True).first()
+            
+            if reward:
+                wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+                if wallet:
+                    wallet.balance += reward.value
+                    
+                    tx = Transaction(
+                        wallet_id=wallet.id,
+                        user_id=current_user.id,
+                        type='credit',
+                        amount=reward.value,
+                        description=f"Reward: {reward_name} for Order #{order.order_ref}"
+                    )
+                    db.session.add(tx)
+        # --- 🏆 TWO-TIER REWARD LOGIC END ---
+
         if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
             order.status = new_status
             db.session.commit()
             flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
+            return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
 
-    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
+    return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
 
 
 # Product CRUD
