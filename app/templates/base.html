@@ -108,22 +108,22 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Top Navigation Bar -->
-        <header class="nav-bar sticky top-0 z-40">
+    <header class="nav-bar sticky top-0 z-40">
         <a href="/" class="brand-logo">MARKETPLACE.</a>
         <div class="flex items-center gap-3 md:gap-4">
             <button type="button" onclick="toggleTheme()" class="p-1.5 md:p-2 rounded-full border border-stone-300 text-xs font-mono cursor-pointer" title="Toggle Light/Dark Theme">
                 <span id="themeIcon">🌙</span>
             </button>
-
+    
             {% if current_user.is_authenticated %}
                 <a href="/dashboard" class="font-ui text-[11px] md:text-xs text-clay font-bold tracking-wider uppercase">Hub</a>
                 
-                <!-- 🎓 CAMPUS HUB LINK (Only visible to verified students) -->
+                <!-- 🎓 CAMPUS HUB (Only for students) -->
                 {% if current_user.is_student %}
                     <a href="/central" class="font-ui text-[11px] md:text-xs text-[#8d5b3e] font-bold tracking-wider uppercase hover:underline">🎓 Campus Hub</a>
                 {% endif %}
                 
-                <!-- ⚙️ SETTINGS LINK (For updating Student Status, University, etc.) -->
+                <!-- ⚙️ SETTINGS LINK - ADD THIS -->
                 <a href="/account/settings" class="font-ui text-[11px] md:text-xs text-stone-600 font-semibold tracking-wider uppercase hover:text-clay transition">⚙️ Settings</a>
                 
                 {% if current_user.is_admin %}
