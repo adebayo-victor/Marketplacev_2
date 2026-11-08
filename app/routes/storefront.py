@@ -15,7 +15,7 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
-@public_bp.route('/central') # Change 'public_bp' to your actual blueprint name
+@storefront_bp.route('/central') # Change 'public_bp' to your actual blueprint name
 @login_required
 def central_hub():
     # 🎓 THE STUDENT GATE
