@@ -147,7 +147,7 @@ class Order(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade="all, delete-orphan")
-
+    checkout_method = db.Column(db.String(20), default='whatsapp') 
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'
