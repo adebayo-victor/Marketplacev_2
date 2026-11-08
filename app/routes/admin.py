@@ -355,3 +355,35 @@ def adjust_balance():
     
     flash(f'Successfully {action}ed {amount} coins for {user.username}.', 'success')
     return redirect(url_for('admin.economy'))
+
+# -------------------------------------------------------------
+# ➕ ADD NEW REWARD TO ECONOMY
+# -------------------------------------------------------------
+@admin_bp.route('/rewards/add', methods=['POST'])
+@login_required
+@admin_required
+def add_reward():
+    name = request.form.get('reward_name', '').strip()
+    description = request.form.get('reward_description', '').strip()
+    value = request.form.get('reward_value', type=int)
+    
+    if not name or not value:
+        flash('Reward Name and Coin Value are required.', 'danger')
+        return redirect(url_for('admin.economy'))
+        
+    # Prevent duplicates
+    if Reward.query.filter_by(name=name).first():
+        flash(f'A reward named "{name}" already exists.', 'warning')
+        return redirect(url_for('admin.economy'))
+        
+    new_reward = Reward(
+        name=name, 
+        description=description, 
+        value=value, 
+        is_active=True
+    )
+    db.session.add(new_reward)
+    db.session.commit()
+    
+    flash(f'✅ New reward "{name}" ({value} coins) added successfully!', 'success')
+    return redirect(url_for('admin.economy'))
