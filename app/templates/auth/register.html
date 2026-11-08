@@ -106,5 +106,17 @@ function togglePassword(inputId, iconId) {
         label.innerText = 'Show';
     }
 }
+function toggleUniversityInput(checkbox) {
+    const field = document.getElementById('universityField');
+    const uniInput = document.getElementById('university_name');
+    if (checkbox.checked) {
+        field.classList.remove('hidden');
+        uniInput.setAttribute('required', 'required');
+    } else {
+        field.classList.add('hidden');
+        uniInput.removeAttribute('required');
+        uniInput.value = '';
+    }
+}
 </script>
 {% endblock %}
