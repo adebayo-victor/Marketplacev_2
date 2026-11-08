@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import secrets
 import markdown
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
@@ -26,28 +27,34 @@ def landing():
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
 # -------------------------------------------------------------
+
+
 @storefront_bp.route('/central')
 @login_required
 def central_hub():
     # 🎓 THE STUDENT GATE
     if not current_user.is_student:
-        flash('🎓 The Central Campus Hub is exclusive to verified students. Please update your profile to access it.', 'warning')
+        flash('🎓 The Central Campus Hub is exclusive to verified students.', 'warning')
         return redirect(url_for('dashboard.account_settings'))
 
-    # Get all unique universities from active stores for the filter dropdown
-    universities = db.session.query(Store.university_name)\
-        .filter(Store.is_active == True, Store.university_name.isnot(None))\
+    # Get all unique universities from active STUDENT merchants for the dropdown
+    universities = db.session.query(User.university_name)\
+        .join(Store, User.id == Store.user_id)\
+        .filter(User.is_student == True, Store.is_active == True, User.university_name.isnot(None))\
         .distinct().all()
     universities = sorted([u[0] for u in universities if u[0]])
 
-    # Handle Filtering
-    filter_uni = request.args.get('university')
+    # 🎯 SMART DEFAULT FILTER: Defaults to the student's own university
+    default_uni = current_user.university_name if current_user.university_name else 'All'
+    filter_uni = request.args.get('university', default_uni)
     
-    # Base query: Get all products from active stores
-    query = Product.query.join(Store).filter(Store.is_active == True)
+    # Base query: Get all products from active stores owned by STUDENTS
+    query = Product.query.join(Store).join(User, Store.user_id == User.id)\
+        .filter(Store.is_active == True, User.is_student == True)
     
-    if filter_uni:
-        query = query.filter(Store.university_name == filter_uni)
+    # Apply filter if a specific university is selected (and it's not 'All')
+    if filter_uni and filter_uni != 'All':
+        query = query.filter(User.university_name == filter_uni)
 
     products = query.order_by(Product.created_at.desc()).all()
 
