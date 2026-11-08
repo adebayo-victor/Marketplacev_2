@@ -7,6 +7,14 @@ from flask_login import current_user
 from app import db
 from app.models import Store, Product, StoreAd, Order, OrderItem
 from app.utils.whatsapp import clean_phone_number, build_whatsapp_order_link
+from flask_login import login_required, current_user  # 👈 THIS WAS MISSING
+from app import db                                    # 👈 MAKE SURE THIS IS HERE
+from app.models import Product, Store, User           # 👈 MAKE SURE THESE ARE HERE
+
+storefront_bp = Blueprint('storefront', __name__)
+
+# ... (your existing routes) ...
+
 
 storefront_bp = Blueprint('storefront', __name__)
 
@@ -15,7 +23,10 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
-@storefront_bp.route('/central') # Change 'public_bp' to your actual blueprint name
+# -------------------------------------------------------------
+# 🎓 CENTRAL CAMPUS HUB
+# -------------------------------------------------------------
+@storefront_bp.route('/central')
 @login_required
 def central_hub():
     # 🎓 THE STUDENT GATE
@@ -23,8 +34,29 @@ def central_hub():
         flash('🎓 The Central Campus Hub is exclusive to verified students. Please update your profile to access it.', 'warning')
         return redirect(url_for('dashboard.account_settings'))
 
-    # (We will build the actual product grid logic here in the next step!)
-    return render_template('store/central_hub.html') 
+    # Get all unique universities from active stores for the filter dropdown
+    universities = db.session.query(Store.university_name)\
+        .filter(Store.is_active == True, Store.university_name.isnot(None))\
+        .distinct().all()
+    universities = sorted([u[0] for u in universities if u[0]])
+
+    # Handle Filtering
+    filter_uni = request.args.get('university')
+    
+    # Base query: Get all products from active stores
+    query = Product.query.join(Store).filter(Store.is_active == True)
+    
+    if filter_uni:
+        query = query.filter(Store.university_name == filter_uni)
+
+    products = query.order_by(Product.created_at.desc()).all()
+
+    return render_template(
+        'store/central_hub.html', 
+        products=products, 
+        universities=universities, 
+        current_uni=filter_uni
+    ) 
 
 @storefront_bp.route('/agent-instructions')
 def agent_instructions():
