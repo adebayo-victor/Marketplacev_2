@@ -108,6 +108,8 @@ class Product(db.Model):
     attributes_json = db.Column(db.Text, default='{}')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    show_in_hub = db.Column(db.Boolean, default=True) # 👈 ADD THIS
+
     @property
     def current_price(self):
         if self.discount_price and self.discount_price > 0:
