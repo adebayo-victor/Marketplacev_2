@@ -787,3 +787,24 @@ def verify_topup():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.finance'))
     return redirect(url_for('auth.login'))
+
+
+# -------------------------------------------------------------
+# 👤 USER PROFILE & STUDENT MODE SETTINGS
+# -------------------------------------------------------------
+@dashboard_bp.route('/account/settings', methods=['GET', 'POST'])
+@login_required
+def account_settings():
+    if request.method == 'POST':
+        # Handle Student Mode Toggle
+        is_student = True if request.form.get('is_student') else False
+        university_name = request.form.get('university_name', '').strip() if is_student else None
+        
+        current_user.is_student = is_student
+        current_user.university_name = university_name
+        
+        db.session.commit()
+        flash('✅ Profile and Student Mode updated successfully!', 'success')
+        return redirect(url_for('dashboard.account_settings'))
+
+    return render_template('dashboard/account_settings.html')
