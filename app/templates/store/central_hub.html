@@ -3,7 +3,7 @@
 {% block title %}Central Campus Hub // Marketplace{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#f9f5f0] py-10 px-4">
+<div class="min-h-screen bg-[#f9f5f0] py-10 px-4 pb-24">
     <div class="max-w-6xl mx-auto">
         
         <!-- Header & Smart Filter -->
@@ -48,12 +48,11 @@
                     <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#f5f5f4]">
                         <span class="font-ui text-base font-black text-[#8d5b3e]">₦{{ "{:,.0f}".format(product.current_price) }}</span>
                         
-                        <!-- Request Order Button -->
-                        <form action="{{ url_for('storefront.central_checkout', product_id=product.id) }}" method="POST" class="m-0">
-                            <button type="submit" class="font-ui text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] px-3 py-1.5 rounded-lg transition">
-                                Request Order
-                            </button>
-                        </form>
+                        <!-- Add to Cart Button -->
+                        <button type="button" onclick="addToCart({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}')" 
+                                class="font-ui text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                            <span>+</span> Add
+                        </button>
                     </div>
                 </div>
             </div>
@@ -65,7 +64,166 @@
             <p class="font-serif italic text-xs text-[#a8a29e] mt-2">Try changing the filter or check back soon!</p>
         </div>
         {% endif %}
-
     </div>
 </div>
+
+<!-- 🛒 FLOATING CART BUTTON -->
+<button onclick="toggleCart()" class="fixed bottom-6 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg z-50 flex items-center gap-2 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <span id="cartCount" class="bg-white text-[#8d5b3e] text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+</button>
+
+<!-- 🛒 CART DRAWER MODAL -->
+<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex justify-end">
+    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
+        <div class="p-5 border-b border-[#e7e5e4] flex justify-between items-center bg-[#f9f5f0]">
+            <h2 class="font-ui text-lg font-bold text-[#2d1e14]">Your Campus Cart</h2>
+            <button onclick="toggleCart()" class="text-[#78716c] hover:text-[#2d1e14] text-2xl font-bold">&times;</button>
+        </div>
+        
+        <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-4">
+            <!-- Cart items injected here by JS -->
+            <p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>
+        </div>
+        
+        <div class="p-5 border-t border-[#e7e5e4] bg-[#f9f5f0]">
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-ui text-sm font-semibold text-[#2d1e14]">Total Estimated:</span>
+                <span id="cartTotal" class="font-ui text-xl font-black text-[#8d5b3e]">₦0</span>
+            </div>
+            <button onclick="checkoutCart()" id="checkoutBtn" disabled class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-ui font-bold text-sm rounded-lg transition">
+                Proceed to Checkout
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🛒 CART LOGIC
+    let cart = JSON.parse(localStorage.getItem('campusCart')) || [];
+
+    function addToCart(id, name, price, storeName) {
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            cart.push({ id, name, price, storeName, qty: 1 });
+        }
+        saveCart();
+        // Visual feedback
+        const btn = event.target.closest('button');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Added';
+        btn.classList.add('bg-[#047857]');
+        setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.classList.remove('bg-[#047857]');
+        }, 1000);
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        saveCart();
+    }
+
+    function updateQty(id, change) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty += change;
+            if (item.qty <= 0) removeFromCart(id);
+            else saveCart();
+        }
+    }
+
+    function saveCart() {
+        localStorage.setItem('campusCart', JSON.stringify(cart));
+        renderCart();
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cartItems');
+        const countBadge = document.getElementById('cartCount');
+        const totalEl = document.getElementById('cartTotal');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        
+        const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+        const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+        countBadge.innerText = totalItems;
+        countBadge.classList.toggle('hidden', totalItems === 0);
+        totalEl.innerText = '₦' + totalPrice.toLocaleString();
+        checkoutBtn.disabled = totalItems === 0;
+
+        if (cart.length === 0) {
+            container.innerHTML = '<p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>';
+            return;
+        }
+
+        container.innerHTML = cart.map(item => `
+            <div class="flex gap-3 bg-white p-3 rounded-lg border border-[#e7e5e4]">
+                <div class="flex-1">
+                    <h4 class="font-ui text-xs font-bold text-[#2d1e14]">${item.name}</h4>
+                    <p class="font-serif text-[10px] text-[#78716c]">${item.storeName}</p>
+                    <p class="font-ui text-xs font-semibold text-[#8d5b3e] mt-1">₦${(item.price * item.qty).toLocaleString()}</p>
+                </div>
+                <div class="flex flex-col items-end justify-between">
+                    <button onclick="removeFromCart(${item.id})" class="text-[#b33a3a] text-xs font-bold hover:underline">&times; Remove</button>
+                    <div class="flex items-center gap-2 bg-[#f9f5f0] rounded px-1">
+                        <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center text-[#8d5b3e] font-bold">-</button>
+                        <span class="font-ui text-xs font-bold w-4 text-center">${item.qty}</span>
+                        <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center text-[#8d5b3e] font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function toggleCart() {
+        const drawer = document.getElementById('cartDrawer');
+        const panel = document.getElementById('cartPanel');
+        if (drawer.classList.contains('hidden')) {
+            drawer.classList.remove('hidden');
+            setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+        } else {
+            panel.classList.add('translate-x-full');
+            setTimeout(() => drawer.classList.add('hidden'), 300);
+        }
+    }
+
+    async function checkoutCart() {
+        const btn = document.getElementById('checkoutBtn');
+        btn.innerText = 'Processing...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/central/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: cart })
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                cart = [];
+                saveCart();
+                toggleCart();
+                alert('🎉 Orders placed successfully! Merchants will see them in their dashboards.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+                btn.innerText = 'Proceed to Checkout';
+                btn.disabled = false;
+            }
+        } catch (error) {
+            alert('Network error. Please try again.');
+            btn.innerText = 'Proceed to Checkout';
+            btn.disabled = false;
+        }
+    }
+
+    // Initialize cart on load
+    renderCart();
+</script>
 {% endblock %}
