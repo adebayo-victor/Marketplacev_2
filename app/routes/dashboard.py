@@ -10,7 +10,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_wtf.csrf import generate_csrf
 from flask_login import login_required, current_user
 from app import db
-from app.models import Store, Product, StoreAd, Order, OrderItem, User, Wallet, Transaction, Task
+from app.models import Store, Product, StoreAd, Order, OrderItem, User, Wallet, Transaction, Task, Reward
 from app.utils.media import upload_image, delete_image
 from app.utils.whatsapp import clean_phone_number
 from app.utils.ai_builder import generate_kiosk_template
