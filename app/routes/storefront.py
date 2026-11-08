@@ -15,7 +15,16 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
+@public_bp.route('/central') # Change 'public_bp' to your actual blueprint name
+@login_required
+def central_hub():
+    # 🎓 THE STUDENT GATE
+    if not current_user.is_student:
+        flash('🎓 The Central Campus Hub is exclusive to verified students. Please update your profile to access it.', 'warning')
+        return redirect(url_for('dashboard.account_settings'))
 
+    # (We will build the actual product grid logic here in the next step!)
+    return render_template('store/central_hub.html') 
 
 @storefront_bp.route('/agent-instructions')
 def agent_instructions():
