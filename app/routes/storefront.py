@@ -71,38 +71,74 @@ def central_hub():
     )
 
 
-@storefront_bp.route('/central/checkout/<int:product_id>', methods=['POST'])
+
+
+# -------------------------------------------------------------
+# 🛒 CENTRAL HUB BULK CHECKOUT
+# -------------------------------------------------------------
+@storefront_bp.route('/central/checkout', methods=['POST'])
 @login_required
-def central_checkout(product_id):
+def central_checkout_bulk():
     if not current_user.is_student:
-        abort(403)
+        return jsonify({'status': 'error', 'message': 'Access denied.'}), 403
 
-    product = Product.query.get_or_404(product_id)
-    if not product.is_active or not product.store.is_active:
-        flash('This product or store is no longer available.', 'danger')
-        return redirect(url_for('storefront.central_hub'))
+    data = request.get_json()
+    cart_items = data.get('items', [])
+    
+    if not cart_items:
+        return jsonify({'status': 'error', 'message': 'Cart is empty.'}), 400
 
-    # Generate a unique order reference
-    order_ref = "CH-" + secrets.token_hex(6).upper()
-    
-    # Create the order with central_hub checkout method
-    new_order = Order(
-        store_id=product.store.id,
-        order_ref=order_ref,
-        customer_name=current_user.username, 
-        customer_phone="Student Account", 
-        delivery_address="Campus Delivery (Update in profile)",
-        status='pending',
-        total_amount=product.current_price,
-        items_summary=f"1x {product.name}",
-        checkout_method='central_hub' # 👈 THIS TRIGGERS THE 200 COIN REWARD!
-    )
-    
-    db.session.add(new_order)
+    # Group cart items by store_id
+    orders_by_store = {}
+    for item in cart_items:
+        product = Product.query.get(item['id'])
+        if not product or not product.is_active or not product.store.is_active:
+            continue # Skip invalid products
+            
+        store_id = product.store.id
+        if store_id not in orders_by_store:
+            orders_by_store[store_id] = {
+                'store': product.store,
+                'items': [],
+                'total': 0.0,
+                'summary_lines': []
+            }
+        
+        subtotal = product.current_price * item['qty']
+        orders_by_store[store_id]['items'].append({
+            'product': product,
+            'qty': item['qty'],
+            'subtotal': subtotal
+        })
+        orders_by_store[store_id]['total'] += subtotal
+        orders_by_store[store_id]['summary_lines'].append(f"• {item['qty']}x {product.name} - ₦{subtotal:,.2f}")
+
+    # Create an order for each merchant
+    created_orders = []
+    for store_id, order_data in orders_by_store.items():
+        order_ref = "CH-" + secrets.token_hex(6).upper()
+        
+        new_order = Order(
+            store_id=store_id,
+            order_ref=order_ref,
+            customer_name=current_user.username, 
+            customer_phone="Student Account", # We will fix this to use real phone later
+            delivery_address="Campus Delivery (Update in profile)",
+            status='pending',
+            total_amount=order_data['total'],
+            items_summary="\n".join(order_data['summary_lines']),
+            checkout_method='central_hub' # 👈 TRIGGERS 200 COIN REWARD FOR MERCHANT
+        )
+        db.session.add(new_order)
+        created_orders.append(order_ref)
+
     db.session.commit()
     
-    flash(f'🎉 Order requested successfully! The merchant will see this in their dashboard. Ref: {order_ref}', 'success')
-    return redirect(url_for('storefront.central_hub'))
+    return jsonify({
+        'status': 'success', 
+        'message': f'Successfully placed {len(created_orders)} order(s).',
+        'order_refs': created_orders
+    }), 201
 
 
 @storefront_bp.route('/agent-instructions')
