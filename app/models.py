@@ -21,6 +21,10 @@ class User(UserMixin, db.Model):
     stores = db.relationship('Store', backref='owner', lazy='dynamic', cascade="all, delete-orphan")
     referred_users = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), lazy='dynamic')
 
+        # ... existing columns ...
+    is_student = db.Column(db.Boolean, default=False)
+    university_name = db.Column(db.String(100), nullable=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
