@@ -114,7 +114,7 @@
             <button type="button" onclick="toggleTheme()" class="p-1.5 md:p-2 rounded-full border border-stone-300 text-xs font-mono cursor-pointer" title="Toggle Light/Dark Theme">
                 <span id="themeIcon">🌙</span>
             </button>
-    
+
             {% if current_user.is_authenticated %}
                 <a href="/dashboard" class="font-ui text-[11px] md:text-xs text-clay font-bold tracking-wider uppercase">Hub</a>
                 
@@ -123,7 +123,7 @@
                     <a href="/central" class="font-ui text-[11px] md:text-xs text-[#8d5b3e] font-bold tracking-wider uppercase hover:underline">🎓 Campus Hub</a>
                 {% endif %}
                 
-                <!-- ⚙️ SETTINGS LINK - ADD THIS -->
+                <!-- ⚙️ SETTINGS LINK -->
                 <a href="/account/settings" class="font-ui text-[11px] md:text-xs text-stone-600 font-semibold tracking-wider uppercase hover:text-clay transition">⚙️ Settings</a>
                 
                 {% if current_user.is_admin %}
