@@ -25,6 +25,8 @@ class User(UserMixin, db.Model):
     is_student = db.Column(db.Boolean, default=False)
     university_name = db.Column(db.String(100), nullable=True)
 
+    phone_number = db.Column(db.String(20), nullable=True) # 👈 ADD THIS LINE
+    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
