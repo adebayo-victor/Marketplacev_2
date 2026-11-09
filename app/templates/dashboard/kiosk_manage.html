@@ -199,6 +199,44 @@
         </div>
 
         <!-- Section 2: Customer Leads & Orders -->
+        <div class="section-box" id="leads">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin: 0;">Customer Leads & Orders</h2>
+            </div>
+            
+            <!-- 🚀 NEW ADVANCED FILTER BAR -->
+            <form method="GET" action="/{{ kiosk.slug }}/manage#leads" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Search</label>
+                    <input type="text" name="search" value="{{ current_search }}" placeholder="Ref, Name, Phone, or Product..." class="search-input">
+                </div>
+                
+                <div style="width: 140px;">
+                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Status</label>
+                    <select name="status" class="search-input" style="cursor: pointer;">
+                        <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Statuses</option>
+                        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>⏳ Pending</option>
+                        <option value="paid" {% if current_status == 'paid' %}selected{% endif %}>✅ Paid</option>
+                        <option value="shipped" {% if current_status == 'shipped' %}selected{% endif %}>🚚 Shipped</option>
+                        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>🏁 Completed</option>
+                        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>❌ Cancelled</option>
+                    </select>
+                </div>
+
+                <div style="width: 160px;">
+                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Source</label>
+                    <select name="source" class="search-input" style="cursor: pointer;">
+                        <option value="all" {% if current_source == 'all' %}selected{% endif %}>All Sources</option>
+                        <option value="central_hub" {% if current_source == 'central_hub' %}selected{% endif %}>🎓 Central Hub</option>
+                        <option value="regular" {% if current_source == 'regular' %}selected{% endif %}>📱 Regular/WhatsApp</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-add" style="padding: 12px 15px;">Apply Filters</button>
+                <a href="/{{ kiosk.slug }}/manage#leads" class="btn-add" style="background: #eee; color: var(--dark); padding: 12px 15px;">Clear</a>
+            </form>
+            <!-- END FILTER BAR -->
+            
             <div class="table-responsive">
                 <table id="leadsTable">
                     <thead>
@@ -209,13 +247,11 @@
                         <tr>
                             <td style="font-family: 'Montserrat'; font-weight: 600;">
                                 #{{ l.order_ref }}
-                                <!-- 👇 CENTRAL HUB BADGE 👇 -->
                                 {% if l.checkout_method == 'central_hub' %}
                                     <span style="display: inline-block; margin-left: 6px; padding: 3px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; background: #8d5b3e; color: white; vertical-align: middle; letter-spacing: 0.5px;">
                                         🎓 Central Hub
                                     </span>
                                 {% endif %}
-                                <!-- 👆 END BADGE 👆 -->
                             </td>
                             <td>{{ l.customer_name }}</td>
                             <td><a href="https://wa.me/{{ l.customer_phone }}" target="_blank" style="color: var(--brand); font-family: 'Montserrat'; font-size: 0.8rem;">{{ l.customer_phone }} &nearr;</a></td>
@@ -237,7 +273,7 @@
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" style="text-align: center; color: var(--gray); font-style: italic;">No orders captured yet.</td></tr>
+                        <tr><td colspan="6" style="text-align: center; color: var(--gray); font-style: italic;">No orders match your filters.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
