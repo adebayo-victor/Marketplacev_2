@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}My Campus Orders // Marketplace{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f9f5f0] py-10 px-4">
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border-t-4 border-[#8d5b3e]">
+            <div>
+                <h1 class="font-ui text-2xl font-bold text-[#2d1e14] m-0">📦 My Campus Orders</h1>
+                <p class="font-serif italic text-xs text-[#78716c] mt-1">Track your Central Hub purchases and download receipts.</p>
+            </div>
+            <a href="/central" class="font-ui text-xs font-bold text-white bg-[#8d5b3e] hover:bg-[#7a4e34] px-4 py-2 rounded-lg transition no-underline">
+                &larr; Back to Hub
+            </a>
+        </div>
+
+        <!-- Orders Table -->
+        {% if orders %}
+        <div class="bg-white rounded-2xl shadow-sm border border-[#e7e5e4] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#f9f5f0] border-b border-[#e7e5e4]">
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c]">Date</th>
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c]">Merchant</th>
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c]">Items</th>
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c]">Total</th>
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c]">Status</th>
+                            <th class="p-4 font-ui text-[0.65rem] font-bold uppercase tracking-wider text-[#78716c] text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#e7e5e4]">
+                        {% for order in orders %}
+                        <tr class="hover:bg-[#fafafa] transition">
+                            <td class="p-4 font-serif text-xs text-[#2d1e14]">
+                                {{ order.created_at.strftime('%b %d, %Y') }}
+                            </td>
+                            <td class="p-4 font-ui text-xs font-bold text-[#2d1e14]">
+                                {{ order.store.name }}
+                            </td>
+                            <td class="p-4 font-serif text-xs text-[#78716c] max-w-[200px] truncate" title="{{ order.items_summary }}">
+                                {{ order.items_summary | replace('\n', ', ') }}
+                            </td>
+                            <td class="p-4 font-ui text-sm font-black text-[#8d5b3e]">
+                                ₦{{ "{:,.0f}".format(order.total_amount) }}
+                            </td>
+                            <td class="p-4">
+                                {% if order.status == 'pending' %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-[#fffbeb] text-[#b45309] border border-[#fde68a]">⏳ Pending</span>
+                                {% elif order.status == 'paid' %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]">✅ Paid</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe]">🚚 Shipped</span>
+                                {% elif order.status == 'completed' %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-[#f3f4f6] text-[#374151] border border-[#e5e7eb]">🏁 Completed</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-[#fef2f2] text-[#b91c1c] border border-[#fecaca]">❌ Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-right whitespace-nowrap">
+                                <a href="https://wa.me/{{ order.store.whatsapp_number }}?text=Hello,%20I'm%20checking%20on%20my%20Central%20Hub%20order%20#{{ order.order_ref }}" 
+                                   target="_blank" 
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui text-[10px] font-bold rounded-lg transition no-underline mr-2">
+                                    💬 Message
+                                </a>
+                                <a href="/receipt/{{ order.order_ref }}?doc=receipt" 
+                                   target="_blank" 
+                                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-[#e7e5e4] hover:bg-[#f9f5f0] text-[#2d1e14] font-ui text-[10px] font-bold rounded-lg transition no-underline">
+                                    🧾 Receipt
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-[#e7e5e4]">
+            <div class="text-4xl mb-4">🛒</div>
+            <p class="font-ui text-lg font-bold text-[#2d1e14]">No orders yet</p>
+            <p class="font-serif italic text-xs text-[#78716c] mt-2 mb-6">You haven't placed any Central Hub orders yet.</p>
+            <a href="/central" class="inline-block px-6 py-3 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white font-ui text-sm font-bold rounded-lg transition no-underline">
+                Start Shopping in the Hub &rarr;
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
