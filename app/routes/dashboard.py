@@ -354,19 +354,52 @@ def manage_kiosk(kiosk_slug):
     # 👆 END CHECK 👆
 
     if kiosk.build_status == 'building':
-        flash(f'⏳ Hold on! Kiosk "{kiosk.name}" is still being assembled by the AI engine. You cannot open it until creation is finished.', 'warning')
+        flash(f'⏳ Hold on! Kiosk "{kiosk.name}" is still being assembled by the AI engine.', 'warning')
         return redirect(url_for('dashboard.overview'))
 
     products = kiosk.products.order_by(Product.created_at.desc()).all()
-    leads = kiosk.orders.order_by(Order.created_at.desc()).all()
     ads = kiosk.ads.order_by(StoreAd.slot_number.asc()).all()
+
+    # --- 🚀 NEW: ADVANCED LEAD FILTERING ---
+    leads_query = kiosk.orders.order_by(Order.created_at.desc())
+    
+    status_filter = request.args.get('status')
+    source_filter = request.args.get('source')
+    search_query = request.args.get('search')
+
+    if status_filter and status_filter != 'all':
+        leads_query = leads_query.filter(Order.status == status_filter)
+        
+    if source_filter == 'central_hub':
+        leads_query = leads_query.filter(Order.checkout_method == 'central_hub')
+    elif source_filter == 'regular':
+        # Regular orders are either 'whatsapp' or NULL (legacy)
+        leads_query = leads_query.filter(db.or_(Order.checkout_method.is_(None), Order.checkout_method == 'whatsapp'))
+        
+    if search_query:
+        term = f"%{search_query}%"
+        leads_query = leads_query.filter(
+            db.or_(
+                Order.order_ref.ilike(term),
+                Order.customer_name.ilike(term),
+                Order.customer_phone.ilike(term),
+                Order.items_summary.ilike(term) # Searches inside the product list!
+            )
+        )
+    
+    leads = leads_query.all()
+    # ---------------------------------------
 
     return render_template(
         'dashboard/kiosk_manage.html',
         kiosk=kiosk,
         products=products,
         leads=leads,
-        ads=ads
+        ads=ads,
+        # Pass current filters to the template so dropdowns stay selected
+        current_status=status_filter or 'all',
+        current_source=source_filter or 'all',
+        current_search=search_query or ''
     )
 
 
