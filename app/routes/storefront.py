@@ -24,8 +24,25 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
+# -------------------------------------------------------------
+# 📦 STUDENT ORDER HISTORY
+# -------------------------------------------------------------
+@storefront_bp.route('/my-orders')
+@login_required
+def my_orders():
+    # Gate: Only students can access this
+    if not current_user.is_student:
+        flash('This page is exclusive to verified students.', 'warning')
+        return redirect(url_for('dashboard.overview'))
 
+    # Fetch orders placed by this student via the Central Hub
+    # (We filter by customer_name matching their username, and checkout_method)
+    orders = Order.query.filter_by(
+        customer_name=current_user.username,
+        checkout_method='central_hub'
+    ).order_by(Order.created_at.desc()).all()
 
+    return render_template('store/my_orders.html', orders=orders)
 
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
