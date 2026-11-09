@@ -143,9 +143,9 @@
         <div style="font-family: 'Montserrat'; font-size: 0.75rem; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
             <span style="color: var(--clay); font-weight: 600; margin-right: 4px; font-size: 0.7rem;">{{ current_user.username }}</span>
             
-            <!-- 🎓 CAMPUS HUB (Only for students) -->
             {% if current_user.is_student %}
-                <a href="/central" style="color: #8d5b3e; text-decoration: none; font-weight: 600; font-size: 0.7rem;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">🎓 Campus Hub</a>
+                <a href="/central" class="hover:text-[#8d5b3e]">🎓 Campus Hub</a>
+                <a href="/my-orders" class="hover:text-[#8d5b3e]">📦 My Campus Orders</a>
             {% endif %}
             
             <!-- ⚙️ SETTINGS LINK -->
