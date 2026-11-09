@@ -3,20 +3,29 @@
 {% block title %}Central Campus Hub // Marketplace{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#f9f5f0] py-10 px-4 pb-32">
+<style>
+    /* Cart FAB sits above the Support button (base.html) with a clear gap on every screen size */
+    .hub-cart-fab { right: 1rem; bottom: 5.5rem; z-index: 9999 !important; }
+    @media (min-width: 768px) { .hub-cart-fab { right: 1.5rem; bottom: 6rem; } }
+    /* Hide floating buttons while the cart drawer / quick view is open */
+    body.overlay-open .hub-cart-fab { display: none; }
+</style>
+
+<div class="min-h-screen bg-[#f9f5f0] py-6 md:py-10 px-4 sm:px-6 pb-36">
     <div class="max-w-6xl mx-auto">
-        
+
         <!-- Header & Smart Filter -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border-t-4 border-[#8d5b3e]">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8 bg-white p-4 md:p-6 rounded-2xl shadow-sm border-t-4 border-[#8d5b3e]">
             <div>
-                <h1 class="font-ui text-2xl font-bold text-[#2d1e14] m-0">🎓 Central Campus Hub</h1>
+                <h1 class="font-ui text-xl md:text-2xl font-bold text-[#2d1e14] m-0">🎓 Central Campus Hub</h1>
                 <p class="font-serif italic text-xs text-[#78716c] mt-1">Exclusive marketplace for verified students.</p>
             </div>
-            
-            <div class="flex items-center gap-3">
-                <label class="font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-[#8d5b3e]">Filter by Campus:</label>
-                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="flex gap-2">
-                    <select name="university" onchange="this.form.submit()" class="p-2 border border-[#e7e5e4] rounded-lg font-ui text-xs outline-none focus:border-[#8d5b3e] bg-white">
+
+            <div class="w-full md:w-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                <label for="universityFilter" class="font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-[#8d5b3e]">Filter by Campus:</label>
+                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="w-full sm:w-auto flex gap-2">
+                    <select id="universityFilter" name="university" onchange="this.form.submit()"
+                            class="w-full sm:w-auto min-h-[44px] md:min-h-0 p-2 border border-[#e7e5e4] rounded-lg font-ui text-base md:text-xs outline-none focus:border-[#8d5b3e] bg-white">
                         <option value="All" {% if current_uni == 'All' %}selected{% endif %}>All Universities</option>
                         {% for uni in universities %}
                             <option value="{{ uni }}" {% if current_uni == uni %}selected{% endif %}>{{ uni }}</option>
@@ -26,38 +35,46 @@
             </div>
         </div>
 
-        <!-- Products Grid -->
+        <!-- Products Grid: 1 col phone · 2 col tablet · 3 col small desktop · 4 col large -->
         {% if products %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {% for product in products %}
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e5e4] hover:shadow-md transition group">
-                
+            <!-- Product data lives in data-* attributes (Jinja auto-escapes them) instead of inline JS strings -->
+            <div class="product-card bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e5e4] hover:shadow-md transition group"
+                 data-id="{{ product.id }}"
+                 data-name="{{ product.name }}"
+                 data-price="{{ product.current_price }}"
+                 data-store="{{ product.store.name }}"
+                 data-desc="{{ product.description or '' }}"
+                 data-image="{{ product.image if product.image else '/static/images/default_product.png' }}">
+
                 <!-- Clickable Image for Quick View -->
-                <div class="aspect-square bg-[#f5f5f4] overflow-hidden relative cursor-pointer" 
-                     onclick="openQuickView({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}', '{{ product.description | replace("'", "\\'") | replace('\n', ' ') }}', '{{ product.image if product.image else '/static/images/default_product.png' }}')">
-                    <img src="{{ product.image if product.image else '/static/images/default_product.png' }}" 
-                         alt="{{ product.name }}" 
+                <div class="aspect-[4/3] sm:aspect-square bg-[#f5f5f4] overflow-hidden relative cursor-pointer"
+                     onclick="openQuickView(this.closest('.product-card'))">
+                    <img src="{{ product.image if product.image else '/static/images/default_product.png' }}"
+                         alt="{{ product.name }}"
+                         loading="lazy"
                          class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    
-                    <div class="absolute top-2 left-2 bg-[#2d1e14] text-white text-[10px] font-ui font-bold px-2 py-1 rounded-full shadow">
+
+                    <div class="absolute top-2 left-2 max-w-[85%] truncate bg-[#2d1e14] text-white text-[10px] font-ui font-bold px-2 py-1 rounded-full shadow">
                         {{ product.store.name }}
                     </div>
                 </div>
 
                 <div class="p-4">
                     <!-- Clickable Title for Quick View -->
-                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 truncate cursor-pointer hover:text-[#8d5b3e]" 
-                        onclick="openQuickView({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}', '{{ product.description | replace("'", "\\'") | replace('\n', ' ') }}', '{{ product.image if product.image else '/static/images/default_product.png' }}')">
-                        {{ product.name }}
+                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 min-h-[44px] md:min-h-0 flex items-center cursor-pointer hover:text-[#8d5b3e]"
+                        onclick="openQuickView(this.closest('.product-card'))">
+                        <span class="truncate min-w-0">{{ product.name }}</span>
                     </h3>
-                    <p class="font-serif text-[10px] text-[#78716c] mt-1 line-clamp-2 h-8">{{ product.description or 'No description' }}</p>
-                    
-                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#f5f5f4]">
+                    <p class="font-serif text-xs md:text-[10px] text-[#78716c] mt-1 line-clamp-2 h-9 md:h-8">{{ product.description or 'No description' }}</p>
+
+                    <div class="flex justify-between items-center gap-2 mt-3 pt-3 border-t border-[#f5f5f4]">
                         <span class="font-ui text-base font-black text-[#8d5b3e]">₦{{ "{:,.0f}".format(product.current_price) }}</span>
-                        
+
                         <!-- Add to Cart Button -->
-                        <button type="button" onclick="addToCart({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}')" 
-                                class="font-ui text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                        <button type="button" onclick="addToCart(readProduct(this.closest('.product-card')), this)"
+                                class="font-ui text-xs md:text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] min-h-[44px] md:min-h-0 px-5 md:px-3 md:py-1.5 rounded-lg transition flex items-center justify-center gap-1">
                             <span>+</span> Add
                         </button>
                     </div>
@@ -65,13 +82,13 @@
             </div>
             {% endfor %}
         </div>
-        
+
         <!-- 🚀 PAGINATION CONTROLS -->
         {% if pagination.pages > 1 %}
-        <div class="flex justify-center items-center gap-2 mt-12 mb-8">
+        <div class="flex flex-wrap justify-center items-center gap-2 mt-10 md:mt-12 mb-8">
             {% if pagination.has_prev %}
-                <a href="?page={{ pagination.prev_num }}&university={{ current_uni }}" 
-                   class="px-4 py-2 bg-white border border-[#e7e5e4] rounded-lg font-ui text-xs font-bold text-[#8d5b3e] hover:bg-[#f9f5f0] transition no-underline">
+                <a href="?page={{ pagination.prev_num }}&university={{ current_uni | urlencode }}"
+                   class="inline-flex items-center min-h-[44px] px-4 py-2 bg-white border border-[#e7e5e4] rounded-lg font-ui text-xs font-bold text-[#8d5b3e] hover:bg-[#f9f5f0] transition no-underline">
                     &larr; Newer
                 </a>
             {% endif %}
@@ -81,17 +98,17 @@
             </span>
 
             {% if pagination.has_next %}
-                <a href="?page={{ pagination.next_num }}&university={{ current_uni }}" 
-                   class="px-4 py-2 bg-[#8d5b3e] border border-[#8d5b3e] rounded-lg font-ui text-xs font-bold text-white hover:bg-[#7a4e34] transition no-underline">
+                <a href="?page={{ pagination.next_num }}&university={{ current_uni | urlencode }}"
+                   class="inline-flex items-center min-h-[44px] px-4 py-2 bg-[#8d5b3e] border border-[#8d5b3e] rounded-lg font-ui text-xs font-bold text-white hover:bg-[#7a4e34] transition no-underline">
                     Older &rarr;
                 </a>
             {% endif %}
         </div>
         {% endif %}
-        
+
         {% else %}
-        <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-[#e7e5e4]">
-            <p class="font-ui text-lg text-[#78716c]">No products found in this campus yet.</p>
+        <div class="text-center py-14 md:py-20 px-4 bg-white rounded-2xl border border-dashed border-[#e7e5e4]">
+            <p class="font-ui text-base md:text-lg text-[#78716c]">No products found in this campus yet.</p>
             <p class="font-serif italic text-xs text-[#a8a29e] mt-2">Try changing the filter or check back soon!</p>
         </div>
         {% endif %}
@@ -99,59 +116,66 @@
 </div>
 
 <!-- 🔍 QUICK VIEW PRODUCT MODAL -->
-<div id="quickViewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[10000]">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative">
-        <button onclick="closeQuickView()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-[#2d1e14] rounded-full w-8 h-8 flex items-center justify-center font-bold text-xl z-10 shadow-sm">&times;</button>
-        
-        <!-- Modal Image -->
-        <div class="w-full md:w-1/2 bg-[#f5f5f4] flex items-center justify-center">
-            <img id="qvImage" src="" alt="Product" class="w-full h-full object-cover max-h-[400px] md:max-h-full">
-        </div>
-        
-        <!-- Modal Details -->
-        <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
-            <span id="qvStore" class="font-ui text-[10px] font-bold text-white bg-[#2d1e14] px-2 py-1 rounded-full w-max mb-3"></span>
-            <h2 id="qvName" class="font-ui text-2xl font-bold text-[#2d1e14] m-0 mb-2"></h2>
-            <p id="qvPrice" class="font-ui text-2xl font-black text-[#8d5b3e] mb-4"></p>
-            
-            <div class="flex-1 overflow-y-auto mb-6">
-                <h4 class="font-ui text-xs font-bold uppercase tracking-wider text-[#78716c] mb-2">Description</h4>
-                <p id="qvDesc" class="font-serif text-sm text-[#2d1e14] leading-relaxed"></p>
+<div id="quickViewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 z-[10000]" role="dialog" aria-modal="true" aria-label="Product quick view">
+    <!-- Outer shell does not scroll, so the close button stays visible while the content scrolls -->
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden relative">
+        <button onclick="closeQuickView()" aria-label="Close"
+                class="absolute top-2 right-2 md:top-3 md:right-3 bg-white/90 hover:bg-white text-[#2d1e14] rounded-full w-11 h-11 md:w-8 md:h-8 flex items-center justify-center font-bold text-2xl md:text-xl z-10 shadow-sm">&times;</button>
+
+        <div id="qvScroll" class="max-h-[90vh] overflow-y-auto flex flex-col md:flex-row">
+            <!-- Modal Image: on top for phones, left on desktop -->
+            <div class="w-full md:w-1/2 bg-[#f5f5f4] flex items-center justify-center">
+                <img id="qvImage" src="" alt="Product" class="w-full h-56 sm:h-72 md:h-full object-cover">
             </div>
-            
-            <button id="qvAddBtn" class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
-                <span>+</span> Add to Cart
-            </button>
+
+            <!-- Modal Details: below on phones, right on desktop -->
+            <div class="w-full md:w-1/2 p-4 sm:p-6 md:p-8 flex flex-col">
+                <span id="qvStore" class="font-ui text-[10px] font-bold text-white bg-[#2d1e14] px-2 py-1 rounded-full w-max max-w-full truncate mb-3"></span>
+                <h2 id="qvName" class="font-ui text-xl md:text-2xl font-bold text-[#2d1e14] m-0 mb-2"></h2>
+                <p id="qvPrice" class="font-ui text-xl md:text-2xl font-black text-[#8d5b3e] mb-4"></p>
+
+                <div class="flex-1 md:overflow-y-auto mb-6">
+                    <h4 class="font-ui text-xs font-bold uppercase tracking-wider text-[#78716c] mb-2">Description</h4>
+                    <p id="qvDesc" class="font-serif text-sm text-[#2d1e14] leading-relaxed"></p>
+                </div>
+
+                <button id="qvAddBtn" class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
+                    <span>+</span> Add to Cart
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- 🛒 FLOATING CART BUTTON -->
-<button onclick="toggleCart()" class="fixed bottom-24 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg flex items-center gap-2 transition" style="z-index: 9999 !important;">
+<button onclick="toggleCart()" aria-label="Open cart"
+        class="hub-cart-fab fixed bg-[#8d5b3e] hover:bg-[#7a4e34] text-white min-h-[56px] px-4 rounded-full shadow-lg flex items-center gap-2 transition">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
     <span id="cartCount" class="bg-white text-[#8d5b3e] text-xs font-bold px-2 py-0.5 rounded-full">0</span>
 </button>
 
-<!-- 🛒 CART DRAWER MODAL -->
-<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-end" style="z-index: 9998 !important;">
-    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
-        <div class="p-5 border-b border-[#e7e5e4] flex justify-between items-center bg-[#f9f5f0]">
-            <h2 class="font-ui text-lg font-bold text-[#2d1e14]">Your Campus Cart</h2>
-            <button onclick="toggleCart()" class="text-[#78716c] hover:text-[#2d1e14] text-2xl font-bold">&times;</button>
+<!-- 🛒 CART DRAWER: full-width on phones, side drawer (max-w-md) from sm: up -->
+<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-end" style="z-index: 9998 !important;" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <div class="bg-white w-full sm:max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
+        <div class="p-4 md:p-5 border-b border-[#e7e5e4] flex justify-between items-center bg-[#f9f5f0]">
+            <h2 class="font-ui text-base md:text-lg font-bold text-[#2d1e14]">Your Campus Cart</h2>
+            <button onclick="toggleCart()" aria-label="Close cart"
+                    class="w-11 h-11 -mr-2 flex items-center justify-center text-[#78716c] hover:text-[#2d1e14] text-3xl font-bold">&times;</button>
         </div>
-        
-        <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-4">
+
+        <div id="cartItems" class="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4">
             <p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>
         </div>
-        
-        <div class="p-5 border-t border-[#e7e5e4] bg-[#f9f5f0]">
+
+        <div class="p-4 md:p-5 border-t border-[#e7e5e4] bg-[#f9f5f0]">
             <div class="flex justify-between items-center mb-4">
                 <span class="font-ui text-sm font-semibold text-[#2d1e14]">Total Estimated:</span>
-                <span id="cartTotal" class="font-ui text-xl font-black text-[#8d5b3e]">₦0</span>
+                <span id="cartTotal" class="font-ui text-lg md:text-xl font-black text-[#8d5b3e]">₦0</span>
             </div>
-            <button onclick="checkoutCart()" id="checkoutBtn" disabled class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-ui font-bold text-sm rounded-lg transition">
+            <button onclick="checkoutCart()" id="checkoutBtn" disabled
+                    class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-ui font-bold text-sm rounded-lg transition">
                 Proceed to Checkout
             </button>
         </div>
@@ -159,29 +183,46 @@
 </div>
 
 <script>
-    console.log("🛒 Cart script loaded successfully!");
-    console.log("Initial cart data:", localStorage.getItem('campusCart'));
-
     // 🛒 CART LOGIC
     let cart = JSON.parse(localStorage.getItem('campusCart')) || [];
 
-    function addToCart(id, name, price, storeName) {
-        const existing = cart.find(item => item.id === id);
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Read a product card's data-* attributes
+    function readProduct(card) {
+        const d = card.dataset;
+        return {
+            id: Number(d.id),
+            name: d.name,
+            price: Number(d.price),
+            storeName: d.store,
+            description: d.desc,
+            image: d.image
+        };
+    }
+
+    function addToCart(product, btn) {
+        const existing = cart.find(item => item.id === product.id);
         if (existing) {
             existing.qty += 1;
         } else {
-            cart.push({ id, name, price, storeName, qty: 1 });
+            cart.push({ id: product.id, name: product.name, price: product.price, storeName: product.storeName, qty: 1 });
         }
         saveCart();
-        
-        const btn = event.target.closest('button');
-        const orig = btn.innerHTML;
-        btn.innerHTML = '✓ Added';
-        btn.classList.add('bg-[#047857]');
-        setTimeout(() => {
-            btn.innerHTML = orig;
-            btn.classList.remove('bg-[#047857]');
-        }, 1000);
+
+        if (btn && !btn.dataset.busy) {
+            btn.dataset.busy = '1';
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ Added';
+            btn.classList.add('bg-[#047857]');
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.classList.remove('bg-[#047857]');
+                delete btn.dataset.busy;
+            }, 1000);
+        }
     }
 
     function removeFromCart(id) {
@@ -208,7 +249,7 @@
         const countBadge = document.getElementById('cartCount');
         const totalEl = document.getElementById('cartTotal');
         const checkoutBtn = document.getElementById('checkoutBtn');
-        
+
         const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
         const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
@@ -223,21 +264,30 @@
 
         container.innerHTML = cart.map(item => `
             <div class="flex gap-3 bg-white p-3 rounded-lg border border-[#e7e5e4]">
-                <div class="flex-1">
-                    <h4 class="font-ui text-xs font-bold text-[#2d1e14]">${item.name}</h4>
-                    <p class="font-serif text-[10px] text-[#78716c]">${item.storeName}</p>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-ui text-xs font-bold text-[#2d1e14] break-words">${escapeHtml(item.name)}</h4>
+                    <p class="font-serif text-[10px] text-[#78716c]">${escapeHtml(item.storeName)}</p>
                     <p class="font-ui text-xs font-semibold text-[#8d5b3e] mt-1">₦${(item.price * item.qty).toLocaleString()}</p>
                 </div>
-                <div class="flex flex-col items-end justify-between">
-                    <button onclick="removeFromCart(${item.id})" class="text-[#b33a3a] text-xs font-bold hover:underline">&times; Remove</button>
-                    <div class="flex items-center gap-2 bg-[#f9f5f0] rounded px-1">
-                        <button onclick="updateQty(${item.id}, -1)" class="w-6 h-6 flex items-center justify-center text-[#8d5b3e] font-bold">-</button>
-                        <span class="font-ui text-xs font-bold w-4 text-center">${item.qty}</span>
-                        <button onclick="updateQty(${item.id}, 1)" class="w-6 h-6 flex items-center justify-center text-[#8d5b3e] font-bold">+</button>
+                <div class="flex flex-col items-end justify-between gap-1 shrink-0">
+                    <button onclick="removeFromCart(${item.id})" class="text-[#b33a3a] text-xs font-bold hover:underline min-h-[44px] md:min-h-0 px-2 md:px-0 -mr-2 md:mr-0">&times; Remove</button>
+                    <div class="flex items-center gap-1 md:gap-2 bg-[#f9f5f0] rounded px-1">
+                        <button onclick="updateQty(${item.id}, -1)" aria-label="Decrease quantity" class="w-11 h-11 md:w-6 md:h-6 flex items-center justify-center text-lg md:text-base text-[#8d5b3e] font-bold">-</button>
+                        <span class="font-ui text-xs font-bold w-5 md:w-4 text-center">${item.qty}</span>
+                        <button onclick="updateQty(${item.id}, 1)" aria-label="Increase quantity" class="w-11 h-11 md:w-6 md:h-6 flex items-center justify-center text-lg md:text-base text-[#8d5b3e] font-bold">+</button>
                     </div>
                 </div>
             </div>
         `).join('');
+    }
+
+    // Lock page scroll + hide floating buttons while any overlay is open
+    function syncOverlayState() {
+        const cartOpen = !document.getElementById('cartDrawer').classList.contains('hidden');
+        const qvOpen = !document.getElementById('quickViewModal').classList.contains('hidden');
+        const anyOpen = cartOpen || qvOpen;
+        document.body.classList.toggle('overlay-open', anyOpen);
+        document.body.style.overflow = anyOpen ? 'hidden' : '';
     }
 
     function toggleCart() {
@@ -245,10 +295,11 @@
         const panel = document.getElementById('cartPanel');
         if (drawer.classList.contains('hidden')) {
             drawer.classList.remove('hidden');
+            syncOverlayState();
             setTimeout(() => panel.classList.remove('translate-x-full'), 10);
         } else {
             panel.classList.add('translate-x-full');
-            setTimeout(() => drawer.classList.add('hidden'), 300);
+            setTimeout(() => { drawer.classList.add('hidden'); syncOverlayState(); }, 300);
         }
     }
 
@@ -264,7 +315,7 @@
                 body: JSON.stringify({ items: cart })
             });
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 cart = [];
                 saveCart();
@@ -284,33 +335,44 @@
     }
 
     // 🔍 QUICK VIEW LOGIC
-    function openQuickView(id, name, price, storeName, description, imageUrl) {
-        document.getElementById('qvImage').src = imageUrl;
-        document.getElementById('qvStore').innerText = storeName;
-        document.getElementById('qvName').innerText = name;
-        document.getElementById('qvPrice').innerText = '₦' + price.toLocaleString();
-        document.getElementById('qvDesc').innerText = description || 'No detailed description available for this product.';
-        
+    function openQuickView(card) {
+        const p = readProduct(card);
+        document.getElementById('qvImage').src = p.image;
+        document.getElementById('qvImage').alt = p.name;
+        document.getElementById('qvStore').innerText = p.storeName;
+        document.getElementById('qvName').innerText = p.name;
+        document.getElementById('qvPrice').innerText = '₦' + p.price.toLocaleString();
+        document.getElementById('qvDesc').innerText = p.description || 'No detailed description available for this product.';
+
         // Update the Add to Cart button inside the modal
-        const addBtn = document.getElementById('qvAddBtn');
-        addBtn.onclick = function() {
-            addToCart(id, name, price, storeName);
+        document.getElementById('qvAddBtn').onclick = function() {
+            addToCart(p);
             closeQuickView();
         };
 
-        const modal = document.getElementById('quickViewModal');
-        modal.classList.remove('hidden');
+        document.getElementById('qvScroll').scrollTop = 0;
+        document.getElementById('quickViewModal').classList.remove('hidden');
+        syncOverlayState();
     }
 
     function closeQuickView() {
         document.getElementById('quickViewModal').classList.add('hidden');
+        syncOverlayState();
     }
 
-    // Close modal if clicking outside the content box
+    // Close modal / drawer when tapping the dimmed backdrop
     document.getElementById('quickViewModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeQuickView();
-        }
+        if (e.target === this) closeQuickView();
+    });
+    document.getElementById('cartDrawer').addEventListener('click', function(e) {
+        if (e.target === this) toggleCart();
+    });
+
+    // Escape closes whichever overlay is open
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if (!document.getElementById('quickViewModal').classList.contains('hidden')) closeQuickView();
+        else if (!document.getElementById('cartDrawer').classList.contains('hidden')) toggleCart();
     });
 
     // Initialize cart on load
