@@ -17,17 +17,21 @@
             --dark-oak: #2d1e14;
         }
 
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
-        }
+        /*
+         * Horizontal-overflow guard.
+         * overflow-x:hidden on BOTH html and body turns <body> into a scroll container,
+         * which silently disables `position: sticky` on the header. We keep it on <html>
+         * and use `clip` on <body> (clip does not create a scroll container).
+         */
+        html { overflow-x: hidden; width: 100%; }
+        body { overflow-x: clip; width: 100%; }
 
         body {
             background-color: var(--cream);
             color: var(--dark-oak);
             font-family: 'Georgia', serif;
             margin: 0;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(249, 245, 240, 0.92), rgba(249, 245, 240, 0.92)),
                 url('/static/images/marketplace_bg.jpg');
             background-attachment: fixed;
@@ -39,7 +43,7 @@
         body.dark-mode {
             background-color: #09090b !important;
             color: #f4f4f5 !important;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(9, 9, 11, 0.94), rgba(9, 9, 11, 0.94)),
                 url('/static/images/marketplace_bg.jpg') !important;
         }
@@ -62,10 +66,11 @@
         body.dark-mode .text-stone-500 { color: #a1a1aa !important; }
 
         .font-ui { font-family: 'Montserrat', sans-serif; }
-        
+
+        /* ───────── TOP NAV ───────── */
         .nav-bar {
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px);
-            padding: 14px 4%; display: flex; justify-content: space-between;
+            padding: 10px 4%; display: flex; justify-content: space-between;
             align-items: center; border-bottom: 1px solid #eee;
         }
         @media (min-width: 768px) {
@@ -75,11 +80,40 @@
         .brand-logo {
             font-family: 'Montserrat', sans-serif; font-weight: 700;
             letter-spacing: 2px; text-decoration: none; color: var(--dark-oak); font-size: 0.9rem;
+            display: inline-flex; align-items: center; min-height: 44px;
         }
         @media (min-width: 768px) {
-            .brand-logo { font-size: 1rem; }
+            .brand-logo { font-size: 1rem; min-height: 0; }
         }
 
+        /* Mobile slide-down menu (hidden at md: and up) */
+        .mobile-menu {
+            position: absolute; left: 0; right: 0; top: 100%;
+            background: #ffffff;
+            border-bottom: 1px solid #eee;
+            box-shadow: 0 18px 30px -12px rgba(45, 30, 20, 0.18);
+            max-height: 0; opacity: 0; visibility: hidden; overflow: hidden; pointer-events: none;
+            transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0s linear 0.3s;
+        }
+        .mobile-menu.open {
+            max-height: calc(100vh - 64px);
+            max-height: calc(100dvh - 64px);
+            opacity: 1; visibility: visible; overflow-y: auto; pointer-events: auto;
+            transition: max-height 0.3s ease, opacity 0.2s ease, visibility 0s;
+        }
+        .mm-link {
+            display: flex; align-items: center; min-height: 48px; padding: 0 5%;
+            border-top: 1px solid #f1ede8;
+            font-family: 'Montserrat', sans-serif; font-size: 0.75rem;
+            letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+        }
+        .mm-link:active { background: rgba(141, 91, 62, 0.08); }
+        .mm-neutral { color: #57534e; }
+        body.dark-mode .mobile-menu { background: #121217; border-bottom-color: #27272a; }
+        body.dark-mode .mm-link { border-top-color: #27272a; }
+        body.dark-mode .mm-neutral { color: #d4d4d8; }
+
+        /* ───────── BUTTONS ───────── */
         .btn-oak {
             background: var(--dark-oak); color: white; padding: 12px 20px;
             font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 600;
@@ -92,53 +126,98 @@
             letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
             border: none; cursor: pointer; transition: 0.3s;
         }
+        /* 44px touch targets on phones only, desktop sizing is untouched */
+        @media (max-width: 767px) {
+            .btn-oak, .btn-clay {
+                min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+            }
+        }
 
+        /* ───────── FLOATING SUPPORT BUTTON ───────── */
         .floating-support-btn {
-            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
-            background: #16a34a; color: white; padding: 10px 16px; border-radius: 50px;
+            position: fixed; bottom: 16px; right: 16px; z-index: 9999;
+            background: #16a34a; color: white; padding: 10px 16px; min-height: 44px; border-radius: 50px;
             font-family: 'Montserrat', sans-serif; font-size: 0.7rem; font-weight: 700;
             display: flex; align-items: center; gap: 8px;
             box-shadow: 0 10px 25px rgba(22, 163, 74, 0.4); text-decoration: none;
         }
         @media (min-width: 768px) {
-            .floating-support-btn { padding: 12px 18px; font-size: 0.75rem; bottom: 24px; right: 24px; }
+            .floating-support-btn { padding: 12px 18px; min-height: 0; font-size: 0.75rem; bottom: 24px; right: 24px; }
         }
+        /* Hidden while a drawer / modal is open so it never covers Checkout */
+        body.overlay-open .floating-support-btn { display: none; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <!-- Top Navigation Bar -->
-    <header class="nav-bar sticky top-0 z-40">
+    <header id="siteHeader" class="nav-bar sticky top-0 z-[60]">
         <a href="/" class="brand-logo">MARKETPLACE.</a>
-        <div class="flex items-center gap-3 md:gap-4">
-            <button type="button" onclick="toggleTheme()" class="p-1.5 md:p-2 rounded-full border border-stone-300 text-xs font-mono cursor-pointer" title="Toggle Light/Dark Theme">
+
+        <div class="flex items-center gap-2 md:gap-4">
+            <button type="button" onclick="toggleTheme()"
+                    class="w-11 h-11 md:w-auto md:h-auto md:p-2 inline-flex items-center justify-center rounded-full border border-stone-300 text-xs font-mono cursor-pointer"
+                    title="Toggle Light/Dark Theme" aria-label="Toggle light or dark theme">
                 <span id="themeIcon">🌙</span>
             </button>
 
-            {% if current_user.is_authenticated %}
-                <a href="/dashboard" class="font-ui text-[11px] md:text-xs text-clay font-bold tracking-wider uppercase">Hub</a>
-                
-                <!-- 🎓 CAMPUS HUB (Only for students) -->
-                {% if current_user.is_student %}
-                    <a href="/central" class="font-ui text-[11px] md:text-xs text-[#8d5b3e] font-bold tracking-wider uppercase hover:underline">🎓 Campus Hub</a>
+            <!-- 🖥️ DESKTOP LINKS (md and up) -->
+            <div class="hidden md:flex items-center gap-4">
+                {% if current_user.is_authenticated %}
+                    <a href="/dashboard" class="font-ui text-xs text-clay font-bold tracking-wider uppercase">Hub</a>
+
+                    <!-- 🎓 CAMPUS HUB (Only for students) -->
+                    {% if current_user.is_student %}
+                        <a href="/central" class="font-ui text-xs text-[#8d5b3e] font-bold tracking-wider uppercase hover:underline">🎓 Campus Hub</a>
+                    {% endif %}
+
+                    <!-- ⚙️ SETTINGS LINK -->
+                    <a href="/account/settings" class="font-ui text-xs text-stone-600 font-semibold tracking-wider uppercase hover:text-clay transition">⚙️ Settings</a>
+
+                    {% if current_user.is_admin %}
+                        <a href="/admin" class="font-ui text-xs text-[#f59e0b] font-bold tracking-wider uppercase">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('auth.logout') }}" class="font-ui text-xs text-rose-500 font-semibold tracking-wider uppercase">Log Out</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="font-ui text-xs text-stone-600 font-semibold tracking-wider uppercase">Log In</a>
+                    <a href="{{ url_for('auth.register') }}" class="font-ui text-xs text-clay font-bold tracking-wider uppercase">Open Kiosk</a>
                 {% endif %}
-                
-                <!-- ⚙️ SETTINGS LINK -->
-                <a href="/account/settings" class="font-ui text-[11px] md:text-xs text-stone-600 font-semibold tracking-wider uppercase hover:text-clay transition">⚙️ Settings</a>
-                
-                {% if current_user.is_admin %}
-                    <a href="/admin" class="font-ui text-[11px] md:text-xs text-[#f59e0b] font-bold tracking-wider uppercase hidden sm:inline">Admin</a>
-                {% endif %}
-                <a href="{{ url_for('auth.logout') }}" class="font-ui text-[11px] md:text-xs text-rose-500 font-semibold tracking-wider uppercase">Log Out</a>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="font-ui text-[11px] md:text-xs text-stone-600 font-semibold tracking-wider uppercase">Log In</a>
-                <a href="{{ url_for('auth.register') }}" class="font-ui text-[11px] md:text-xs text-clay font-bold tracking-wider uppercase">Open Kiosk</a>
-            {% endif %}
+            </div>
+
+            <!-- 🍔 HAMBURGER (below md) -->
+            <button id="menuBtn" type="button"
+                    class="md:hidden w-11 h-11 -mr-2 inline-flex items-center justify-center rounded-lg cursor-pointer"
+                    aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+                <svg id="iconBurger" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+                <svg id="iconClose" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
         </div>
+
+        <!-- 📱 MOBILE DROPDOWN (full width, slides down) -->
+        <nav id="mobileMenu" class="mobile-menu md:hidden" aria-label="Mobile navigation" aria-hidden="true">
+            {% if current_user.is_authenticated %}
+                <a href="/dashboard" class="mm-link text-[#8d5b3e] font-bold">Hub</a>
+                {% if current_user.is_student %}
+                    <a href="/central" class="mm-link text-[#8d5b3e] font-bold">🎓 Campus Hub</a>
+                {% endif %}
+                <a href="/account/settings" class="mm-link mm-neutral font-semibold">⚙️ Settings</a>
+                {% if current_user.is_admin %}
+                    <a href="/admin" class="mm-link text-[#f59e0b] font-bold">Admin</a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}" class="mm-link text-rose-500 font-semibold">Log Out</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="mm-link mm-neutral font-semibold">Log In</a>
+                <a href="{{ url_for('auth.register') }}" class="mm-link text-[#8d5b3e] font-bold">Open Kiosk</a>
+            {% endif %}
+        </nav>
     </header>
 
     <!-- Flash Messages -->
-    <div class="fixed top-16 md:top-20 right-4 left-4 sm:left-auto sm:right-6 z-50 max-w-sm sm:w-full space-y-2">
+    <div class="fixed top-[72px] md:top-20 right-4 left-4 sm:left-auto sm:right-6 z-50 max-w-sm sm:w-full space-y-2">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -146,9 +225,9 @@
                     {% if category == 'success' %}{% set bg = 'bg-[#15803d]' %}{% endif %}
                     {% if category == 'danger' %}{% set bg = 'bg-[#b33a3a]' %}{% endif %}
                     {% if category == 'warning' %}{% set bg = 'bg-[#8d5b3e]' %}{% endif %}
-                    <div class="{{ bg }} text-white font-ui text-xs px-4 py-3 shadow-xl border-l-4 border-clay flex items-center justify-between">
-                        <span>{{ message }}</span>
-                        <button onclick="this.parentElement.remove()" class="ml-3 font-bold text-white/80 hover:text-white">&times;</button>
+                    <div class="{{ bg }} text-white font-ui text-xs pl-4 pr-1 py-1 shadow-xl border-l-4 border-clay flex items-center justify-between">
+                        <span class="py-2">{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="ml-3 min-w-[44px] min-h-[44px] flex items-center justify-center text-lg font-bold text-white/80 hover:text-white" aria-label="Dismiss">&times;</button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -161,7 +240,7 @@
 
     <!-- ⏳ GLOBAL ANTI-DOUBLE-CLICK MODAL -->
     <div id="globalLoadingModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[999999] flex items-center justify-center p-4 hidden">
-        <div class="bg-white p-8 max-w-xs sm:max-w-sm w-full text-center border-t-[6px] border-clay shadow-2xl rounded-2xl">
+        <div class="bg-white p-6 sm:p-8 max-w-xs sm:max-w-sm w-full text-center border-t-[6px] border-clay shadow-2xl rounded-2xl">
             <div class="inline-block animate-spin w-10 h-10 border-4 border-clay border-t-transparent rounded-full mb-4"></div>
             <h3 class="font-ui text-sm font-bold text-dark-oak mb-1">Processing Request...</h3>
             <p id="globalLoadingText" class="font-serif italic text-[11px] text-stone-500 leading-relaxed m-0">
@@ -171,13 +250,14 @@
     </div>
 
     <!-- 💬 MERCHANT SUPPORT BUTTON -->
-    <a href="https://wa.me/2348136390030?text=Hello%20Marketplace%20Support,%20I%20am%20a%20merchant%20and%20need%20assistance%20with%20my%20storefront." 
+    <a href="https://wa.me/2348136390030?text=Hello%20Marketplace%20Support,%20I%20am%20a%20merchant%20and%20need%20assistance%20with%20my%20storefront."
        target="_blank" class="floating-support-btn">
         <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
         <span>Support</span>
     </a>
 
     <script>
+        /* 🌙 Theme */
         function toggleTheme() {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -189,6 +269,36 @@
             document.getElementById('themeIcon').innerText = '☀️';
         }
 
+        /* 🍔 Mobile menu */
+        (function () {
+            const header = document.getElementById('siteHeader');
+            const btn    = document.getElementById('menuBtn');
+            const menu   = document.getElementById('mobileMenu');
+            const burger = document.getElementById('iconBurger');
+            const close  = document.getElementById('iconClose');
+            if (!btn || !menu) return;
+
+            function setOpen(open) {
+                menu.classList.toggle('open', open);
+                menu.setAttribute('aria-hidden', String(!open));
+                btn.setAttribute('aria-expanded', String(open));
+                btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+                burger.classList.toggle('hidden', open);
+                close.classList.toggle('hidden', !open);
+            }
+
+            btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')); });
+            menu.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+            document.addEventListener('click', function (e) {
+                if (menu.classList.contains('open') && !header.contains(e.target)) setOpen(false);
+            });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false); });
+            window.matchMedia('(min-width: 768px)').addEventListener('change', function (e) {
+                if (e.matches) setOpen(false);
+            });
+        })();
+
+        /* ⏳ Anti-double-submit */
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('form').forEach(form => {
                 form.addEventListener('submit', function() {
