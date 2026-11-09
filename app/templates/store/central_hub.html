@@ -31,7 +31,10 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {% for product in products %}
             <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e5e4] hover:shadow-md transition group">
-                <div class="aspect-square bg-[#f5f5f4] overflow-hidden relative">
+                
+                <!-- Clickable Image for Quick View -->
+                <div class="aspect-square bg-[#f5f5f4] overflow-hidden relative cursor-pointer" 
+                     onclick="openQuickView({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}', '{{ product.description | replace("'", "\\'") | replace('\n', ' ') }}', '{{ product.image if product.image else '/static/images/default_product.png' }}')">
                     <img src="{{ product.image if product.image else '/static/images/default_product.png' }}" 
                          alt="{{ product.name }}" 
                          class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
@@ -42,7 +45,11 @@
                 </div>
 
                 <div class="p-4">
-                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 truncate">{{ product.name }}</h3>
+                    <!-- Clickable Title for Quick View -->
+                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 truncate cursor-pointer hover:text-[#8d5b3e]" 
+                        onclick="openQuickView({{ product.id }}, '{{ product.name | replace("'", "\\'") }}', {{ product.current_price }}, '{{ product.store.name | replace("'", "\\'") }}', '{{ product.description | replace("'", "\\'") | replace('\n', ' ') }}', '{{ product.image if product.image else '/static/images/default_product.png' }}')">
+                        {{ product.name }}
+                    </h3>
                     <p class="font-serif text-[10px] text-[#78716c] mt-1 line-clamp-2 h-8">{{ product.description or 'No description' }}</p>
                     
                     <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#f5f5f4]">
@@ -91,6 +98,34 @@
     </div>
 </div>
 
+<!-- 🔍 QUICK VIEW PRODUCT MODAL -->
+<div id="quickViewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-[10000]">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative">
+        <button onclick="closeQuickView()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-[#2d1e14] rounded-full w-8 h-8 flex items-center justify-center font-bold text-xl z-10 shadow-sm">&times;</button>
+        
+        <!-- Modal Image -->
+        <div class="w-full md:w-1/2 bg-[#f5f5f4] flex items-center justify-center">
+            <img id="qvImage" src="" alt="Product" class="w-full h-full object-cover max-h-[400px] md:max-h-full">
+        </div>
+        
+        <!-- Modal Details -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col">
+            <span id="qvStore" class="font-ui text-[10px] font-bold text-white bg-[#2d1e14] px-2 py-1 rounded-full w-max mb-3"></span>
+            <h2 id="qvName" class="font-ui text-2xl font-bold text-[#2d1e14] m-0 mb-2"></h2>
+            <p id="qvPrice" class="font-ui text-2xl font-black text-[#8d5b3e] mb-4"></p>
+            
+            <div class="flex-1 overflow-y-auto mb-6">
+                <h4 class="font-ui text-xs font-bold uppercase tracking-wider text-[#78716c] mb-2">Description</h4>
+                <p id="qvDesc" class="font-serif text-sm text-[#2d1e14] leading-relaxed"></p>
+            </div>
+            
+            <button id="qvAddBtn" class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
+                <span>+</span> Add to Cart
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- 🛒 FLOATING CART BUTTON -->
 <button onclick="toggleCart()" class="fixed bottom-24 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg flex items-center gap-2 transition" style="z-index: 9999 !important;">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,7 +159,7 @@
 </div>
 
 <script>
-    console.log(" Cart script loaded successfully!");
+    console.log("🛒 Cart script loaded successfully!");
     console.log("Initial cart data:", localStorage.getItem('campusCart'));
 
     // 🛒 CART LOGIC
@@ -248,6 +283,37 @@
         }
     }
 
+    // 🔍 QUICK VIEW LOGIC
+    function openQuickView(id, name, price, storeName, description, imageUrl) {
+        document.getElementById('qvImage').src = imageUrl;
+        document.getElementById('qvStore').innerText = storeName;
+        document.getElementById('qvName').innerText = name;
+        document.getElementById('qvPrice').innerText = '₦' + price.toLocaleString();
+        document.getElementById('qvDesc').innerText = description || 'No detailed description available for this product.';
+        
+        // Update the Add to Cart button inside the modal
+        const addBtn = document.getElementById('qvAddBtn');
+        addBtn.onclick = function() {
+            addToCart(id, name, price, storeName);
+            closeQuickView();
+        };
+
+        const modal = document.getElementById('quickViewModal');
+        modal.classList.remove('hidden');
+    }
+
+    function closeQuickView() {
+        document.getElementById('quickViewModal').classList.add('hidden');
+    }
+
+    // Close modal if clicking outside the content box
+    document.getElementById('quickViewModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeQuickView();
+        }
+    });
+
+    // Initialize cart on load
     renderCart();
 </script>
 {% endblock %}
