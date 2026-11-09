@@ -67,16 +67,16 @@
     </div>
 </div>
 
-<!-- 🛒 FLOATING CART BUTTON -->
-<button onclick="toggleCart()" class="fixed bottom-6 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg z-50 flex items-center gap-2 transition">
+<!-- 🛒 FLOATING CART BUTTON (Fixed visibility) -->
+<button onclick="toggleCart()" class="fixed bottom-6 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg flex items-center gap-2 transition" style="z-index: 9999 !important;">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
-    <span id="cartCount" class="bg-white text-[#8d5b3e] text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+    <span id="cartCount" class="bg-white text-[#8d5b3e] text-xs font-bold px-2 py-0.5 rounded-full">0</span>
 </button>
 
 <!-- 🛒 CART DRAWER MODAL -->
-<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex justify-end">
+<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-end" style="z-index: 9998 !important;">
     <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
         <div class="p-5 border-b border-[#e7e5e4] flex justify-between items-center bg-[#f9f5f0]">
             <h2 class="font-ui text-lg font-bold text-[#2d1e14]">Your Campus Cart</h2>
@@ -101,6 +101,9 @@
 </div>
 
 <script>
+    console.log("🛒 Cart script loaded successfully!");
+    console.log("Initial cart data:", localStorage.getItem('campusCart'));
+
     // 🛒 CART LOGIC
     let cart = JSON.parse(localStorage.getItem('campusCart')) || [];
 
@@ -112,6 +115,7 @@
             cart.push({ id, name, price, storeName, qty: 1 });
         }
         saveCart();
+        
         // Visual feedback
         const btn = event.target.closest('button');
         const orig = btn.innerHTML;
@@ -152,7 +156,6 @@
         const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
         countBadge.innerText = totalItems;
-        countBadge.classList.toggle('hidden', totalItems === 0);
         totalEl.innerText = '₦' + totalPrice.toLocaleString();
         checkoutBtn.disabled = totalItems === 0;
 
