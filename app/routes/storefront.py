@@ -33,9 +33,14 @@ def landing():
 @storefront_bp.route('/central')
 @login_required
 def central_hub():
-    # 🎓 THE STUDENT GATE
+    # 🎓 1. THE STUDENT GATE
     if not current_user.is_student:
         flash('🎓 The Central Campus Hub is exclusive to verified students.', 'warning')
+        return redirect(url_for('dashboard.account_settings'))
+
+    # 📱 2. PHONE NUMBER ENFORCEMENT (NEW!)
+    if not current_user.phone_number or not current_user.phone_number.strip():
+        flash('📱 Please add your WhatsApp phone number in your Account Settings before accessing the Central Hub. Merchants need this to contact you!', 'warning')
         return redirect(url_for('dashboard.account_settings'))
 
     # Get all unique universities from active STUDENT merchants for the dropdown
@@ -56,7 +61,7 @@ def central_hub():
     if filter_uni and filter_uni != 'All':
         query = query.filter(User.university_name == filter_uni)
 
-    # 🚀 DYNAMIC LOADING: Paginate instead of loading all
+    # 🚀 DYNAMIC LOADING: Paginate
     page = request.args.get('page', 1, type=int)
     pagination = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=12, error_out=False)
     products = pagination.items
@@ -66,7 +71,7 @@ def central_hub():
         products=products, 
         universities=universities, 
         current_uni=filter_uni,
-        pagination=pagination # 👈 Pass pagination object to template
+        pagination=pagination
     )
 
 
