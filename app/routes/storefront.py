@@ -121,7 +121,7 @@ def central_checkout_bulk():
             store_id=store_id,
             order_ref=order_ref,
             customer_name=current_user.username, 
-            customer_phone="Student Account", # We will fix this to use real phone later
+            customer_phone=current_user.phone_number or "Student Account",  
             delivery_address="Campus Delivery (Update in profile)",
             status='pending',
             total_amount=order_data['total'],
