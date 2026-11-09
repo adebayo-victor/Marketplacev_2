@@ -3,7 +3,7 @@
 {% block title %}Central Campus Hub // Marketplace{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-[#f9f5f0] py-10 px-4 pb-32"> <!-- Increased bottom padding to prevent scroll overlap -->
+<div class="min-h-screen bg-[#f9f5f0] py-10 px-4 pb-32">
     <div class="max-w-6xl mx-auto">
         
         <!-- Header & Smart Filter -->
@@ -58,6 +58,30 @@
             </div>
             {% endfor %}
         </div>
+        
+        <!-- 🚀 PAGINATION CONTROLS -->
+        {% if pagination.pages > 1 %}
+        <div class="flex justify-center items-center gap-2 mt-12 mb-8">
+            {% if pagination.has_prev %}
+                <a href="?page={{ pagination.prev_num }}&university={{ current_uni }}" 
+                   class="px-4 py-2 bg-white border border-[#e7e5e4] rounded-lg font-ui text-xs font-bold text-[#8d5b3e] hover:bg-[#f9f5f0] transition no-underline">
+                    &larr; Newer
+                </a>
+            {% endif %}
+
+            <span class="font-ui text-xs text-[#78716c] px-2">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+            </span>
+
+            {% if pagination.has_next %}
+                <a href="?page={{ pagination.next_num }}&university={{ current_uni }}" 
+                   class="px-4 py-2 bg-[#8d5b3e] border border-[#8d5b3e] rounded-lg font-ui text-xs font-bold text-white hover:bg-[#7a4e34] transition no-underline">
+                    Older &rarr;
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
         {% else %}
         <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-[#e7e5e4]">
             <p class="font-ui text-lg text-[#78716c]">No products found in this campus yet.</p>
@@ -67,7 +91,7 @@
     </div>
 </div>
 
-<!-- 🛒 FLOATING CART BUTTON (Moved up to avoid Support button) -->
+<!-- 🛒 FLOATING CART BUTTON -->
 <button onclick="toggleCart()" class="fixed bottom-24 right-6 bg-[#8d5b3e] hover:bg-[#7a4e34] text-white p-4 rounded-full shadow-lg flex items-center gap-2 transition" style="z-index: 9999 !important;">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -84,7 +108,6 @@
         </div>
         
         <div id="cartItems" class="flex-1 overflow-y-auto p-5 space-y-4">
-            <!-- Cart items injected here by JS -->
             <p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>
         </div>
         
@@ -101,7 +124,7 @@
 </div>
 
 <script>
-    console.log("🛒 Cart script loaded successfully!");
+    console.log(" Cart script loaded successfully!");
     console.log("Initial cart data:", localStorage.getItem('campusCart'));
 
     // 🛒 CART LOGIC
@@ -116,7 +139,6 @@
         }
         saveCart();
         
-        // Visual feedback
         const btn = event.target.closest('button');
         const orig = btn.innerHTML;
         btn.innerHTML = '✓ Added';
@@ -226,7 +248,6 @@
         }
     }
 
-    // Initialize cart on load
     renderCart();
 </script>
 {% endblock %}
