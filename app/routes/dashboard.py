@@ -842,12 +842,13 @@ def verify_topup():
 @login_required
 def account_settings():
     if request.method == 'POST':
-        # Handle Student Mode Toggle
         is_student = True if request.form.get('is_student') else False
         university_name = request.form.get('university_name', '').strip() if is_student else None
+        phone_number = request.form.get('phone_number', '').strip() # 👈 CAPTURE PHONE
         
         current_user.is_student = is_student
         current_user.university_name = university_name
+        current_user.phone_number = phone_number # 👈 SAVE PHONE
         
         db.session.commit()
         flash('✅ Profile and Student Mode updated successfully!', 'success')
