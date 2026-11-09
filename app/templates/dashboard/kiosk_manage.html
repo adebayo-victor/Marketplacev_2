@@ -4,157 +4,193 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Manage: {{ kiosk.name }} // Marketplace</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { brand: '#8d5b3e', ink: '#2d1e14', mute: '#888888' },
+                    fontFamily: { ui: ['Montserrat', 'sans-serif'] }
+                }
+            }
+        };
+    </script>
+
+    <!-- Reusable components (Tailwind @apply) -->
+    <style type="text/tailwindcss">
+        @layer components {
+            .section-box   { @apply bg-white p-4 sm:p-6 lg:p-10 mb-6 lg:mb-10 border-l-[5px] border-brand shadow-[0_10px_30px_rgba(0,0,0,0.02)] scroll-mt-20 md:scroll-mt-0; }
+            .stat-card     { @apply bg-white p-4 md:p-5 border-l-[5px] border-brand shadow-[0_10px_30px_rgba(0,0,0,0.02)]; }
+            .stat-label    { @apply font-ui text-[0.65rem] text-mute uppercase tracking-wider; }
+            .stat-value    { @apply font-ui font-bold text-2xl md:text-[1.8rem] my-1.5; }
+            .field-label   { @apply block font-ui text-[0.65rem] font-semibold uppercase text-brand mb-1; }
+            .field-input   { @apply w-full min-h-[44px] px-3 py-3 border border-[#eee] bg-[#fafafa] font-ui text-base md:text-xs outline-none focus:border-brand; }
+            .btn-add       { @apply inline-flex items-center justify-center min-h-[44px] md:min-h-0 px-5 py-3 bg-brand text-white font-ui text-[0.7rem] font-semibold border-0 cursor-pointer no-underline; }
+            .btn-ghost     { @apply bg-[#eee] text-ink; }
+            .btn-save      { @apply inline-flex items-center justify-center w-full sm:max-w-[250px] min-h-[44px] md:min-h-0 px-5 py-3.5 bg-ink text-white font-ui text-[0.7rem] font-semibold border-0 cursor-pointer; }
+            .link-action   { @apply inline-flex items-center min-h-[44px] md:min-h-0 px-2 md:px-0 font-ui text-[0.7rem] font-semibold no-underline whitespace-nowrap bg-transparent border-0 cursor-pointer; }
+            .nav-link      { @apply flex items-center min-h-[44px] md:min-h-[2rem] text-ink no-underline hover:text-brand transition; }
+            .check-row     { @apply flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer; }
+        }
+    </style>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700&display=swap');
-        :root { 
-            --brand: #8d5b3e; 
-            --dark: #2d1e14; 
-            --bg: #fdfcfb; 
-            --gray: #888;
-        }
         * { box-sizing: border-box; }
-        html, body { width: 100%; overflow-x: hidden; }
+        html { scroll-behavior: smooth; }
+        @media (max-width: 767px) { html { scroll-padding-top: 4.5rem; } }
 
-        body { 
-            background: var(--bg); font-family: 'Georgia', serif; margin: 0; color: var(--dark); 
-            display: flex; flex-direction: column; min-height: 100vh;
-        }
-        @media (min-width: 900px) {
-            body { flex-direction: row; }
-        }
+        /* `clip` (not `hidden`) so the sticky mobile bar keeps working */
+        body { font-family: 'Georgia', serif; overflow-x: clip; }
 
-        /* 📱 RESPONSIVE SIDEBAR */
-        .sidebar { 
-            width: 100%; background: white; border-bottom: 1px solid #eee; padding: 25px 5%; z-index: 100; 
+        /* Slide-down mobile menu */
+        .slide-menu {
+            max-height: 0; opacity: 0; visibility: hidden; overflow: hidden; pointer-events: none;
+            transition: max-height .3s ease, opacity .2s ease, visibility 0s linear .3s;
         }
-        @media (min-width: 900px) {
-            .sidebar { width: 280px; position: fixed; height: 100vh; border-right: 1px solid #eee; border-bottom: none; padding: 50px 30px; overflow-y: auto; }
-        }
-
-        .sidebar h3 { font-family: 'Montserrat'; color: var(--brand); text-transform: lowercase; font-size: 1.35rem; margin: 0; }
-        .sidebar nav { margin-top: 20px; font-family: 'Montserrat'; font-size: 0.8rem; line-height: 2.2; display: flex; flex-wrap: wrap; gap: 15px; }
-        @media (min-width: 900px) {
-            .sidebar nav { margin-top: 40px; display: block; line-height: 2.5; }
-        }
-        .sidebar nav a { text-decoration: none; color: var(--dark); display: inline-block; transition: 0.3s; }
-        @media (min-width: 900px) { .sidebar nav a { display: block; } }
-        .sidebar nav a:hover { color: var(--brand); }
-        .sidebar .back-btn { color: var(--gray); font-size: 0.7rem; text-decoration: none; display: block; margin-bottom: 10px; }
-
-        /* 📱 FLUID MAIN CONTENT */
-        .main-content { 
-            padding: 30px 4%; width: 100%; 
-        }
-        @media (min-width: 900px) {
-            .main-content { margin-left: 280px; padding: 60px 5%; width: calc(100% - 280px); }
+        .slide-menu.open {
+            max-height: calc(100vh - 56px);
+            max-height: calc(100dvh - 56px);
+            opacity: 1; visibility: visible; overflow-y: auto; pointer-events: auto;
+            transition: max-height .3s ease, opacity .2s ease, visibility 0s;
         }
 
-        h2 { font-family: 'Montserrat'; text-transform: lowercase; letter-spacing: -1px; font-size: clamp(1.5rem, 4vw, 2.2rem); margin-top: 0; }
-        
-        .section-box { 
-            background: white; padding: 24px; margin-bottom: 30px; border-left: 5px solid var(--brand); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02); width: 100%;
+        /* Data tables (always wrapped in an overflow-x-auto div) */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .85rem; }
+        .data-table th {
+            text-align: left; font-family: 'Montserrat', sans-serif; font-size: .65rem; text-transform: uppercase;
+            padding: 12px 10px; color: #888; border-bottom: 1px solid #eee; white-space: nowrap;
         }
-        @media (min-width: 768px) { .section-box { padding: 40px; margin-bottom: 40px; } }
+        .data-table td { padding: 6px 10px; border-bottom: 1px solid #f9f9f9; vertical-align: middle; }
+        @media (min-width: 768px) { .data-table td { padding: 14px 10px; } }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        @media (min-width: 768px) { .stats-grid { gap: 20px; margin-bottom: 40px; } }
-
-        .search-input { width: 100%; padding: 12px 15px; border: 1px solid #eee; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; outline: none; background: #fafafa; }
-        
-        /* 📱 SAFE TOUCH-SCROLL TABLES */
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; min-width: 500px; }
-        th { text-align: left; font-family: 'Montserrat'; font-size: 0.65rem; text-transform: uppercase; padding: 12px 10px; color: var(--gray); border-bottom: 1px solid #eee; }
-        td { padding: 14px 10px; border-bottom: 1px solid #f9f9f9; }
-
-        .btn-add { background: var(--brand); color: white; padding: 12px 20px; text-decoration: none; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; display: inline-block; border: none; cursor: pointer; }
-        .btn-save { background: var(--dark); color: white; padding: 14px 20px; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; border: none; cursor: pointer; width: 100%; max-width: 250px; }
-        .link-button { background: none; border: none; padding: 0; margin: 0; color: inherit; cursor: pointer; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600; text-decoration: none; }
-        .btn-sidebar-copy {
-            background: #fff9f5; border: 1px solid var(--brand); color: var(--brand);
-            padding: 8px 12px; font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 700;
-            cursor: pointer; width: 100%; margin-top: 15px; text-align: center; display: block;
+        /* File inputs: bigger tap area for the "Choose file" button */
+        .file-input { width: 100%; font-family: 'Montserrat', sans-serif; font-size: .75rem; }
+        .file-input::file-selector-button {
+            margin-right: 12px; min-height: 44px; padding: 0 16px; border: 0;
+            background: #f3ece6; color: #8d5b3e; font-family: 'Montserrat', sans-serif;
+            font-size: .7rem; font-weight: 600; cursor: pointer;
         }
+        @media (min-width: 768px) { .file-input::file-selector-button { min-height: 34px; } }
 
+        /* Order status pills */
         .status-select {
             padding: 6px 8px; font-family: 'Montserrat', sans-serif; font-size: 0.65rem;
             font-weight: 700; text-transform: uppercase; border-radius: 4px;
             outline: none; cursor: pointer; border: 1px solid #ddd;
         }
-        .status-pending { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-        .status-paid { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-        .status-shipped { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+        @media (max-width: 767px) { .status-select { min-height: 44px; font-size: .7rem; } }
+        .status-pending   { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+        .status-paid      { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .status-shipped   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
         .status-completed { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
         .status-cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
     </style>
 </head>
-<body>
+<body class="bg-[#fdfcfb] text-ink min-h-screen">
 
-    <aside class="sidebar">
-        <a href="/dashboard" class="back-btn">&larr; back to global hub</a>
-        <h3>{{ kiosk.name }}</h3>
-        <nav>
-            <a href="#inventory">• Inventory</a>
-            <a href="#leads">• Customer Leads</a>
-            <a href="#ads">• Monetization Ads</a>
-            <a href="#branding">• Branding & Receipts</a>
-            <a href="/{{ kiosk.slug }}" target="_blank" style="color: var(--brand); font-weight: 600;">Live Kiosk &nearr;</a>
-        </nav>
+{# One copy of the sidebar contents, reused by the mobile dropdown and the desktop sidebar #}
+{% macro sidebar_body(kiosk) %}
+    <a href="/dashboard" class="flex items-center min-h-[44px] md:min-h-0 md:mb-2 font-ui text-[0.7rem] text-mute no-underline">&larr; back to global hub</a>
+    <h3 class="hidden md:block font-ui text-[1.35rem] font-bold text-brand lowercase m-0 break-words">{{ kiosk.name }}</h3>
 
-        <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)" class="btn-sidebar-copy">
-            📋 Copy Public Link
-        </button>
+    <nav class="mt-1 md:mt-10 font-ui text-[0.8rem] flex flex-col">
+        <a href="#inventory" class="nav-link">• Inventory</a>
+        <a href="#leads" class="nav-link">• Customer Leads</a>
+        <a href="#ads" class="nav-link">• Monetization Ads</a>
+        <a href="#branding" class="nav-link">• Branding &amp; Receipts</a>
+        <a href="/{{ kiosk.slug }}" target="_blank" class="nav-link !text-brand font-semibold">Live Kiosk &nearr;</a>
+    </nav>
 
-        <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee;">
-            <form action="/{{ kiosk.slug }}/delete" method="post" onsubmit="return confirm('EXTREME DANGER: This will delete the kiosk and products. Proceed?');">
-                <button type="submit" class="link-button" style="color: #e74c3c; font-size: 0.7rem;">× PERMANENTLY DELETE KIOSK</button>
-            </form>
+    <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)"
+            class="block w-full min-h-[44px] mt-4 px-3 py-2 bg-[#fff9f5] border border-brand text-brand font-ui text-[0.7rem] font-bold text-center cursor-pointer">
+        📋 Copy Public Link
+    </button>
+
+    <div class="mt-6 pt-3 border-t border-[#eee]">
+        <form action="/{{ kiosk.slug }}/delete" method="post" onsubmit="return confirm('EXTREME DANGER: This will delete the kiosk and products. Proceed?');">
+            <button type="submit" class="link-action !text-[#e74c3c]">× PERMANENTLY DELETE KIOSK</button>
+        </form>
+    </div>
+{% endmacro %}
+
+    <!-- 📱 MOBILE TOP BAR (below md): sticky, hamburger reveals the navigation -->
+    <header id="kioskMobileHeader" class="md:hidden sticky top-0 z-[100] bg-white border-b border-[#eee]">
+        <div class="flex items-center justify-between gap-3 h-14 px-4">
+            <div class="min-w-0">
+                <p class="font-ui text-[0.6rem] uppercase tracking-widest text-mute m-0 leading-none">Manage kiosk</p>
+                <h1 class="font-ui text-base font-bold text-brand lowercase truncate m-0 mt-1 leading-none">{{ kiosk.name }}</h1>
+            </div>
+            <button id="kioskMenuBtn" type="button"
+                    class="shrink-0 w-11 h-11 -mr-2 inline-flex items-center justify-center cursor-pointer"
+                    aria-label="Open menu" aria-expanded="false" aria-controls="kioskMobileMenu">
+                <svg id="kBurger" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+                <svg id="kClose" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
         </div>
+
+        <div id="kioskMobileMenu" class="slide-menu absolute left-0 right-0 top-full bg-white border-b border-[#eee] shadow-lg px-4 pb-4" aria-hidden="true">
+            {{ sidebar_body(kiosk) }}
+        </div>
+    </header>
+
+    <!-- 🖥️ DESKTOP SIDEBAR (md and up): fixed on the left -->
+    <aside class="hidden md:block fixed top-0 left-0 z-[100] w-[280px] h-screen bg-white border-r border-[#eee] px-[30px] py-[50px] overflow-y-auto">
+        {{ sidebar_body(kiosk) }}
     </aside>
 
-    <main class="main-content">
+    <main class="min-w-0 p-4 sm:p-6 md:ml-[280px] md:p-6 lg:px-[5%] lg:py-14">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div style="margin-bottom: 25px;">
+                <div class="mb-6">
                     {% for category, message in messages %}
-                        <div style="background: white; border-left: 4px solid var(--brand); padding: 12px 16px; font-family: 'Montserrat'; font-size: 0.75rem; box-shadow: 0 5px 20px rgba(0,0,0,0.02);">
+                        <div class="bg-white border-l-4 border-brand px-4 py-3 font-ui text-xs shadow-[0_5px_20px_rgba(0,0,0,0.02)] mb-2">
                             {{ message }}
                         </div>
                     {% endfor %}
                 </div>
             {% endif %}
         {% endwith %}
-        
-        <div class="stats-grid">
-            <div class="section-box" style="margin-bottom: 0; padding: 20px;">
-                <p style="font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; margin: 0;">Visits</p>
-                <h1 style="font-family: 'Montserrat'; font-size: 1.8rem; margin: 6px 0;">{{ kiosk.views_count }}</h1>
-                <p style="font-size: 0.6rem; color: var(--brand); font-family: 'Montserrat'; margin: 0;">Live tracking</p>
+
+        <!-- 📊 Stats: 1 column on phones, 3 on desktop -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6 lg:mb-10">
+            <div class="stat-card">
+                <p class="stat-label m-0">Visits</p>
+                <p class="stat-value">{{ kiosk.views_count }}</p>
+                <p class="font-ui text-[0.6rem] text-brand m-0">Live tracking</p>
             </div>
-            <div class="section-box" style="margin-bottom: 0; padding: 20px;">
-                <p style="font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; margin: 0;">Orders</p>
-                <h1 style="font-family: 'Montserrat'; font-size: 1.8rem; margin: 6px 0;">{{ leads|length }}</h1>
-                <p style="font-size: 0.6rem; color: var(--gray); font-family: 'Montserrat'; margin: 0;">WhatsApp Leads</p>
+            <div class="stat-card">
+                <p class="stat-label m-0">Orders</p>
+                <p class="stat-value">{{ leads|length }}</p>
+                <p class="font-ui text-[0.6rem] text-mute m-0">WhatsApp Leads</p>
             </div>
-            <div class="section-box" style="margin-bottom: 0; padding: 20px;">
-                <p style="font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; font-family: 'Montserrat'; margin: 0;">Catalog</p>
-                <h1 style="font-family: 'Montserrat'; font-size: 1.8rem; margin: 6px 0;">{{ products|length }}</h1>
-                <p style="font-size: 0.6rem; color: var(--gray); font-family: 'Montserrat'; margin: 0;">Active Items</p>
+            <div class="stat-card">
+                <p class="stat-label m-0">Catalog</p>
+                <p class="stat-value">{{ products|length }}</p>
+                <p class="font-ui text-[0.6rem] text-mute m-0">Active Items</p>
             </div>
         </div>
 
         <!-- Section 1: Inventory -->
-        <div class="section-box" id="inventory">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0;">Inventory</h2>
-                <a href="/{{ kiosk.slug }}/product/new" class="btn-add">+ ADD PRODUCT</a>
+        <section class="section-box" id="inventory">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] m-0">Inventory</h2>
+                <a href="/{{ kiosk.slug }}/product/new" class="btn-add w-full sm:w-auto">+ ADD PRODUCT</a>
             </div>
-            
-            <input type="text" class="search-input" onkeyup="searchTable('inventoryTable', this.value)" placeholder="Search products by name...">
-            
-            <div class="table-responsive">
-                <table id="inventoryTable">
+
+            <input type="text" class="field-input" aria-label="Search products by name"
+                   onkeyup="searchTable('inventoryTable', this.value)" placeholder="Search products by name...">
+
+            <p class="md:hidden font-ui text-[0.6rem] text-mute mt-3 mb-0">Swipe sideways to see all columns</p>
+            <div class="overflow-x-auto">
+                <table id="inventoryTable" class="data-table min-w-[520px]">
                     <thead>
                         <tr><th>Product Name</th><th>Price</th><th>Stock</th><th>Action</th></tr>
                     </thead>
@@ -164,56 +200,58 @@
                             <td>
                                 <strong>{{ p.name }}</strong>
                                 {% if p.is_flash_sale %}
-                                    <span style="font-family: 'Montserrat'; font-size: 0.55rem; color: #b33a3a; font-weight: bold; background: #ffebeb; padding: 2px 4px; margin-left: 4px;">🔥 SALE</span>
+                                    <span class="font-ui text-[0.55rem] text-[#b33a3a] font-bold bg-[#ffebeb] px-1 py-0.5 ml-1">🔥 SALE</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="whitespace-nowrap">
                                 {% if p.has_discount %}
-                                    <span style="text-decoration: line-through; color: #aaa; font-size: 0.7rem;">{{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}</span><br>
-                                    <strong style="color: var(--brand);">{{ kiosk.currency }}{{ "{:,.2f}".format(p.discount_price) }}</strong>
+                                    <span class="line-through text-[#aaa] text-[0.7rem]">{{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}</span><br>
+                                    <strong class="text-brand">{{ kiosk.currency }}{{ "{:,.2f}".format(p.discount_price) }}</strong>
                                 {% else %}
                                     {{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="whitespace-nowrap">
                                 {% if p.is_unlimited_stock %}
-                                    <span style="color: #16a34a; font-weight: bold; font-size: 0.75rem;">Unlimited</span>
+                                    <span class="text-[#16a34a] font-bold text-xs">Unlimited</span>
                                 {% else %}
                                     {{ p.stock }} units
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" style="color: #06b6d4; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">FLYER 📸</a>
-                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">EDIT</a>
-                                <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Delete this product permanently?');">
-                                    <button type="submit" class="link-button" style="color: #e74c3c;">DELETE</button>
-                                </form>
+                                <div class="flex items-center gap-0 md:gap-2 whitespace-nowrap">
+                                    <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" class="link-action !text-[#06b6d4] !font-bold">FLYER 📸</a>
+                                    <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" class="link-action !text-brand">EDIT</a>
+                                    <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" class="inline" onsubmit="return confirm('Delete this product permanently?');">
+                                        <button type="submit" class="link-action !text-[#e74c3c]">DELETE</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="4" style="text-align: center; color: var(--gray); font-style: italic;">No products in inventory yet.</td></tr>
+                        <tr><td colspan="4" class="text-center text-mute italic">No products in inventory yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         <!-- Section 2: Customer Leads & Orders -->
-        <div class="section-box" id="leads">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <h2 style="margin: 0;">Customer Leads & Orders</h2>
+        <section class="section-box" id="leads">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] m-0">Customer Leads &amp; Orders</h2>
             </div>
-            
-            <!-- 🚀 NEW ADVANCED FILTER BAR -->
-            <form method="GET" action="/{{ kiosk.slug }}/manage#leads" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: flex-end;">
-                <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Search</label>
-                    <input type="text" name="search" value="{{ current_search }}" placeholder="Ref, Name, Phone, or Product..." class="search-input">
+
+            <!-- 🚀 FILTER BAR: stacked on phones, horizontal from md: up (wraps if the row gets tight) -->
+            <form method="GET" action="/{{ kiosk.slug }}/manage#leads" class="flex flex-col md:flex-row md:flex-wrap md:items-end gap-3 mb-5">
+                <div class="w-full md:w-auto md:flex-1 md:min-w-[200px]">
+                    <label for="f-search" class="field-label">Search</label>
+                    <input id="f-search" type="text" name="search" value="{{ current_search }}" placeholder="Ref, Name, Phone, or Product..." class="field-input">
                 </div>
-                
-                <div style="width: 140px;">
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Status</label>
-                    <select name="status" class="search-input" style="cursor: pointer;">
+
+                <div class="w-full md:w-36">
+                    <label for="f-status" class="field-label">Status</label>
+                    <select id="f-status" name="status" class="field-input cursor-pointer">
                         <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Statuses</option>
                         <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>⏳ Pending</option>
                         <option value="paid" {% if current_status == 'paid' %}selected{% endif %}>✅ Paid</option>
@@ -223,41 +261,46 @@
                     </select>
                 </div>
 
-                <div style="width: 160px;">
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Source</label>
-                    <select name="source" class="search-input" style="cursor: pointer;">
+                <div class="w-full md:w-40">
+                    <label for="f-source" class="field-label">Source</label>
+                    <select id="f-source" name="source" class="field-input cursor-pointer">
                         <option value="all" {% if current_source == 'all' %}selected{% endif %}>All Sources</option>
                         <option value="central_hub" {% if current_source == 'central_hub' %}selected{% endif %}>🎓 Central Hub</option>
                         <option value="regular" {% if current_source == 'regular' %}selected{% endif %}>📱 Regular/WhatsApp</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn-add" style="padding: 12px 15px;">Apply Filters</button>
-                <a href="/{{ kiosk.slug }}/manage#leads" class="btn-add" style="background: #eee; color: var(--dark); padding: 12px 15px;">Clear</a>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button type="submit" class="btn-add flex-1 md:flex-none">Apply Filters</button>
+                    <a href="/{{ kiosk.slug }}/manage#leads" class="btn-add btn-ghost flex-1 md:flex-none">Clear</a>
+                </div>
             </form>
             <!-- END FILTER BAR -->
-            
-            <div class="table-responsive">
-                <table id="leadsTable">
+
+            <p class="md:hidden font-ui text-[0.6rem] text-mute mb-0">Swipe sideways to see all columns</p>
+            <div class="overflow-x-auto">
+                <table id="leadsTable" class="data-table min-w-[760px]">
                     <thead>
                         <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th><th>Documents</th></tr>
                     </thead>
                     <tbody>
                         {% for l in leads %}
                         <tr>
-                            <td style="font-family: 'Montserrat'; font-weight: 600;">
+                            <td class="font-ui font-semibold whitespace-nowrap">
                                 #{{ l.order_ref }}
                                 {% if l.checkout_method == 'central_hub' %}
-                                    <span style="display: inline-block; margin-left: 6px; padding: 3px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: 700; background: #8d5b3e; color: white; vertical-align: middle; letter-spacing: 0.5px;">
+                                    <span class="inline-block ml-1.5 px-1.5 py-[3px] rounded text-[0.6rem] font-bold bg-brand text-white align-middle tracking-[0.5px]">
                                         🎓 Central Hub
                                     </span>
                                 {% endif %}
                             </td>
                             <td>{{ l.customer_name }}</td>
-                            <td><a href="https://wa.me/{{ l.customer_phone }}" target="_blank" style="color: var(--brand); font-family: 'Montserrat'; font-size: 0.8rem;">{{ l.customer_phone }} &nearr;</a></td>
-                            <td style="font-family: 'Montserrat'; font-weight: 600;">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
                             <td>
-                                <form action="/{{ kiosk.slug }}/order/{{ l.id }}/status" method="POST" style="margin: 0;">
+                                <a href="https://wa.me/{{ l.customer_phone }}" target="_blank" class="link-action !text-brand !text-[0.8rem] !font-normal !underline-offset-2">{{ l.customer_phone }} &nearr;</a>
+                            </td>
+                            <td class="font-ui font-semibold whitespace-nowrap">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
+                            <td>
+                                <form action="/{{ kiosk.slug }}/order/{{ l.id }}/status" method="POST" class="m-0">
                                     <select name="status" onchange="this.form.submit()" class="status-select status-{{ l.status }}">
                                         <option value="pending" {% if l.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
                                         <option value="paid" {% if l.status == 'paid' %}selected{% endif %}>✅ Paid</option>
@@ -267,131 +310,127 @@
                                     </select>
                                 </form>
                             </td>
-                            <td style="white-space: nowrap;">
-                                <a href="/receipt/{{ l.order_ref }}?doc=invoice" target="_blank" style="color: var(--brand); font-weight: 600; font-size: 0.7rem; text-decoration: underline; margin-right: 6px;">Invoice 📄</a>
-                                <a href="/receipt/{{ l.order_ref }}?doc=receipt" target="_blank" style="color: #16a34a; font-weight: 600; font-size: 0.7rem; text-decoration: underline;">Receipt 🧾</a>
+                            <td class="whitespace-nowrap">
+                                <a href="/receipt/{{ l.order_ref }}?doc=invoice" target="_blank" class="link-action !text-brand !underline">Invoice 📄</a>
+                                <a href="/receipt/{{ l.order_ref }}?doc=receipt" target="_blank" class="link-action !text-[#16a34a] !underline">Receipt 🧾</a>
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" style="text-align: center; color: var(--gray); font-style: italic;">No orders match your filters.</td></tr>
+                        <tr><td colspan="6" class="text-center text-mute italic">No orders match your filters.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
         <!-- Section 3: Branding, Settings & Receipts -->
-        <div class="section-box" id="branding">
-            <h2>Branding, Layout & Receipts</h2>
-            <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 15px; max-width: 650px;">
+        <section class="section-box" id="branding">
+            <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] mt-0 mb-4">Branding, Layout &amp; Receipts</h2>
+            <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" class="flex flex-col gap-4 max-w-[650px]">
                 <div>
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">Kiosk Name</label>
-                    <input type="text" name="name" value="{{ kiosk.name }}" required style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
+                    <label for="b-name" class="field-label">Kiosk Name</label>
+                    <input id="b-name" type="text" name="name" value="{{ kiosk.name }}" required class="field-input">
                 </div>
 
                 <div>
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">WhatsApp Number for Orders</label>
-                    <input type="text" name="whatsapp_number" value="{{ kiosk.whatsapp_number }}" required style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Montserrat'; font-size: 0.8rem;">
+                    <label for="b-wa" class="field-label">WhatsApp Number for Orders</label>
+                    <input id="b-wa" type="text" name="whatsapp_number" value="{{ kiosk.whatsapp_number }}" required inputmode="tel" class="field-input">
                 </div>
 
                 <div>
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 5px;">Tagline / Bio</label>
-                    <textarea name="bio" rows="2" style="width: 100%; padding: 12px; border: 1px solid #eee; background: #fafafa; font-family: 'Georgia'; font-size: 0.85rem;">{{ kiosk.bio }}</textarea>
+                    <label for="b-bio" class="field-label">Tagline / Bio</label>
+                    <textarea id="b-bio" name="bio" rows="2" class="field-input !font-serif md:!text-sm">{{ kiosk.bio }}</textarea>
                 </div>
 
                 <!-- Section Activation -->
-                <div style="background: #fafafa; border: 1px solid #eee; padding: 16px;">
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 8px;">
-                        Website Section Activation
-                    </label>
-                    <div style="display: flex; flex-wrap: wrap; gap: 12px; font-family: 'Montserrat'; font-size: 0.75rem;">
-                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="checkbox" name="section_hero" {% if kiosk.is_section_active('hero') %}checked{% endif %} style="accent-color: var(--brand);">
+                <div class="bg-[#fafafa] border border-[#eee] p-4">
+                    <p class="font-ui text-xs font-bold uppercase text-ink mb-2 mt-0">Website Section Activation</p>
+                    <div class="flex flex-wrap gap-x-5 gap-y-1 font-ui text-xs">
+                        <label class="check-row">
+                            <input type="checkbox" name="section_hero" {% if kiosk.is_section_active('hero') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
                             Hero Banner
                         </label>
-                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="checkbox" name="section_flash" {% if kiosk.is_section_active('flash_sales') %}checked{% endif %} style="accent-color: var(--brand);">
+                        <label class="check-row">
+                            <input type="checkbox" name="section_flash" {% if kiosk.is_section_active('flash_sales') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
                             Flash Deals
                         </label>
-                        <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="checkbox" name="section_ads" {% if kiosk.is_section_active('ads') %}checked{% endif %} style="accent-color: var(--brand);">
+                        <label class="check-row">
+                            <input type="checkbox" name="section_ads" {% if kiosk.is_section_active('ads') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
                             Sponsor Ads
                         </label>
                     </div>
                 </div>
 
                 <!-- Receipt Signature Style Picker -->
-                <div style="background: #fff9f5; border-left: 4px solid var(--brand); padding: 16px;">
-                    <label style="display: block; font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--dark); margin-bottom: 4px;">
-                        Signature Invoice / Receipt Style
-                    </label>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
-                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}var(--brand){% else %}#eee{% endif %}; padding: 10px; background: white; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="radio" name="receipt_theme" value="classic" {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}checked{% endif %}>
+                <div class="bg-[#fff9f5] border-l-4 border-brand p-4">
+                    <p class="font-ui text-xs font-bold uppercase text-ink mb-1 mt-0">Signature Invoice / Receipt Style</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+                        <label class="border-2 {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}border-brand{% else %}border-[#eee]{% endif %} p-2.5 min-h-[44px] bg-white cursor-pointer flex items-center gap-2">
+                            <input type="radio" name="receipt_theme" value="classic" {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4">
                             <div>
-                                <strong style="font-family: 'Montserrat'; font-size: 0.7rem; display: block;">Classic Clay</strong>
-                                <span style="font-size: 0.6rem; color: var(--gray);">Cream & clay</span>
+                                <strong class="font-ui text-[0.7rem] block">Classic Clay</strong>
+                                <span class="text-[0.6rem] text-mute">Cream &amp; clay</span>
                             </div>
                         </label>
-                        <label style="border: 2px solid {% if kiosk.receipt_theme == 'cyber' %}var(--brand){% else %}#eee{% endif %}; padding: 10px; background: white; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                            <input type="radio" name="receipt_theme" value="cyber" {% if kiosk.receipt_theme == 'cyber' %}checked{% endif %}>
+                        <label class="border-2 {% if kiosk.receipt_theme == 'cyber' %}border-brand{% else %}border-[#eee]{% endif %} p-2.5 min-h-[44px] bg-white cursor-pointer flex items-center gap-2">
+                            <input type="radio" name="receipt_theme" value="cyber" {% if kiosk.receipt_theme == 'cyber' %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4">
                             <div>
-                                <strong style="font-family: 'Montserrat'; font-size: 0.7rem; display: block;">Cyber</strong>
-                                <span style="font-size: 0.6rem; color: var(--gray);">Dark terminal</span>
+                                <strong class="font-ui text-[0.7rem] block">Cyber</strong>
+                                <span class="text-[0.6rem] text-mute">Dark terminal</span>
                             </div>
                         </label>
                     </div>
                 </div>
 
                 <!-- Social Proof -->
-                <div style="background: white; border: 1px solid #eee; padding: 14px;">
-                    <label style="font-family: 'Montserrat'; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
-                        <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} style="margin-right: 6px;">
+                <div class="bg-white border border-[#eee] px-3.5">
+                    <label class="check-row font-ui text-xs font-semibold">
+                        <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 shrink-0 accent-[#8d5b3e]">
                         Display Total Visits in WhatsApp Previews
                     </label>
                 </div>
 
                 <!-- Image Uploads -->
-                <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+                <div class="grid grid-cols-1 gap-3">
                     <div>
-                        <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Store Logo</label>
-                        <input type="file" name="logo" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.7rem; width: 100%;">
+                        <label for="b-logo" class="field-label">Store Logo</label>
+                        <input id="b-logo" type="file" name="logo" accept="image/*" class="file-input">
                     </div>
                     <div>
-                        <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Hero Banner</label>
-                        <input type="file" name="hero_image" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.7rem; width: 100%;">
+                        <label for="b-hero" class="field-label">Hero Banner</label>
+                        <input id="b-hero" type="file" name="hero_image" accept="image/*" class="file-input">
                     </div>
                     <div>
-                        <label style="display: block; font-family: 'Montserrat'; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--brand); margin-bottom: 4px;">Background Wallpaper</label>
-                        <input type="file" name="background_image" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.7rem; width: 100%;">
+                        <label for="b-bg" class="field-label">Background Wallpaper</label>
+                        <input id="b-bg" type="file" name="background_image" accept="image/*" class="file-input">
                     </div>
                 </div>
 
                 <button type="submit" class="btn-save">SAVE BRANDING &rarr;</button>
             </form>
-        </div>
+        </section>
 
         <!-- Section 4: Monetization -->
-        <div class="section-box" id="ads">
-            <h2>Monetization (3 Ad Slots)</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
+        <section class="section-box" id="ads">
+            <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] mt-0 mb-4">Monetization (3 Ad Slots)</h2>
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
                 {% for ad in ads %}
-                <div style="border: 1px solid #eee; padding: 16px; background: #fafafa;">
-                    <h4 style="font-family: 'Montserrat'; font-size: 0.8rem; margin: 0 0 8px 0;">Slot #{{ ad.slot_number }}</h4>
-                    <p style="font-family: 'Montserrat'; font-size: 0.65rem; color: var(--brand); margin-bottom: 12px;">Clicks: {{ ad.clicks_count }}</p>
-                    <form action="/{{ kiosk.slug }}/ads" method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="border border-[#eee] p-4 bg-[#fafafa] min-w-0">
+                    <h4 class="font-ui text-xs font-bold m-0 mb-2">Slot #{{ ad.slot_number }}</h4>
+                    <p class="font-ui text-[0.65rem] text-brand mb-3 mt-0">Clicks: {{ ad.clicks_count }}</p>
+                    <form action="/{{ kiosk.slug }}/ads" method="post" enctype="multipart/form-data" class="flex flex-col gap-2">
                         <input type="hidden" name="slot_number" value="{{ ad.slot_number }}">
-                        <input type="url" name="target_link" value="{{ ad.target_link or '' }}" placeholder="Sponsor URL / WhatsApp" style="width: 100%; padding: 8px; border: 1px solid #ddd; font-family: 'Montserrat'; font-size: 0.7rem;">
-                        <input type="file" name="banner_image" accept="image/*" style="font-family: 'Montserrat'; font-size: 0.65rem;">
-                        <label style="font-family: 'Montserrat'; font-size: 0.7rem; font-weight: 600;">
-                            <input type="checkbox" name="is_active" {% if ad.is_active %}checked{% endif %}> Enable Ad Slot
+                        <input type="url" name="target_link" value="{{ ad.target_link or '' }}" placeholder="Sponsor URL / WhatsApp" aria-label="Sponsor URL for slot {{ ad.slot_number }}" class="field-input !bg-white">
+                        <input type="file" name="banner_image" accept="image/*" aria-label="Banner image for slot {{ ad.slot_number }}" class="file-input">
+                        <label class="check-row font-ui text-[0.7rem] font-semibold">
+                            <input type="checkbox" name="is_active" {% if ad.is_active %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]"> Enable Ad Slot
                         </label>
-                        <button type="submit" class="btn-save" style="padding: 8px; font-size: 0.65rem; width: auto;">UPDATE SLOT</button>
+                        <button type="submit" class="btn-save sm:!max-w-none !text-[0.65rem]">UPDATE SLOT</button>
                     </form>
                 </div>
                 {% endfor %}
             </div>
-        </div>
+        </section>
     </main>
 
     <script>
@@ -413,6 +452,33 @@
                 setTimeout(() => { btn.innerText = orig; }, 2000);
             }).catch(() => { prompt('Copy link:', fullUrl); });
         }
+
+        /* 🍔 Mobile menu */
+        (function () {
+            const header = document.getElementById('kioskMobileHeader');
+            const btn    = document.getElementById('kioskMenuBtn');
+            const menu   = document.getElementById('kioskMobileMenu');
+            const burger = document.getElementById('kBurger');
+            const close  = document.getElementById('kClose');
+
+            function setOpen(open) {
+                menu.classList.toggle('open', open);
+                menu.setAttribute('aria-hidden', String(!open));
+                btn.setAttribute('aria-expanded', String(open));
+                btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+                burger.classList.toggle('hidden', open);
+                close.classList.toggle('hidden', !open);
+            }
+
+            btn.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
+            // Close after choosing a section (the Copy Link button stays open so you see "COPIED")
+            menu.addEventListener('click', e => { if (e.target.closest('a')) setOpen(false); });
+            document.addEventListener('click', e => {
+                if (menu.classList.contains('open') && !header.contains(e.target)) setOpen(false);
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+            window.matchMedia('(min-width: 768px)').addEventListener('change', e => { if (e.matches) setOpen(false); });
+        })();
     </script>
 </body>
 </html>
