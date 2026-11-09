@@ -24,12 +24,8 @@ def landing():
     stores = Store.query.filter_by(is_active=True).order_by(Store.views_count.desc()).all()
     return render_template('store/landing.html', stores=stores)
 
-# -------------------------------------------------------------
-# 🎓 CENTRAL CAMPUS HUB
-# -------------------------------------------------------------
 
 
-import secrets # Make sure this is at the top of your file with other imports
 
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
@@ -49,25 +45,28 @@ def central_hub():
         .distinct().all()
     universities = sorted([u[0] for u in universities if u[0]])
 
-    # 🎯 SMART DEFAULT FILTER: Defaults to the student's own university
+    # 🎯 SMART DEFAULT FILTER
     default_uni = current_user.university_name if current_user.university_name else 'All'
     filter_uni = request.args.get('university', default_uni)
     
-    # Base query: Get all products from active stores owned by STUDENTS that are ALLOWED in the hub
+    # Base query
     query = Product.query.join(Store).join(User, Store.user_id == User.id)\
         .filter(Store.is_active == True, User.is_student == True, Product.show_in_hub == True)
     
-    # Apply filter if a specific university is selected (and it's not 'All')
     if filter_uni and filter_uni != 'All':
         query = query.filter(User.university_name == filter_uni)
 
-    products = query.order_by(Product.created_at.desc()).all()
+    # 🚀 DYNAMIC LOADING: Paginate instead of loading all
+    page = request.args.get('page', 1, type=int)
+    pagination = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=12, error_out=False)
+    products = pagination.items
 
     return render_template(
         'store/central_hub.html', 
         products=products, 
         universities=universities, 
-        current_uni=filter_uni
+        current_uni=filter_uni,
+        pagination=pagination # 👈 Pass pagination object to template
     )
 
 
