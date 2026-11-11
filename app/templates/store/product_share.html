@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block og_title %}{{ product.name }} - {{ store.name }}{% endblock %}
+{% block og_desc %}{{ product.description[:150] }} | Price: ₦{{ "{:,.0f}".format(product.current_price) }}{% endblock %}
+{% block og_image %}{{ product.image }}{% endblock %}
+{% block og_type %}product{% endblock %}
+
+{% block title %}{{ product.name }} // {{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f9f5f0] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg max-w-md w-full overflow-hidden border-t-4 border-[#8d5b3e]">
+        <div class="aspect-video bg-[#f5f5f4] overflow-hidden">
+            <img src="{{ product.image }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+        </div>
+        <div class="p-6 text-center">
+            <h1 class="font-ui text-xl font-bold text-[#2d1e14] m-0">{{ product.name }}</h1>
+            <p class="font-ui text-2xl font-black text-[#8d5b3e] my-3">₦{{ "{:,.0f}".format(product.current_price) }}</p>
+            <p class="font-serif text-sm text-[#78716c] mb-6">{{ product.description[:100] }}...</p>
+            
+            <a href="/{{ store.slug }}" class="block w-full py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition no-underline">
+                View in {{ store.name }} Store &rarr;
+            </a>
+            <p class="font-serif italic text-[10px] text-[#a8a29e] mt-4">Powered by Marketplace</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
