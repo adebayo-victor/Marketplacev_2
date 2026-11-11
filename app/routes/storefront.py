@@ -3,6 +3,7 @@ import uuid
 import json
 import secrets
 import markdown
+from app.utils.obfuscate import decode_product_id 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
@@ -47,16 +48,25 @@ def my_orders():
 # -------------------------------------------------------------
 # 📤 PUBLIC PRODUCT SHARE LINK
 # -------------------------------------------------------------
-@storefront_bp.route('/p/<int:product_id>')
-def public_product(product_id):
+
+
+@storefront_bp.route('/p/<token>')
+def public_product(token):
+    # 1. Decode the token back to the real ID
+    product_id = decode_product_id(token)
+    
+    # 2. If the token was fake or tampered with, return 404
+    if not product_id:
+        abort(404)
+        
     product = Product.query.get_or_404(product_id)
     store = product.store
     
-    # Security: Don't expose inactive products or stores
+    # Security checks
     if not product.is_active or not store.is_active or store.build_status != 'ready':
         abort(404)
         
-    return render_template('store/product_share.html', product=product, store=store)
+    return render_template('store/product_share.html', product=product, store=store))
 
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
