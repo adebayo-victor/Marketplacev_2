@@ -4,6 +4,7 @@ import json
 import secrets
 import markdown
 from app.utils.obfuscate import encode_product_id, decode_product_id
+from app.utils.obfuscate import encode_id, decode_id 
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
@@ -67,6 +68,37 @@ def public_product(token):
         abort(404)
         
     return render_template('store/product_share.html', product=product, store=store)
+
+
+
+# ... existing routes ...
+
+@storefront_bp.route('/ad/<token>')
+def public_ad(token):
+    ad_id = decode_id(token)
+    if not ad_id:
+        abort(404)
+        
+    ad = StoreAd.query.get_or_404(ad_id)
+    store = ad.store
+    
+    # Security: Don't expose inactive ads or stores
+    if not ad.is_active or not store.is_active or store.build_status != 'ready':
+        abort(404)
+        
+    # Log the click/view for the merchant's analytics
+    ad.clicks_count += 1
+    db.session.commit()
+    
+    # Determine destination (fallback to store catalog if no target link)
+    destination = ad.target_link or f"/{store.slug}"
+    
+    # Append UTM parameters for external tracking if it's an external link
+    if destination.startswith('http'):
+        separator = '&' if '?' in destination else '?'
+        destination += f"{separator}utm_source=marketplace_ad&utm_medium=banner&utm_campaign={store.slug}"
+
+    return render_template('store/ad_share.html', ad=ad, store=store, destination=destination)
 
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
