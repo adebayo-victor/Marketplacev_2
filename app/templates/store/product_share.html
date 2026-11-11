@@ -1,11 +1,21 @@
 {% extends 'base.html' %}
 
+{% extends 'base.html' %}
+
+{# 1. Force absolute URLs for Vercel compatibility #}
+{% set raw_img = product.image if product.image else 'default_product.png' %}
+{% set abs_img = raw_img if raw_img.startswith('http') else (request.host_url.rstrip('/') + '/static/images/' + raw_img) %}
+
 {% block og_title %}{{ product.name }} - {{ store.name }}{% endblock %}
-{% block og_desc %}{{ product.description[:150] }} | Price: ₦{{ "{:,.0f}".format(product.current_price) }}{% endblock %}
-{% block og_image %}{{ product.image }}{% endblock %}
+{% block og_desc %}{{ product.description[:150] if product.description else 'Check out this product on Marketplace' }} | Price: ₦{{ "{:,.0f}".format(product.current_price) }}{% endblock %}
+{% block og_image %}{{ abs_img }}{% endblock %}
 {% block og_type %}product{% endblock %}
+{% block og_url %}{{ request.url }}{% endblock %}
 
 {% block title %}{{ product.name }} // {{ store.name }}{% endblock %}
+
+{% block content %}
+<!-- ... (keep the rest of your HTML exactly as it is) ... -->
 
 {% block content %}
 <div class="min-h-screen bg-[#f9f5f0] flex items-center justify-center p-4">
