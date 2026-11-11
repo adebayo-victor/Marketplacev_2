@@ -416,39 +416,43 @@ def update_order_status(kiosk_slug, order_id):
         order = Order.query.filter_by(id=order_id, store_id=kiosk.id).first_or_404()
         new_status = request.form.get('status', 'pending').strip().lower()
 
-        # --- 🏆 TWO-TIER REWARD LOGIC START ---
-        # Only trigger if moving TO a rewarding status, and wasn't already rewarded
+        # --- 🏆 IDEMPOTENT TWO-TIER REWARD LOGIC START ---
         rewarding_statuses = ['paid', 'completed']
+        
+        # Only trigger if transitioning INTO a rewarding status, AND wasn't already in one
         if new_status in rewarding_statuses and order.status not in rewarding_statuses:
             
-            # Determine which reward to give based on checkout method
-            if order.checkout_method == 'central_hub':
-                reward_name = "Central Hub Sale Reward"
-            else:
-                reward_name = "Normal Sale Reward"
+            # 1. IDEMPOTENCY CHECK: Has this specific order already generated a reward?
+            reward_desc_check = f"%Reward%Order #{order.order_ref}%"
+            already_rewarded = Transaction.query.filter(
+                Transaction.user_id == current_user.id,
+                Transaction.description.ilike(reward_desc_check)
+            ).first()
             
-            # Fetch the configurable reward amount from the database
-            reward = Reward.query.filter_by(name=reward_name, is_active=True).first()
-            
-            if reward:
-                wallet = Wallet.query.filter_by(user_id=current_user.id).first()
-                if wallet:
-                    wallet.balance += reward.value
-                    
-                    tx = Transaction(
-                        wallet_id=wallet.id,
-                        user_id=current_user.id,
-                        type='credit',
-                        amount=reward.value,
-                        description=f"Reward: {reward_name} for Order #{order.order_ref}"
-                    )
-                    db.session.add(tx)
-        # --- 🏆 TWO-TIER REWARD LOGIC END ---
+            # 2. If NOT already rewarded, proceed safely
+            if not already_rewarded:
+                reward_name = "Central Hub Sale Reward" if order.checkout_method == 'central_hub' else "Normal Sale Reward"
+                reward = Reward.query.filter_by(name=reward_name, is_active=True).first()
+                
+                if reward:
+                    wallet = Wallet.query.filter_by(user_id=current_user.id).first()
+                    if wallet:
+                        wallet.balance += reward.value
+                        
+                        tx = Transaction(
+                            wallet_id=wallet.id,
+                            user_id=current_user.id,
+                            type='credit',
+                            amount=reward.value,
+                            description=f"Reward: {reward_name} for Order #{order.order_ref}"
+                        )
+                        db.session.add(tx)
+        # --- 🏆 IDEMPOTENT TWO-TIER REWARD LOGIC END ---
 
         if new_status in ['pending', 'paid', 'shipped', 'completed', 'cancelled']:
             order.status = new_status
             db.session.commit()
-            flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'. Receipt updated.", "success")
+            flash(f"Order #{order.order_ref} updated to '{new_status.upper()}'.", "success")
             return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug) + '#leads')
 
     return redirect(url_for('dashboard.manage_kiosk', kiosk_slug=kiosk.slug))
