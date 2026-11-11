@@ -66,7 +66,7 @@ def public_product(token):
     if not product.is_active or not store.is_active or store.build_status != 'ready':
         abort(404)
         
-    return render_template('store/product_share.html', product=product, store=store))
+    return render_template('store/product_share.html', product=product, store=store)
 
 # -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
