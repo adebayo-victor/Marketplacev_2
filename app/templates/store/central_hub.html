@@ -4,17 +4,17 @@
 
 {% block content %}
 <style>
-    /* Cart FAB sits above the Support button (base.html) with a clear gap on every screen size */
+    /* Cart FAB sits above the Support button with a clear gap on every screen size */
     .hub-cart-fab { right: 1rem; bottom: 5.5rem; z-index: 9999 !important; }
     @media (min-width: 768px) { .hub-cart-fab { right: 1.5rem; bottom: 6rem; } }
     /* Hide floating buttons while the cart drawer / quick view is open */
-    body.overlay-open .hub-cart-fab { display: none; }
+    body.overlay-open .hub-cart-fab { display: none !important; }
 </style>
 
 <div class="min-h-screen bg-[#f9f5f0] py-6 md:py-10 px-4 sm:px-6 pb-36">
     <div class="max-w-6xl mx-auto">
 
-        <!-- Header & Smart Filter -->
+        <!-- Header & Smart Filter + Search -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8 bg-white p-4 md:p-6 rounded-2xl shadow-sm border-t-4 border-[#8d5b3e]">
             <div>
                 <h1 class="font-ui text-xl md:text-2xl font-bold text-[#2d1e14] m-0">🎓 Central Campus Hub</h1>
@@ -22,15 +22,24 @@
             </div>
 
             <div class="w-full md:w-auto flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                <label for="universityFilter" class="font-ui text-[0.65rem] font-semibold uppercase tracking-[1px] text-[#8d5b3e]">Filter by Campus:</label>
-                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="w-full sm:w-auto flex gap-2">
-                    <select id="universityFilter" name="university" onchange="this.form.submit()"
+                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                    <!-- 🔍 SEARCH INPUT -->
+                    <input type="text" name="search" value="{{ current_search or '' }}" placeholder="Search products..." 
+                           class="w-full sm:w-40 min-h-[44px] md:min-h-0 p-2 border border-[#e7e5e4] rounded-lg font-ui text-base md:text-xs outline-none focus:border-[#8d5b3e] bg-white">
+                    
+                    <!-- CAMPUS FILTER -->
+                    <select name="university" onchange="this.form.submit()"
                             class="w-full sm:w-auto min-h-[44px] md:min-h-0 p-2 border border-[#e7e5e4] rounded-lg font-ui text-base md:text-xs outline-none focus:border-[#8d5b3e] bg-white">
                         <option value="All" {% if current_uni == 'All' %}selected{% endif %}>All Universities</option>
                         {% for uni in universities %}
                             <option value="{{ uni }}" {% if current_uni == uni %}selected{% endif %}>{{ uni }}</option>
                         {% endfor %}
                     </select>
+                    
+                    <!-- SEARCH BUTTON -->
+                    <button type="submit" class="w-full sm:w-auto min-h-[44px] md:min-h-0 px-4 py-2 bg-[#8d5b3e] text-white rounded-lg font-ui text-xs font-bold hover:bg-[#7a4e34] transition">
+                        Search
+                    </button>
                 </form>
             </div>
         </div>
@@ -39,14 +48,15 @@
         {% if products %}
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {% for product in products %}
-            <!-- Product data lives in data-* attributes (Jinja auto-escapes them) instead of inline JS strings -->
+            <!-- Product data lives in data-* attributes (Jinja auto-escapes them) -->
             <div class="product-card bg-white rounded-xl shadow-sm overflow-hidden border border-[#e7e5e4] hover:shadow-md transition group"
                  data-id="{{ product.id }}"
                  data-name="{{ product.name }}"
                  data-price="{{ product.current_price }}"
                  data-store="{{ product.store.name }}"
                  data-desc="{{ product.description or '' }}"
-                 data-image="{{ product.image if product.image else '/static/images/default_product.png' }}">
+                 data-image="{{ product.image if product.image else '/static/images/default_product.png' }}"
+                 data-share-token="{{ product.share_token or '' }}">
 
                 <!-- Clickable Image for Quick View -->
                 <div class="aspect-[4/3] sm:aspect-square bg-[#f5f5f4] overflow-hidden relative cursor-pointer"
@@ -77,12 +87,6 @@
                                 class="font-ui text-xs md:text-[10px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] min-h-[44px] md:min-h-0 px-5 md:px-3 md:py-1.5 rounded-lg transition flex items-center justify-center gap-1">
                             <span>+</span> Add
                         </button>
-                        <button id="qvAddBtn" class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2 mb-2">
-                            <span>+</span> Add to Cart
-                        </button>
-                        <button id="qvShareBtn" class="w-full py-2.5 bg-white border border-[#e7e5e4] hover:bg-[#f9f5f0] text-[#2d1e14] font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
-                            📤 Share Product
-                        </button>
                     </div>
                 </div>
             </div>
@@ -90,10 +94,10 @@
         </div>
 
         <!-- 🚀 PAGINATION CONTROLS -->
-        {% if pagination.pages > 1 %}
+        {% if pagination and pagination.pages > 1 %}
         <div class="flex flex-wrap justify-center items-center gap-2 mt-10 md:mt-12 mb-8">
             {% if pagination.has_prev %}
-                <a href="?page={{ pagination.prev_num }}&university={{ current_uni | urlencode }}"
+                <a href="?page={{ pagination.prev_num }}&university={{ current_uni | urlencode }}{% if current_search %}&search={{ current_search | urlencode }}{% endif %}"
                    class="inline-flex items-center min-h-[44px] px-4 py-2 bg-white border border-[#e7e5e4] rounded-lg font-ui text-xs font-bold text-[#8d5b3e] hover:bg-[#f9f5f0] transition no-underline">
                     &larr; Newer
                 </a>
@@ -104,7 +108,7 @@
             </span>
 
             {% if pagination.has_next %}
-                <a href="?page={{ pagination.next_num }}&university={{ current_uni | urlencode }}"
+                <a href="?page={{ pagination.next_num }}&university={{ current_uni | urlencode }}{% if current_search %}&search={{ current_search | urlencode }}{% endif %}"
                    class="inline-flex items-center min-h-[44px] px-4 py-2 bg-[#8d5b3e] border border-[#8d5b3e] rounded-lg font-ui text-xs font-bold text-white hover:bg-[#7a4e34] transition no-underline">
                     Older &rarr;
                 </a>
@@ -123,7 +127,6 @@
 
 <!-- 🔍 QUICK VIEW PRODUCT MODAL -->
 <div id="quickViewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 z-[10000]" role="dialog" aria-modal="true" aria-label="Product quick view">
-    <!-- Outer shell does not scroll, so the close button stays visible while the content scrolls -->
     <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden relative">
         <button onclick="closeQuickView()" aria-label="Close"
                 class="absolute top-2 right-2 md:top-3 md:right-3 bg-white/90 hover:bg-white text-[#2d1e14] rounded-full w-11 h-11 md:w-8 md:h-8 flex items-center justify-center font-bold text-2xl md:text-xl z-10 shadow-sm">&times;</button>
@@ -145,8 +148,14 @@
                     <p id="qvDesc" class="font-serif text-sm text-[#2d1e14] leading-relaxed"></p>
                 </div>
 
-                <button id="qvAddBtn" class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
+                <!-- Add to Cart Button -->
+                <button id="qvAddBtn" class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2 mb-3">
                     <span>+</span> Add to Cart
+                </button>
+                
+                <!-- 📤 Share Product Button -->
+                <button id="qvShareBtn" class="w-full min-h-[48px] py-2.5 bg-white border border-[#e7e5e4] hover:bg-[#f9f5f0] text-[#2d1e14] font-ui font-bold text-sm rounded-lg transition flex items-center justify-center gap-2">
+                    📤 Copy Share Link
                 </button>
             </div>
         </div>
@@ -205,7 +214,8 @@
             price: Number(d.price),
             storeName: d.store,
             description: d.desc,
-            image: d.image
+            image: d.image,
+            shareToken: d.shareToken
         };
     }
 
@@ -340,7 +350,7 @@
         }
     }
 
-    // 🔍 QUICK VIEW LOGIC
+    // 🔍 QUICK VIEW LOGIC (Consolidated & Clean)
     function openQuickView(card) {
         const p = readProduct(card);
         document.getElementById('qvImage').src = p.image;
@@ -350,10 +360,23 @@
         document.getElementById('qvPrice').innerText = '₦' + p.price.toLocaleString();
         document.getElementById('qvDesc').innerText = p.description || 'No detailed description available for this product.';
 
-        // Update the Add to Cart button inside the modal
+        // Add to Cart logic
         document.getElementById('qvAddBtn').onclick = function() {
             addToCart(p);
             closeQuickView();
+        };
+
+        // 📤 Share Product logic (Uses secure token if available, falls back to ID)
+        const shareIdentifier = p.shareToken || p.id;
+        const shareUrl = window.location.origin + '/p/' + shareIdentifier;
+        
+        document.getElementById('qvShareBtn').onclick = function() {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const btn = document.getElementById('qvShareBtn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Link Copied!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            });
         };
 
         document.getElementById('qvScroll').scrollTop = 0;
@@ -383,28 +406,5 @@
 
     // Initialize cart on load
     renderCart();
-    function openQuickView(id, name, price, storeName, description, imageUrl) {
-        document.getElementById('qvImage').src = imageUrl;
-        document.getElementById('qvStore').innerText = storeName;
-        document.getElementById('qvName').innerText = name;
-        document.getElementById('qvPrice').innerText = '₦' + price.toLocaleString();
-        document.getElementById('qvDesc').innerText = description || 'No detailed description available.';
-        
-        // Add to Cart logic
-        document.getElementById('qvAddBtn').onclick = function() { addToCart(id, name, price, storeName); closeQuickView(); };
-        
-        // 📤 Share Product logic
-        const shareUrl = window.location.origin + '/p/' + id;
-        document.getElementById('qvShareBtn').onclick = function() {
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                const btn = document.getElementById('qvShareBtn');
-                const orig = btn.innerHTML;
-                btn.innerHTML = '✅ Link Copied!';
-                setTimeout(() => { btn.innerHTML = orig; }, 2000);
-            });
-        };
-
-        document.getElementById('quickViewModal').classList.remove('hidden');
-    }
 </script>
 {% endblock %}
