@@ -45,6 +45,20 @@ def my_orders():
     return render_template('store/my_orders.html', orders=orders)
 
 # -------------------------------------------------------------
+# 📤 PUBLIC PRODUCT SHARE LINK
+# -------------------------------------------------------------
+@storefront_bp.route('/p/<int:product_id>')
+def public_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    store = product.store
+    
+    # Security: Don't expose inactive products or stores
+    if not product.is_active or not store.is_active or store.build_status != 'ready':
+        abort(404)
+        
+    return render_template('store/product_share.html', product=product, store=store)
+
+# -------------------------------------------------------------
 # 🎓 CENTRAL CAMPUS HUB
 # -------------------------------------------------------------
 @storefront_bp.route('/central')
