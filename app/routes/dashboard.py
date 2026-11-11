@@ -6,6 +6,7 @@ import json
 import re
 import urllib.request
 from datetime import datetime, timedelta
+from app.utils.obfuscate import encode_product_id
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, current_app
 from flask_wtf.csrf import generate_csrf
 from flask_login import login_required, current_user
@@ -506,6 +507,10 @@ def new_product(kiosk_slug):
             show_in_hub=show_in_hub,  # 👈 SAVE THE TOGGLE VALUE
             attributes_json=json.dumps(attributes_dict)
         )
+
+        # Generate share token
+        product.share_token = encode_product_id(product.id) if hasattr(product, 'share_token') else None
+        
         db.session.add(product)
         db.session.commit()
 
