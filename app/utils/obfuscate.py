@@ -39,3 +39,28 @@ def decode_product_id(token):
         return product_id
     except Exception:
         return None
+
+
+SECRET_KEY = os.environ.get('ID_OBFUSCATION_KEY', 'marketplace_secret_key_2026_adebayo')
+
+def encode_id(entity_id):
+    """Converts any numerical ID into a short, unguessable alphanumeric token"""
+    id_bytes = int(entity_id).to_bytes(8, byteorder='big')
+    key_bytes = SECRET_KEY.encode('utf-8')[:8]
+    scrambled = bytes(a ^ b for a, b in zip(id_bytes, key_bytes))
+    token = base64.urlsafe_b64encode(scrambled).rstrip(b'=').decode('utf-8')
+    return token
+
+def decode_id(token):
+    """Converts the token back into the original numerical ID"""
+    try:
+        padding = 4 - len(token) % 4
+        if padding != 4:
+            token += '=' * padding
+        scrambled = base64.urlsafe_b64decode(token)
+        key_bytes = SECRET_KEY.encode('utf-8')[:8]
+        id_bytes = bytes(a ^ b for a, b in zip(scrambled, key_bytes))
+        entity_id = int.from_bytes(id_bytes, byteorder='big')
+        return entity_id
+    except Exception:
+        return None
