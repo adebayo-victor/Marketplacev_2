@@ -3,7 +3,7 @@ import uuid
 import json
 import secrets
 import markdown
-from app.utils.obfuscate import decode_product_id 
+ from app.utils.obfuscate import encode_product_id, decode_product_id
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
@@ -74,35 +74,33 @@ def public_product(token):
 @storefront_bp.route('/central')
 @login_required
 def central_hub():
-    # 🎓 1. THE STUDENT GATE
     if not current_user.is_student:
-        flash('🎓 The Central Campus Hub is exclusive to verified students.', 'warning')
+        flash(' The Central Campus Hub is exclusive to verified students.', 'warning')
         return redirect(url_for('dashboard.account_settings'))
 
-    # 📱 2. PHONE NUMBER ENFORCEMENT (NEW!)
     if not current_user.phone_number or not current_user.phone_number.strip():
-        flash('📱 Please add your WhatsApp phone number in your Account Settings before accessing the Central Hub. Merchants need this to contact you!', 'warning')
+        flash(' Please add your WhatsApp phone number in Settings before accessing the Hub.', 'warning')
         return redirect(url_for('dashboard.account_settings'))
 
-    # Get all unique universities from active STUDENT merchants for the dropdown
     universities = db.session.query(User.university_name)\
         .join(Store, User.id == Store.user_id)\
         .filter(User.is_student == True, Store.is_active == True, User.university_name.isnot(None))\
         .distinct().all()
     universities = sorted([u[0] for u in universities if u[0]])
 
-    # 🎯 SMART DEFAULT FILTER
     default_uni = current_user.university_name if current_user.university_name else 'All'
     filter_uni = request.args.get('university', default_uni)
+    search_query = request.args.get('search', '').strip()
     
-    # Base query
     query = Product.query.join(Store).join(User, Store.user_id == User.id)\
         .filter(Store.is_active == True, User.is_student == True, Product.show_in_hub == True)
     
     if filter_uni and filter_uni != 'All':
         query = query.filter(User.university_name == filter_uni)
+    
+    if search_query:
+        query = query.filter(Product.name.ilike(f'%{search_query}%'))
 
-    # 🚀 DYNAMIC LOADING: Paginate
     page = request.args.get('page', 1, type=int)
     pagination = query.order_by(Product.created_at.desc()).paginate(page=page, per_page=12, error_out=False)
     products = pagination.items
@@ -112,6 +110,7 @@ def central_hub():
         products=products, 
         universities=universities, 
         current_uni=filter_uni,
+        current_search=search_query,
         pagination=pagination
     )
 
