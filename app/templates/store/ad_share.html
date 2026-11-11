@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block og_title %}Sponsored: {{ store.name }} // Marketplace{% endblock %}
+{% block og_desc %}Check out this featured offer from {{ store.name }} on Marketplace.{% endblock %}
+{% block og_image %}{{ ad.banner_image if ad.banner_image.startswith('http') else url_for('static', filename='images/' + ad.banner_image, _external=True) }}{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block title %}Sponsored Ad // {{ store.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#f9f5f0] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg max-w-md w-full overflow-hidden border-t-4 border-[#f59e0b]">
+        {% if ad.banner_image %}
+        <div class="aspect-video bg-[#f5f5f4] overflow-hidden">
+            <img src="{{ ad.banner_image if ad.banner_image.startswith('http') else url_for('static', filename='images/' + ad.banner_image) }}" alt="Sponsored Ad" class="w-full h-full object-cover">
+        </div>
+        {% endif %}
+        
+        <div class="p-6 text-center">
+            <span class="inline-block px-2 py-1 bg-[#fef3c7] text-[#b45309] text-[10px] font-ui font-bold uppercase tracking-wider rounded mb-3">Sponsored</span>
+            <h1 class="font-ui text-xl font-bold text-[#2d1e14] m-0 mb-2">{{ store.name }}</h1>
+            <p class="font-serif text-sm text-[#78716c] mb-6">{{ store.bio or 'Check out this amazing store on Marketplace!' }}</p>
+            
+            <a href="{{ destination }}" class="block w-full py-3 bg-[#f59e0b] hover:bg-[#d97706] text-white font-ui font-bold text-sm rounded-lg transition no-underline mb-3">
+                Visit Store / Offer &rarr;
+            </a>
+            
+            <button onclick="copyShareLink()" class="block w-full py-2.5 bg-white border border-[#e7e5e4] hover:bg-[#f9f5f0] text-[#2d1e14] font-ui font-bold text-sm rounded-lg transition">
+                📤 Copy Ad Link
+            </button>
+            
+            <p class="font-serif italic text-[10px] text-[#a8a29e] mt-4">Powered by Marketplace Ads</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyShareLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+        alert('Ad link copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}
