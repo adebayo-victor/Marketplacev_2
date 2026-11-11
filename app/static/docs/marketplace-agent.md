@@ -10,18 +10,18 @@
 ---
 
 ## 📌 Executive Overview
-Marketplace enables social commerce vendors to launch a professional online storefront in under 60 seconds, streamlining order management and marketing asset creation. It also features a dedicated **Central Campus Hub**, an exclusive, student-to-student marketplace.
+Marketplace enables social commerce vendors to launch a professional online storefront in under 60 seconds, streamlining order management and marketing asset creation. It also features a dedicated **Central Campus Hub**, a student-personalized discovery marketplace.
 * **For Merchants:** Set up instantly, receive structured WhatsApp orders, design promo flyers, issue invoices/receipts, and tap into the student market with 0% commission.
 * **For Customers:** Shop freely with no account creation required.
-* **For Students:** Verify your student status to access the Central Campus Hub, browse products from fellow students, use a seamless shopping cart, and checkout in one click.
+* **For Students:** Toggle Student Mode to personalize your Central Campus Hub feed with your university's products, use a seamless multi-merchant shopping cart, and checkout in one click.
 
 ---
 
 ## 🛠️ Core Features & Capabilities
 * **Custom AI Website Builder:** Deploy vibe-matched storefront layouts rapidly by entering your business description.
 * **Direct WhatsApp Ordering:** Orders arrive in your WhatsApp DM with clean, itemized breakdowns.
-* **🎓 Central Campus Hub:** An exclusive, verified-student-only marketplace with smart university filtering, a built-in search bar, a floating shopping cart, Quick View overlays, and bulk checkout that automatically splits orders by merchant.
-* **📤 Secure Shareable Product Links:** Every product has a unique, unguessable share link (e.g., `/p/x7K9mP2q`). When shared on WhatsApp or Facebook, it generates a rich preview with the product's exact image, name, and price.
+* **🎓 Central Campus Hub:** A student-personalized discovery marketplace with smart university filtering, a built-in search bar, a floating shopping cart, Quick View overlays, and bulk checkout that automatically splits orders by merchant.
+* **🔗 Universal Public Links & Rich Metadata:** Stores, products, and advertisements have secure, unguessable share links (e.g., `/p/x7K9mP2q`, `/ad/x7K9mP2q`). When shared on WhatsApp or Facebook, they generate rich Open Graph previews with the exact image, name, and description.
 * **1-Click Status Flyer Studio:** Generate high-resolution PNG & PDF promotional flyers for social statuses using 12 brand themes or AI-generated designs.
 * **Invoices & Receipts:** Create formal invoices and stamp them "PAID IN FULL" upon payment verification across 4 professional themes.
 * **Made-to-Order Stock Mode & Lead Recovery:** Keep items available for food/service vendors and track cart abandonments to nudge potential buyers.
@@ -30,7 +30,7 @@ Marketplace enables social commerce vendors to launch a professional online stor
 ---
 
 ## 🚀 Getting Started & Pricing
-1. **Create Account / Onboard:** Sign up via Google or username. *Students can toggle "I am a University Student" to select their campus and unlock the Hub.*
+1. **Create Account / Onboard:** Sign up via Google or username. *Students can toggle "I am a University Student" to select their campus and unlock personalized Hub discovery.*
 2. **Share Link:** Add your URL to your Instagram bio or WhatsApp status.
 3. **Pricing Tiers:**
    * **Preview Mode (`₦0`):** Free testing, unlimited AI redesigns, and flyer generation.
@@ -48,7 +48,7 @@ Marketplace enables social commerce vendors to launch a professional online stor
 4. [Quick Start for Merchants](#4-quick-start-for-merchants)
 5. [Page-by-Page Guide: Public and Account Pages](#5-page-by-page-guide-public-and-account-pages)
 6. [Page-by-Page Guide: The Customer Storefront](#6-page-by-page-guide-the-customer-storefront)
-7. [Page-by-Page Guide: The Central Campus Hub (Students Only)](#7-page-by-page-guide-the-central-campus-hub-students-only)
+7. [Page-by-Page Guide: The Central Campus Hub](#7-page-by-page-guide-the-central-campus-hub)
 8. [Page-by-Page Guide: Merchant Hub and Tools](#8-page-by-page-guide-merchant-hub-and-tools)
 9. [Coins, Payments, and the Monthly Subscription](#9-coins-payments-and-the-monthly-subscription)
 10. [Order Lifecycle: From Click to Receipt](#10-order-lifecycle-from-click-to-receipt)
@@ -62,13 +62,13 @@ Marketplace enables social commerce vendors to launch a professional online stor
 ---
 
 ## 1. What Marketplace Is
-Marketplace is a web platform where a merchant opens one or more kiosks (online stores). Each kiosk gets its own public link, a product catalog, and a WhatsApp-based checkout. Additionally, verified students can opt into the **Central Campus Hub**, a unified marketplace to buy and sell exclusively with other students.
+Marketplace is a web platform where a merchant opens one or more kiosks (online stores). Each kiosk gets its own public link, a product catalog, and a WhatsApp-based checkout. Additionally, users can opt into the **Central Campus Hub**, a unified marketplace tailored to discover and buy from businesses within their specific university community.
 
 | Feature | What it does for you |
 | --- | --- |
-| **Central Campus Hub** | A student-only marketplace with smart filtering, search, a floating cart, Quick View, and bulk checkout that splits orders by merchant. |
+| **Central Campus Hub** | A personalized discovery marketplace with smart filtering, search, a floating cart, Quick View, and bulk checkout that splits orders by merchant. |
 | **Two-Tier Coin Rewards** | Earn bonus platform coins automatically when you mark a "Central Hub" order as Paid or Completed. |
-| **Secure Share Links** | Generate unguessable, rich-preview links for individual products to share on social media. |
+| **Universal Share Links** | Generate secure, unguessable, rich-preview links for individual products, ads, and stores to share on social media. |
 
 ---
 
@@ -76,11 +76,11 @@ Marketplace is a web platform where a merchant opens one or more kiosks (online 
 
 | Term | Meaning |
 | --- | --- |
-| **Student Mode** | A profile setting that verifies a user as a university student, granting access to the Central Campus Hub. |
-| **Central Campus Hub** | The exclusive, student-only marketplace accessible via the top navigation bar. |
+| **Student Mode** | A profile setting that personalizes your Central Campus Hub feed to your selected university and streamlines campus deliveries. |
+| **Central Campus Hub** | The student-personalized discovery marketplace accessible via the top navigation bar. |
 | **Quick View** | A pop-up overlay on the Central Hub that lets students see product details and add to cart without leaving the page. |
 | **Floating Cart** | A persistent cart icon on the Central Hub that lets students gather items from multiple merchants before checking out once. |
-| **Share Token** | A secure, unguessable alphanumeric code used in product share links (e.g., `/p/x7K9mP2q`) to protect product IDs from scraping. |
+| **Share Token** | A secure, unguessable alphanumeric code used in public links for products and ads (e.g., `/p/x7K9mP2q`) to protect database IDs from scraping while enabling rich social media previews. |
 
 ---
 
@@ -89,7 +89,7 @@ Marketplace is a web platform where a merchant opens one or more kiosks (online 
 | Role | Needs an account? | What they can do |
 | --- | --- | --- |
 | **Regular Customer** | No | Browse a live kiosk, search products, pick options, build a bag, and check out on WhatsApp. |
-| **Student Customer** | Yes | Everything a regular customer can do, PLUS access the Central Campus Hub, use the floating cart, Quick View, and bulk checkout. |
+| **Student Customer** | Yes | Everything a regular customer can do, PLUS access the personalized Central Campus Hub, use the floating cart, Quick View, and bulk checkout. |
 | **Merchant** | Yes | Create kiosks, add products (and toggle Hub visibility), manage orders with advanced filters, design flyers, run ads, handle wallet and referrals. |
 
 ---
@@ -103,7 +103,7 @@ Marketplace is a web platform where a merchant opens one or more kiosks (online 
 6. **Describe your dream look** in the AI Design Instructions box. Upload a logo, banner or background if you have them.
 7. **Tap LAUNCH STOREFRONT.** The AI builds your store in the background. Your kiosk shows BUILDING and unlocks by itself when ready.
 8. **Add products** with photos, prices and options.
-9. **Opt products into the Hub:** Check the **"🎓 Show in Central Campus Hub"** box if you want students to be able to find and buy this item in the exclusive student marketplace.
+9. **Opt products into the Hub:** Check the **"🎓 Show in Central Campus Hub"** box if you want students to be able to find and buy this item in the personalized student marketplace.
 10. **Preview your store** on the phone-style preview to check it looks right.
 11. **Activate your monthly subscription (₦5,000/month)** when you're happy, or use coins if you have enough. *(Admins can grant a 30-day free trial manually).*
 12. **Share your link** on your WhatsApp Status, Instagram bio and anywhere customers find you.
@@ -116,7 +116,7 @@ Marketplace is a web platform where a merchant opens one or more kiosks (online 
 | Component | What it does |
 | --- | --- |
 | **Hub** (signed in) | Takes you to your merchant Hub. |
-| **🎓 Campus Hub** (students only) | Takes you to the exclusive Central Campus Hub marketplace. |
+| **🎓 Campus Hub** (students only) | Takes you to the personalized Central Campus Hub marketplace. |
 | **⚙️ Settings** (signed in) | Opens your Account Settings to manage Student Mode, University, and WhatsApp Phone Number. |
 | **Admin** (admins only) | Opens the admin area. |
 | **Log Out** (signed in) | Ends your session. |
@@ -128,7 +128,7 @@ Marketplace is a web platform where a merchant opens one or more kiosks (online 
 | **University Name** | A smart dropdown with predefined Nigerian universities (e.g., UNILAG, OAU, UNN). You can also type a custom one. |
 
 ### 5.7 Account Settings ("⚙️ Settings")
-This page allows you to manage your profile and unlock student features.
+This page allows you to manage your profile and unlock personalized discovery features.
 | Component | What it does |
 | --- | --- |
 | **🎓 Activate Student Mode** | A toggle switch. Turning this on reveals the University and Phone Number fields. |
@@ -143,8 +143,8 @@ This page allows you to manage your profile and unlock student features.
 
 ---
 
-## 7. Page-by-Page Guide: The Central Campus Hub (Students Only)
-Accessible only to logged-in users with "Student Mode" activated and a valid WhatsApp phone number saved in their settings.
+## 7. Page-by-Page Guide: The Central Campus Hub
+Accessible to logged-in users who have activated Student Mode and saved a valid WhatsApp phone number in their settings.
 
 ### 7.1 Hub Header & Smart Filter + Search
 * **Search Bar:** Instantly filter products by name directly in the Hub header.
@@ -186,16 +186,22 @@ Your home screen after logging in. Features quick shortcuts to Referrals and Fin
 ### 8.4 Add / Edit Product
 | Component | What it does |
 | --- | --- |
-| **🎓 Show in Central Campus Hub** | A checkbox. Checked by default. Uncheck this to hide the product from the student-only marketplace (useful for bulk items or non-student-targeted goods). |
+| **🎓 Show in Central Campus Hub** | A checkbox. Checked by default. Uncheck this to hide the product from the personalized student marketplace (useful for bulk items or non-student-targeted goods). |
+
+### 8.5 Monetization (Ad Slots) *(Updated)*
+| Component | What it does |
+| --- | --- |
+| **📤 Share Ad Link** | Each active ad slot generates a secure, trackable public link (e.g., `/ad/x7K9mP2q`). Sharing this link generates a rich preview and logs a click in your dashboard analytics when visited. |
 
 ---
 
 ## 9. Coins, Payments, and the Monthly Subscription
 
-### Two-Tier Coin Rewards
-Marketplace incentivizes campus commerce. When a merchant marks an order as **Paid** or **Completed**:
+### Two-Tier Coin Rewards (Idempotent)
+Marketplace incentivizes campus commerce. When a merchant marks an order as **Paid** or **Completed**, a reward is triggered. 
 * **Regular WhatsApp Orders:** Earn the standard sale reward.
-* **🎓 Central Hub Orders:** Earn an elevated bonus reward to encourage participation in the student marketplace. This is logged clearly in your Transaction History.
+* **🎓 Central Hub Orders:** Earn an elevated bonus reward to encourage participation in the student marketplace.
+* **Idempotency Guarantee:** Rewards are strictly **idempotent**. An order will only ever generate a reward *once*, even if its status is updated multiple times (e.g., from Paid to Completed). This is logged clearly and safely in your Transaction History.
 
 ### Monthly Subscription & Free Trials
 * **Standard:** Keep your kiosk live for ₦5,000 per month. Early renewals add 30 days to your current expiry.
@@ -212,7 +218,7 @@ Marketplace incentivizes campus commerce. When a merchant marks an order as **Pa
 | 3 | System | Records the orders with `checkout_method = 'central_hub'` and attaches the student's real WhatsApp number. |
 | 4 | Merchant | Sees the new order in the Dashboard with a **🎓 Central Hub** badge. Clicks the WhatsApp link to confirm details. |
 | 5 | Merchant | Receives payment directly from the student. |
-| 6 | Merchant | Sets the order to ✅ Paid. The system **automatically credits the bonus Central Hub coin reward** to the merchant's wallet. |
+| 6 | Merchant | Sets the order to ✅ Paid. The system **automatically and securely credits the bonus Central Hub coin reward exactly once** to the merchant's wallet. |
 
 ---
 
@@ -223,9 +229,9 @@ Marketplace incentivizes campus commerce. When a merchant marks an order as **Pa
 * When a 🎓 Hub order comes in, use the provided WhatsApp link to quickly confirm campus pickup or delivery details.
 * Mark Hub orders as "Paid" promptly to claim your elevated bonus coin rewards.
 
-**Using Share Links**
-* Use the **📤 SHARE** button in your Inventory to copy a product's secure link.
-* Paste this link into WhatsApp groups or Instagram Stories. It will generate a beautiful preview card with the product's image and price, driving higher click-through rates.
+**Using Universal Share Links**
+* Use the **📤 SHARE** button in your Inventory or Ad Slots to copy secure links.
+* Paste these links into WhatsApp groups or Instagram Stories. They generate beautiful, trackable preview cards with the product's or store's image and price, driving significantly higher click-through rates.
 
 ---
 
@@ -250,7 +256,7 @@ Marketplace incentivizes campus commerce. When a merchant marks an order as **Pa
 
 **Social Sharing & Previews**
 * `how Open Graph meta tags work for WhatsApp and Facebook`
-* `best practices for sharing product links on social media`
+* `best practices for sharing product and ad links on social media`
 
 ---
 
@@ -259,8 +265,7 @@ Marketplace incentivizes campus commerce. When a merchant marks an order as **Pa
 For the curious:
 * **Language and framework:** Python with the Flask web framework.
 * **Look and feel:** HTML pages styled with Tailwind CSS, featuring a mobile-first approach with adaptive grids, hamburger navigation, and touch-friendly targets.
-* **Security:** Product share links use server-side XOR obfuscation (Share Tokens) to prevent ID scraping and enumeration attacks.
-* **Metadata:** Dynamic Open Graph (OG) tags are rendered server-side, ensuring social crawlers always see accurate, rich previews.
+* **Security & Metadata:** Product and ad share links use server-side XOR obfuscation (Share Tokens) to prevent ID scraping and enumeration attacks. Dynamic Open Graph (OG) tags are rendered server-side for stores, products, and ads, ensuring social crawlers always see accurate, rich previews.
 * **Payments:** Paystack handles monthly subscription payments and wallet top-ups.
 * **Hosting:** Deployed on Vercel.
 
@@ -276,3 +281,6 @@ The project is public on GitHub: https://github.com/adebayo-victor/Marketplacev_
 
 ---
 *Marketplace — "More than a marketplace — a community."*
+
+---
+
