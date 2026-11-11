@@ -227,6 +227,14 @@
                                     </form>
                                 </div>
                             </td>
+                            <td>
+                                <button type="button" onclick="copyProductLink({{ p.id }}, this)" style="color: #8d5b3e; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 8px; font-family: 'Montserrat'; background: none; border: none; cursor: pointer;">📤 SHARE</button>
+                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" style="color: #06b6d4; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">FLYER 📸</a>
+                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">EDIT</a>
+                                <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Delete this product permanently?');">
+                                    <button type="submit" class="link-button" style="color: #e74c3c;">DELETE</button>
+                                </form>
+                            </td>
                         </tr>
                         {% else %}
                         <tr><td colspan="4" class="text-center text-mute italic">No products in inventory yet.</td></tr>
