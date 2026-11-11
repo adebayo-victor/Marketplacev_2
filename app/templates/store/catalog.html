@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block og_title %}{{ store.name }} // Marketplace{% endblock %}
+    {% block og_desc %}{{ store.bio or 'Shop now on Marketplace' }}{% endblock %}
+    {% block og_image %}{{ store.logo if store.logo.startswith('http') else url_for('static', filename='images/' + store.logo, _external=True) }}{% endblock %}
+    {% block og_type %}website{% endblock %}
     <title>{{ store.name }} // Marketplace</title>
 
     <meta property="og:title" content="{{ store.name }}">
