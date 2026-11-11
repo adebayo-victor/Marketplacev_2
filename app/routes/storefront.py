@@ -3,7 +3,7 @@ import uuid
 import json
 import secrets
 import markdown
- from app.utils.obfuscate import encode_product_id, decode_product_id
+from app.utils.obfuscate import encode_product_id, decode_product_id
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, abort, flash, Response, current_app
 from flask_login import current_user
 from app import db
