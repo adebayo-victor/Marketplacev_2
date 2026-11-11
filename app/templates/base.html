@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-        <!-- 🌍 UNIVERSAL METADATA ENGINE -->
+    
+    <!-- 🌍 UNIVERSAL METADATA ENGINE -->
     <meta property="og:title" content="{% block og_title %}Marketplace{% endblock %}">
     <meta property="og:description" content="{% block og_desc %}The easiest way to set up an online store and sell on WhatsApp.{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/default_og.png') }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.host_url.rstrip('/') }}/static/images/default_og.png{% endblock %}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
-    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:url" content="{% block og_url %}{{ request.url }}{% endblock %}">
     <meta name="twitter:card" content="summary_large_image">
     
     <title>{% block title %}Marketplace{% endblock %}</title>
