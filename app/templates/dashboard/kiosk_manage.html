@@ -487,6 +487,14 @@
             document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
             window.matchMedia('(min-width: 768px)').addEventListener('change', e => { if (e.matches) setOpen(false); });
         })();
+        function copyProductLink(productId, btn) {
+            const fullUrl = window.location.origin + '/p/' + productId;
+            navigator.clipboard.writeText(fullUrl).then(() => {
+                const orig = btn.innerText;
+                btn.innerText = 'COPIED! ✅';
+                setTimeout(() => { btn.innerText = orig; }, 2000);
+            }).catch(() => { prompt('Copy link:', fullUrl); });
+        }
     </script>
 </body>
 </html>
