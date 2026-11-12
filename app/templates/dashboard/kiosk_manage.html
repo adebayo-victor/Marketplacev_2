@@ -1,500 +1,340 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Manage: {{ kiosk.name }} // Marketplace</title>
+{% extends 'base.html' %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { brand: '#8d5b3e', ink: '#2d1e14', mute: '#888888' },
-                    fontFamily: { ui: ['Montserrat', 'sans-serif'] }
-                }
-            }
-        };
-    </script>
+{% block title %}Central Campus Hub // Marketplace{% endblock %}
 
-    <!-- Reusable components (Tailwind @apply) -->
-    <style type="text/tailwindcss">
-        @layer components {
-            .section-box   { @apply bg-white p-4 sm:p-6 lg:p-10 mb-6 lg:mb-10 border-l-[5px] border-brand shadow-[0_10px_30px_rgba(0,0,0,0.02)] scroll-mt-20 md:scroll-mt-0; }
-            .stat-card     { @apply bg-white p-4 md:p-5 border-l-[5px] border-brand shadow-[0_10px_30px_rgba(0,0,0,0.02)]; }
-            .stat-label    { @apply font-ui text-[0.65rem] text-mute uppercase tracking-wider; }
-            .stat-value    { @apply font-ui font-bold text-2xl md:text-[1.8rem] my-1.5; }
-            .field-label   { @apply block font-ui text-[0.65rem] font-semibold uppercase text-brand mb-1; }
-            .field-input   { @apply w-full min-h-[44px] px-3 py-3 border border-[#eee] bg-[#fafafa] font-ui text-base md:text-xs outline-none focus:border-brand; }
-            .btn-add       { @apply inline-flex items-center justify-center min-h-[44px] md:min-h-0 px-5 py-3 bg-brand text-white font-ui text-[0.7rem] font-semibold border-0 cursor-pointer no-underline; }
-            .btn-ghost     { @apply bg-[#eee] text-ink; }
-            .btn-save      { @apply inline-flex items-center justify-center w-full sm:max-w-[250px] min-h-[44px] md:min-h-0 px-5 py-3.5 bg-ink text-white font-ui text-[0.7rem] font-semibold border-0 cursor-pointer; }
-            .link-action   { @apply inline-flex items-center min-h-[44px] md:min-h-0 px-2 md:px-0 font-ui text-[0.7rem] font-semibold no-underline whitespace-nowrap bg-transparent border-0 cursor-pointer; }
-            .nav-link      { @apply flex items-center min-h-[44px] md:min-h-[2rem] text-ink no-underline hover:text-brand transition; }
-            .check-row     { @apply flex items-center gap-2 min-h-[44px] md:min-h-0 cursor-pointer; }
-        }
-    </style>
+{% block content %}
+<style>
+    .hub-cart-fab { right: 1rem; bottom: 5.5rem; z-index: 9999 !important; }
+    @media (min-width: 768px) { .hub-cart-fab { right: 1.5rem; bottom: 6rem; } }
+    body.overlay-open .hub-cart-fab { display: none !important; }
+    .hub-bg { background-image: radial-gradient(rgba(141,91,62,.07) 1px, transparent 1px); background-size: 20px 20px; }
+    .hub-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .hub-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(45,30,20,.10); }
+</style>
 
-    <style>
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        @media (max-width: 767px) { html { scroll-padding-top: 4.5rem; } }
+<div class="hub-bg min-h-screen bg-[#f9f5f0] py-6 md:py-10 px-4 sm:px-6 pb-36">
+    <div class="max-w-6xl mx-auto">
 
-        /* `clip` (not `hidden`) so the sticky mobile bar keeps working */
-        body { font-family: 'Georgia', serif; overflow-x: clip; }
+        <!-- Header: title + search/filter -->
+        <div class="relative overflow-hidden mb-6 md:mb-8 bg-white rounded-2xl shadow-sm border border-[#efe7df] border-t-4 border-t-[#8d5b3e] p-5 md:p-7">
+            <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-[#8d5b3e]/5 pointer-events-none"></div>
+            <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div>
+                    <span class="inline-block font-ui text-[10px] font-bold uppercase tracking-[0.2em] text-[#8d5b3e] bg-[#f3ece6] px-2.5 py-1 rounded-full mb-2">Verified students only</span>
+                    <h1 class="font-ui text-2xl md:text-3xl font-extrabold text-[#2d1e14] m-0 tracking-tight">🎓 Central Campus Hub</h1>
+                    <p class="font-serif italic text-xs md:text-sm text-[#78716c] mt-1 mb-0">Exclusive marketplace for verified students.</p>
+                </div>
 
-        /* Slide-down mobile menu */
-        .slide-menu {
-            max-height: 0; opacity: 0; visibility: hidden; overflow: hidden; pointer-events: none;
-            transition: max-height .3s ease, opacity .2s ease, visibility 0s linear .3s;
-        }
-        .slide-menu.open {
-            max-height: calc(100vh - 56px);
-            max-height: calc(100dvh - 56px);
-            opacity: 1; visibility: visible; overflow-y: auto; pointer-events: auto;
-            transition: max-height .3s ease, opacity .2s ease, visibility 0s;
-        }
-
-        /* Data tables (always wrapped in an overflow-x-auto div) */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: .85rem; }
-        .data-table th {
-            text-align: left; font-family: 'Montserrat', sans-serif; font-size: .65rem; text-transform: uppercase;
-            padding: 12px 10px; color: #888; border-bottom: 1px solid #eee; white-space: nowrap;
-        }
-        .data-table td { padding: 6px 10px; border-bottom: 1px solid #f9f9f9; vertical-align: middle; }
-        @media (min-width: 768px) { .data-table td { padding: 14px 10px; } }
-
-        /* File inputs: bigger tap area for the "Choose file" button */
-        .file-input { width: 100%; font-family: 'Montserrat', sans-serif; font-size: .75rem; }
-        .file-input::file-selector-button {
-            margin-right: 12px; min-height: 44px; padding: 0 16px; border: 0;
-            background: #f3ece6; color: #8d5b3e; font-family: 'Montserrat', sans-serif;
-            font-size: .7rem; font-weight: 600; cursor: pointer;
-        }
-        @media (min-width: 768px) { .file-input::file-selector-button { min-height: 34px; } }
-
-        /* Order status pills */
-        .status-select {
-            padding: 6px 8px; font-family: 'Montserrat', sans-serif; font-size: 0.65rem;
-            font-weight: 700; text-transform: uppercase; border-radius: 4px;
-            outline: none; cursor: pointer; border: 1px solid #ddd;
-        }
-        @media (max-width: 767px) { .status-select { min-height: 44px; font-size: .7rem; } }
-        .status-pending   { background: #fffbeb; color: #b45309; border-color: #fde68a; }
-        .status-paid      { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
-        .status-shipped   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-        .status-completed { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
-        .status-cancelled { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-    </style>
-</head>
-<body class="bg-[#fdfcfb] text-ink min-h-screen">
-
-{# One copy of the sidebar contents, reused by the mobile dropdown and the desktop sidebar #}
-{% macro sidebar_body(kiosk) %}
-    <a href="/dashboard" class="flex items-center min-h-[44px] md:min-h-0 md:mb-2 font-ui text-[0.7rem] text-mute no-underline">&larr; back to global hub</a>
-    <h3 class="hidden md:block font-ui text-[1.35rem] font-bold text-brand lowercase m-0 break-words">{{ kiosk.name }}</h3>
-
-    <nav class="mt-1 md:mt-10 font-ui text-[0.8rem] flex flex-col">
-        <a href="#inventory" class="nav-link">• Inventory</a>
-        <a href="#leads" class="nav-link">• Customer Leads</a>
-        <a href="#ads" class="nav-link">• Monetization Ads</a>
-        <a href="#branding" class="nav-link">• Branding &amp; Receipts</a>
-        <a href="/{{ kiosk.slug }}" target="_blank" class="nav-link !text-brand font-semibold">Live Kiosk &nearr;</a>
-    </nav>
-
-    <button type="button" onclick="copyKioskLink('{{ kiosk.slug }}', this)"
-            class="block w-full min-h-[44px] mt-4 px-3 py-2 bg-[#fff9f5] border border-brand text-brand font-ui text-[0.7rem] font-bold text-center cursor-pointer">
-        📋 Copy Public Link
-    </button>
-
-    <div class="mt-6 pt-3 border-t border-[#eee]">
-        <form action="/{{ kiosk.slug }}/delete" method="post" onsubmit="return confirm('EXTREME DANGER: This will delete the kiosk and products. Proceed?');">
-            <button type="submit" class="link-action !text-[#e74c3c]">× PERMANENTLY DELETE KIOSK</button>
-        </form>
-    </div>
-{% endmacro %}
-
-    <!-- 📱 MOBILE TOP BAR (below md): sticky, hamburger reveals the navigation -->
-    <header id="kioskMobileHeader" class="md:hidden sticky top-0 z-[100] bg-white border-b border-[#eee]">
-        <div class="flex items-center justify-between gap-3 h-14 px-4">
-            <div class="min-w-0">
-                <p class="font-ui text-[0.6rem] uppercase tracking-widest text-mute m-0 leading-none">Manage kiosk</p>
-                <h1 class="font-ui text-base font-bold text-brand lowercase truncate m-0 mt-1 leading-none">{{ kiosk.name }}</h1>
+                <form method="GET" action="{{ url_for('storefront.central_hub') }}" class="w-full lg:w-auto flex flex-col sm:flex-row gap-2">
+                    <div class="relative w-full sm:w-56">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm opacity-50 pointer-events-none">🔍</span>
+                        <input type="text" name="search" value="{{ current_search or '' }}" placeholder="Search products..."
+                               class="w-full min-h-[44px] pl-9 pr-3 py-2 border border-[#e7e5e4] rounded-xl font-ui text-base md:text-xs outline-none focus:border-[#8d5b3e] focus:ring-4 focus:ring-[#8d5b3e]/10 bg-[#fdfcfb] transition">
+                    </div>
+                    <select name="university" onchange="this.form.submit()"
+                            class="w-full sm:w-auto min-h-[44px] px-3 py-2 border border-[#e7e5e4] rounded-xl font-ui text-base md:text-xs outline-none focus:border-[#8d5b3e] bg-[#fdfcfb] cursor-pointer">
+                        <option value="All" {% if current_uni == 'All' %}selected{% endif %}>All Universities</option>
+                        {% for uni in universities %}
+                            <option value="{{ uni }}" {% if current_uni == uni %}selected{% endif %}>{{ uni }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="w-full sm:w-auto min-h-[44px] px-5 py-2 bg-[#8d5b3e] text-white rounded-xl font-ui text-xs font-bold hover:bg-[#7a4e34] transition">Search</button>
+                </form>
             </div>
-            <button id="kioskMenuBtn" type="button"
-                    class="shrink-0 w-11 h-11 -mr-2 inline-flex items-center justify-center cursor-pointer"
-                    aria-label="Open menu" aria-expanded="false" aria-controls="kioskMobileMenu">
-                <svg id="kBurger" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
-                </svg>
-                <svg id="kClose" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/>
-                </svg>
+        </div>
+
+        {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {% for product in products %}
+            <div class="product-card hub-card bg-white rounded-2xl shadow-sm overflow-hidden border border-[#e7e5e4] group flex flex-col"
+                 data-id="{{ product.id }}"
+                 data-name="{{ product.name }}"
+                 data-price="{{ product.current_price }}"
+                 data-store="{{ product.store.name }}"
+                 data-desc="{{ product.description or '' }}"
+                 data-image="{{ product.image if product.image else '/static/images/default_product.png' }}"
+                 data-share-token="{{ product.share_token or '' }}">
+
+                <div class="aspect-[4/3] sm:aspect-square bg-[#f5f5f4] overflow-hidden relative cursor-pointer"
+                     onclick="openQuickView(this.closest('.product-card'))">
+                    <img src="{{ product.image if product.image else '/static/images/default_product.png' }}"
+                         alt="{{ product.name }}" loading="lazy"
+                         class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/35 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="absolute top-2.5 left-2.5 max-w-[85%] truncate bg-[#2d1e14]/90 backdrop-blur text-white text-[10px] font-ui font-bold px-2.5 py-1 rounded-full shadow">
+                        {{ product.store.name }}
+                    </div>
+                    <span class="absolute bottom-2.5 right-2.5 bg-white/95 text-[#2d1e14] text-[10px] font-ui font-bold px-2.5 py-1 rounded-full shadow opacity-0 group-hover:opacity-100 transition">Quick view</span>
+                </div>
+
+                <div class="p-4 flex flex-col flex-1">
+                    <h3 class="font-ui text-sm font-bold text-[#2d1e14] m-0 min-h-[44px] md:min-h-0 flex items-center cursor-pointer hover:text-[#8d5b3e] transition"
+                        onclick="openQuickView(this.closest('.product-card'))">
+                        <span class="truncate min-w-0">{{ product.name }}</span>
+                    </h3>
+                    <p class="font-serif text-xs md:text-[11px] text-[#78716c] mt-1 line-clamp-2 h-9 md:h-8">{{ product.description or 'No description' }}</p>
+
+                    <div class="flex justify-between items-center gap-2 mt-auto pt-3 border-t border-[#f5f5f4]">
+                        <span class="font-ui text-lg font-black text-[#8d5b3e] tracking-tight">₦{{ "{:,.0f}".format(product.current_price) }}</span>
+                        <button type="button" onclick="addToCart(readProduct(this.closest('.product-card')), this)"
+                                class="font-ui text-xs md:text-[11px] font-bold text-white bg-[#16a34a] hover:bg-[#15803d] active:scale-95 min-h-[44px] md:min-h-0 px-5 md:px-3.5 md:py-2 rounded-full transition flex items-center justify-center gap-1">
+                            <span>+</span> Add
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if pagination and pagination.pages > 1 %}
+        <div class="flex flex-wrap justify-center items-center gap-2 mt-10 md:mt-12 mb-8">
+            {% if pagination.has_prev %}
+                <a href="?page={{ pagination.prev_num }}&university={{ current_uni | urlencode }}{% if current_search %}&search={{ current_search | urlencode }}{% endif %}"
+                   class="inline-flex items-center min-h-[44px] px-4 py-2 bg-white border border-[#e7e5e4] rounded-full font-ui text-xs font-bold text-[#8d5b3e] hover:bg-[#f3ece6] transition no-underline">&larr; Newer</a>
+            {% endif %}
+            <span class="font-ui text-xs text-[#78716c] px-3 py-2 bg-white rounded-full border border-[#efe7df]">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="?page={{ pagination.next_num }}&university={{ current_uni | urlencode }}{% if current_search %}&search={{ current_search | urlencode }}{% endif %}"
+                   class="inline-flex items-center min-h-[44px] px-4 py-2 bg-[#8d5b3e] border border-[#8d5b3e] rounded-full font-ui text-xs font-bold text-white hover:bg-[#7a4e34] transition no-underline">Older &rarr;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-14 md:py-20 px-4 bg-white rounded-2xl border border-dashed border-[#d6cfc7]">
+            <div class="text-4xl mb-3">🛍️</div>
+            <p class="font-ui text-base md:text-lg font-bold text-[#2d1e14] m-0">No products found in this campus yet.</p>
+            <p class="font-serif italic text-xs text-[#a8a29e] mt-2">Try changing the filter or check back soon!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 🔍 QUICK VIEW PRODUCT MODAL -->
+<div id="quickViewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 z-[10000]" role="dialog" aria-modal="true" aria-label="Product quick view">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden relative">
+        <button onclick="closeQuickView()" aria-label="Close"
+                class="absolute top-2 right-2 md:top-3 md:right-3 bg-white/90 hover:bg-white text-[#2d1e14] rounded-full w-11 h-11 md:w-9 md:h-9 flex items-center justify-center font-bold text-2xl md:text-xl z-10 shadow">&times;</button>
+
+        <div id="qvScroll" class="max-h-[90vh] overflow-y-auto flex flex-col md:flex-row">
+            <div class="w-full md:w-1/2 bg-[#f5f5f4] flex items-center justify-center">
+                <img id="qvImage" src="" alt="Product" class="w-full h-56 sm:h-72 md:h-full object-cover">
+            </div>
+            <div class="w-full md:w-1/2 p-5 sm:p-6 md:p-8 flex flex-col">
+                <span id="qvStore" class="font-ui text-[10px] font-bold text-white bg-[#2d1e14] px-2.5 py-1 rounded-full w-max max-w-full truncate mb-3"></span>
+                <h2 id="qvName" class="font-ui text-xl md:text-2xl font-extrabold text-[#2d1e14] tracking-tight m-0 mb-2"></h2>
+                <p id="qvPrice" class="font-ui text-2xl md:text-3xl font-black text-[#8d5b3e] mb-4"></p>
+
+                <div class="flex-1 md:overflow-y-auto mb-6 pt-4 border-t border-[#f0ebe6]">
+                    <h4 class="font-ui text-[10px] font-bold uppercase tracking-[0.18em] text-[#78716c] mb-2">Description</h4>
+                    <p id="qvDesc" class="font-serif text-sm text-[#2d1e14] leading-relaxed"></p>
+                </div>
+
+                <button id="qvAddBtn" class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-ui font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 mb-3">
+                    <span>+</span> Add to Cart
+                </button>
+                <button id="qvShareBtn" class="w-full min-h-[48px] py-2.5 bg-white border border-[#e7e5e4] hover:bg-[#f9f5f0] text-[#2d1e14] font-ui font-bold text-sm rounded-xl transition flex items-center justify-center gap-2">
+                    📤 Copy Share Link
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🛒 FLOATING CART BUTTON -->
+<button onclick="toggleCart()" aria-label="Open cart"
+        class="hub-cart-fab fixed bg-[#8d5b3e] hover:bg-[#7a4e34] text-white min-h-[56px] px-5 rounded-full shadow-xl shadow-[#8d5b3e]/30 flex items-center gap-2 transition active:scale-95">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+    <span id="cartCount" class="bg-white text-[#8d5b3e] text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+</button>
+
+<!-- 🛒 CART DRAWER -->
+<div id="cartDrawer" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex justify-end" style="z-index: 9998 !important;" role="dialog" aria-modal="true" aria-label="Shopping cart">
+    <div class="bg-white w-full sm:max-w-md h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-full" id="cartPanel">
+        <div class="p-4 md:p-5 border-b border-[#e7e5e4] flex justify-between items-center bg-[#f9f5f0]">
+            <h2 class="font-ui text-base md:text-lg font-extrabold text-[#2d1e14] m-0">🛒 Your Campus Cart</h2>
+            <button onclick="toggleCart()" aria-label="Close cart"
+                    class="w-11 h-11 -mr-2 flex items-center justify-center text-[#78716c] hover:text-[#2d1e14] text-3xl font-bold">&times;</button>
+        </div>
+
+        <div id="cartItems" class="flex-1 overflow-y-auto p-4 md:p-5 space-y-3 md:space-y-4">
+            <p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>
+        </div>
+
+        <div class="p-4 md:p-5 border-t border-[#e7e5e4] bg-[#f9f5f0]">
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-ui text-sm font-semibold text-[#2d1e14]">Total Estimated:</span>
+                <span id="cartTotal" class="font-ui text-xl md:text-2xl font-black text-[#8d5b3e]">₦0</span>
+            </div>
+            <button onclick="checkoutCart()" id="checkoutBtn" disabled
+                    class="w-full min-h-[48px] py-3 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-ui font-bold text-sm rounded-xl transition">
+                Proceed to Checkout
             </button>
         </div>
+    </div>
+</div>
 
-        <div id="kioskMobileMenu" class="slide-menu absolute left-0 right-0 top-full bg-white border-b border-[#eee] shadow-lg px-4 pb-4" aria-hidden="true">
-            {{ sidebar_body(kiosk) }}
-        </div>
-    </header>
+<script>
+    // 🛒 CART LOGIC (unchanged)
+    let cart = JSON.parse(localStorage.getItem('campusCart')) || [];
 
-    <!-- 🖥️ DESKTOP SIDEBAR (md and up): fixed on the left -->
-    <aside class="hidden md:block fixed top-0 left-0 z-[100] w-[280px] h-screen bg-white border-r border-[#eee] px-[30px] py-[50px] overflow-y-auto">
-        {{ sidebar_body(kiosk) }}
-    </aside>
+    function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
 
-    <main class="min-w-0 p-4 sm:p-6 md:ml-[280px] md:p-6 lg:px-[5%] lg:py-14">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-6">
-                    {% for category, message in messages %}
-                        <div class="bg-white border-l-4 border-brand px-4 py-3 font-ui text-xs shadow-[0_5px_20px_rgba(0,0,0,0.02)] mb-2">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+    function readProduct(card) {
+        const d = card.dataset;
+        return { id: Number(d.id), name: d.name, price: Number(d.price), storeName: d.store, description: d.desc, image: d.image, shareToken: d.shareToken };
+    }
 
-        <!-- 📊 Stats: 1 column on phones, 3 on desktop -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-6 lg:mb-10">
-            <div class="stat-card">
-                <p class="stat-label m-0">Visits</p>
-                <p class="stat-value">{{ kiosk.views_count }}</p>
-                <p class="font-ui text-[0.6rem] text-brand m-0">Live tracking</p>
-            </div>
-            <div class="stat-card">
-                <p class="stat-label m-0">Orders</p>
-                <p class="stat-value">{{ leads|length }}</p>
-                <p class="font-ui text-[0.6rem] text-mute m-0">WhatsApp Leads</p>
-            </div>
-            <div class="stat-card">
-                <p class="stat-label m-0">Catalog</p>
-                <p class="stat-value">{{ products|length }}</p>
-                <p class="font-ui text-[0.6rem] text-mute m-0">Active Items</p>
-            </div>
-        </div>
+    function addToCart(product, btn) {
+        const existing = cart.find(item => item.id === product.id);
+        if (existing) existing.qty += 1;
+        else cart.push({ id: product.id, name: product.name, price: product.price, storeName: product.storeName, qty: 1 });
+        saveCart();
 
-        <!-- Section 1: Inventory -->
-        <section class="section-box" id="inventory">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] m-0">Inventory</h2>
-                <a href="/{{ kiosk.slug }}/product/new" class="btn-add w-full sm:w-auto">+ ADD PRODUCT</a>
-            </div>
+        if (btn && !btn.dataset.busy) {
+            btn.dataset.busy = '1';
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✓ Added';
+            btn.classList.add('bg-[#047857]');
+            setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('bg-[#047857]'); delete btn.dataset.busy; }, 1000);
+        }
+    }
 
-            <input type="text" class="field-input" aria-label="Search products by name"
-                   onkeyup="searchTable('inventoryTable', this.value)" placeholder="Search products by name...">
+    function removeFromCart(id) { cart = cart.filter(item => item.id !== id); saveCart(); }
 
-            <p class="md:hidden font-ui text-[0.6rem] text-mute mt-3 mb-0">Swipe sideways to see all columns</p>
-            <div class="overflow-x-auto">
-                <table id="inventoryTable" class="data-table min-w-[520px]">
-                    <thead>
-                        <tr><th>Product Name</th><th>Price</th><th>Stock</th><th>Action</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for p in products %}
-                        <tr>
-                            <td>
-                                <strong>{{ p.name }}</strong>
-                                {% if p.is_flash_sale %}
-                                    <span class="font-ui text-[0.55rem] text-[#b33a3a] font-bold bg-[#ffebeb] px-1 py-0.5 ml-1">🔥 SALE</span>
-                                {% endif %}
-                            </td>
-                            <td class="whitespace-nowrap">
-                                {% if p.has_discount %}
-                                    <span class="line-through text-[#aaa] text-[0.7rem]">{{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}</span><br>
-                                    <strong class="text-brand">{{ kiosk.currency }}{{ "{:,.2f}".format(p.discount_price) }}</strong>
-                                {% else %}
-                                    {{ kiosk.currency }}{{ "{:,.2f}".format(p.original_price) }}
-                                {% endif %}
-                            </td>
-                            <td class="whitespace-nowrap">
-                                {% if p.is_unlimited_stock %}
-                                    <span class="text-[#16a34a] font-bold text-xs">Unlimited</span>
-                                {% else %}
-                                    {{ p.stock }} units
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="flex items-center gap-0 md:gap-2 whitespace-nowrap">
-                                    <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" class="link-action !text-[#06b6d4] !font-bold">FLYER 📸</a>
-                                    <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" class="link-action !text-brand">EDIT</a>
-                                    <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" class="inline" onsubmit="return confirm('Delete this product permanently?');">
-                                        <button type="submit" class="link-action !text-[#e74c3c]">DELETE</button>
-                                    </form>
-                                </div>
-                            </td>
-                            <td>
-                                <button type="button" onclick="copyProductLink({{ p.id }}, this)" style="color: #8d5b3e; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 8px; font-family: 'Montserrat'; background: none; border: none; cursor: pointer;">📤 SHARE</button>
-                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/flyer" style="color: #06b6d4; font-size: 0.7rem; font-weight: 700; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">FLYER 📸</a>
-                                <a href="/{{ kiosk.slug }}/product/{{ p.id }}/edit" style="color: var(--brand); font-size: 0.7rem; font-weight: 600; text-decoration: none; margin-right: 8px; font-family: 'Montserrat';">EDIT</a>
-                                <form action="/{{ kiosk.slug }}/product/{{ p.id }}/delete" method="post" style="display:inline;" onsubmit="return confirm('Delete this product permanently?');">
-                                    <button type="submit" class="link-button" style="color: #e74c3c;">DELETE</button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="4" class="text-center text-mute italic">No products in inventory yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    function updateQty(id, change) {
+        const item = cart.find(i => i.id === id);
+        if (item) { item.qty += change; if (item.qty <= 0) removeFromCart(id); else saveCart(); }
+    }
 
-        <!-- Section 2: Customer Leads & Orders -->
-        <section class="section-box" id="leads">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] m-0">Customer Leads &amp; Orders</h2>
-            </div>
+    function saveCart() { localStorage.setItem('campusCart', JSON.stringify(cart)); renderCart(); }
 
-            <!-- 🚀 FILTER BAR: stacked on phones, horizontal from md: up (wraps if the row gets tight) -->
-            <form method="GET" action="/{{ kiosk.slug }}/manage#leads" class="flex flex-col md:flex-row md:flex-wrap md:items-end gap-3 mb-5">
-                <div class="w-full md:w-auto md:flex-1 md:min-w-[200px]">
-                    <label for="f-search" class="field-label">Search</label>
-                    <input id="f-search" type="text" name="search" value="{{ current_search }}" placeholder="Ref, Name, Phone, or Product..." class="field-input">
-                </div>
+    function renderCart() {
+        const container = document.getElementById('cartItems');
+        const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+        const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-                <div class="w-full md:w-36">
-                    <label for="f-status" class="field-label">Status</label>
-                    <select id="f-status" name="status" class="field-input cursor-pointer">
-                        <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Statuses</option>
-                        <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>⏳ Pending</option>
-                        <option value="paid" {% if current_status == 'paid' %}selected{% endif %}>✅ Paid</option>
-                        <option value="shipped" {% if current_status == 'shipped' %}selected{% endif %}>🚚 Shipped</option>
-                        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>🏁 Completed</option>
-                        <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>❌ Cancelled</option>
-                    </select>
-                </div>
+        document.getElementById('cartCount').innerText = totalItems;
+        document.getElementById('cartTotal').innerText = '₦' + totalPrice.toLocaleString();
+        document.getElementById('checkoutBtn').disabled = totalItems === 0;
 
-                <div class="w-full md:w-40">
-                    <label for="f-source" class="field-label">Source</label>
-                    <select id="f-source" name="source" class="field-input cursor-pointer">
-                        <option value="all" {% if current_source == 'all' %}selected{% endif %}>All Sources</option>
-                        <option value="central_hub" {% if current_source == 'central_hub' %}selected{% endif %}>🎓 Central Hub</option>
-                        <option value="regular" {% if current_source == 'regular' %}selected{% endif %}>📱 Regular/WhatsApp</option>
-                    </select>
-                </div>
-
-                <div class="flex gap-2 w-full md:w-auto">
-                    <button type="submit" class="btn-add flex-1 md:flex-none">Apply Filters</button>
-                    <a href="/{{ kiosk.slug }}/manage#leads" class="btn-add btn-ghost flex-1 md:flex-none">Clear</a>
-                </div>
-            </form>
-            <!-- END FILTER BAR -->
-
-            <p class="md:hidden font-ui text-[0.6rem] text-mute mb-0">Swipe sideways to see all columns</p>
-            <div class="overflow-x-auto">
-                <table id="leadsTable" class="data-table min-w-[760px]">
-                    <thead>
-                        <tr><th>Ref</th><th>Customer</th><th>WhatsApp</th><th>Total</th><th>Status</th><th>Documents</th></tr>
-                    </thead>
-                    <tbody>
-                        {% for l in leads %}
-                        <tr>
-                            <td class="font-ui font-semibold whitespace-nowrap">
-                                #{{ l.order_ref }}
-                                {% if l.checkout_method == 'central_hub' %}
-                                    <span class="inline-block ml-1.5 px-1.5 py-[3px] rounded text-[0.6rem] font-bold bg-brand text-white align-middle tracking-[0.5px]">
-                                        🎓 Central Hub
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td>{{ l.customer_name }}</td>
-                            <td>
-                                <a href="https://wa.me/{{ l.customer_phone }}" target="_blank" class="link-action !text-brand !text-[0.8rem] !font-normal !underline-offset-2">{{ l.customer_phone }} &nearr;</a>
-                            </td>
-                            <td class="font-ui font-semibold whitespace-nowrap">{{ kiosk.currency }}{{ "{:,.2f}".format(l.total_amount) }}</td>
-                            <td>
-                                <form action="/{{ kiosk.slug }}/order/{{ l.id }}/status" method="POST" class="m-0">
-                                    <select name="status" onchange="this.form.submit()" class="status-select status-{{ l.status }}">
-                                        <option value="pending" {% if l.status == 'pending' %}selected{% endif %}>⏳ Pending</option>
-                                        <option value="paid" {% if l.status == 'paid' %}selected{% endif %}>✅ Paid</option>
-                                        <option value="shipped" {% if l.status == 'shipped' %}selected{% endif %}>🚚 Shipped</option>
-                                        <option value="completed" {% if l.status == 'completed' %}selected{% endif %}>🏁 Completed</option>
-                                        <option value="cancelled" {% if l.status == 'cancelled' %}selected{% endif %}>❌ Cancelled</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td class="whitespace-nowrap">
-                                <a href="/receipt/{{ l.order_ref }}?doc=invoice" target="_blank" class="link-action !text-brand !underline">Invoice 📄</a>
-                                <a href="/receipt/{{ l.order_ref }}?doc=receipt" target="_blank" class="link-action !text-[#16a34a] !underline">Receipt 🧾</a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="6" class="text-center text-mute italic">No orders match your filters.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- Section 3: Branding, Settings & Receipts -->
-        <section class="section-box" id="branding">
-            <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] mt-0 mb-4">Branding, Layout &amp; Receipts</h2>
-            <form action="/{{ kiosk.slug }}/settings" method="post" enctype="multipart/form-data" class="flex flex-col gap-4 max-w-[650px]">
-                <div>
-                    <label for="b-name" class="field-label">Kiosk Name</label>
-                    <input id="b-name" type="text" name="name" value="{{ kiosk.name }}" required class="field-input">
-                </div>
-
-                <div>
-                    <label for="b-wa" class="field-label">WhatsApp Number for Orders</label>
-                    <input id="b-wa" type="text" name="whatsapp_number" value="{{ kiosk.whatsapp_number }}" required inputmode="tel" class="field-input">
-                </div>
-
-                <div>
-                    <label for="b-bio" class="field-label">Tagline / Bio</label>
-                    <textarea id="b-bio" name="bio" rows="2" class="field-input !font-serif md:!text-sm">{{ kiosk.bio }}</textarea>
-                </div>
-
-                <!-- Section Activation -->
-                <div class="bg-[#fafafa] border border-[#eee] p-4">
-                    <p class="font-ui text-xs font-bold uppercase text-ink mb-2 mt-0">Website Section Activation</p>
-                    <div class="flex flex-wrap gap-x-5 gap-y-1 font-ui text-xs">
-                        <label class="check-row">
-                            <input type="checkbox" name="section_hero" {% if kiosk.is_section_active('hero') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
-                            Hero Banner
-                        </label>
-                        <label class="check-row">
-                            <input type="checkbox" name="section_flash" {% if kiosk.is_section_active('flash_sales') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
-                            Flash Deals
-                        </label>
-                        <label class="check-row">
-                            <input type="checkbox" name="section_ads" {% if kiosk.is_section_active('ads') %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]">
-                            Sponsor Ads
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Receipt Signature Style Picker -->
-                <div class="bg-[#fff9f5] border-l-4 border-brand p-4">
-                    <p class="font-ui text-xs font-bold uppercase text-ink mb-1 mt-0">Signature Invoice / Receipt Style</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
-                        <label class="border-2 {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}border-brand{% else %}border-[#eee]{% endif %} p-2.5 min-h-[44px] bg-white cursor-pointer flex items-center gap-2">
-                            <input type="radio" name="receipt_theme" value="classic" {% if kiosk.receipt_theme == 'classic' or not kiosk.receipt_theme %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4">
-                            <div>
-                                <strong class="font-ui text-[0.7rem] block">Classic Clay</strong>
-                                <span class="text-[0.6rem] text-mute">Cream &amp; clay</span>
-                            </div>
-                        </label>
-                        <label class="border-2 {% if kiosk.receipt_theme == 'cyber' %}border-brand{% else %}border-[#eee]{% endif %} p-2.5 min-h-[44px] bg-white cursor-pointer flex items-center gap-2">
-                            <input type="radio" name="receipt_theme" value="cyber" {% if kiosk.receipt_theme == 'cyber' %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4">
-                            <div>
-                                <strong class="font-ui text-[0.7rem] block">Cyber</strong>
-                                <span class="text-[0.6rem] text-mute">Dark terminal</span>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Social Proof -->
-                <div class="bg-white border border-[#eee] px-3.5">
-                    <label class="check-row font-ui text-xs font-semibold">
-                        <input type="checkbox" name="show_public_stats" {% if kiosk.show_public_stats %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 shrink-0 accent-[#8d5b3e]">
-                        Display Total Visits in WhatsApp Previews
-                    </label>
-                </div>
-
-                <!-- Image Uploads -->
-                <div class="grid grid-cols-1 gap-3">
-                    <div>
-                        <label for="b-logo" class="field-label">Store Logo</label>
-                        <input id="b-logo" type="file" name="logo" accept="image/*" class="file-input">
-                    </div>
-                    <div>
-                        <label for="b-hero" class="field-label">Hero Banner</label>
-                        <input id="b-hero" type="file" name="hero_image" accept="image/*" class="file-input">
-                    </div>
-                    <div>
-                        <label for="b-bg" class="field-label">Background Wallpaper</label>
-                        <input id="b-bg" type="file" name="background_image" accept="image/*" class="file-input">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-save">SAVE BRANDING &rarr;</button>
-            </form>
-        </section>
-
-        <!-- Section 4: Monetization -->
-        <section class="section-box" id="ads">
-            <h2 class="font-ui font-bold lowercase tracking-[-1px] text-xl sm:text-2xl lg:text-[2rem] mt-0 mb-4">Monetization (3 Ad Slots)</h2>
-            <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
-                {% for ad in ads %}
-                <div class="border border-[#eee] p-4 bg-[#fafafa] min-w-0">
-                    <h4 class="font-ui text-xs font-bold m-0 mb-2">Slot #{{ ad.slot_number }}</h4>
-                    <p class="font-ui text-[0.65rem] text-brand mb-3 mt-0">Clicks: {{ ad.clicks_count }}</p>
-                    <form action="/{{ kiosk.slug }}/ads" method="post" enctype="multipart/form-data" class="flex flex-col gap-2">
-                        <input type="hidden" name="slot_number" value="{{ ad.slot_number }}">
-                        <input type="url" name="target_link" value="{{ ad.target_link or '' }}" placeholder="Sponsor URL / WhatsApp" aria-label="Sponsor URL for slot {{ ad.slot_number }}" class="field-input !bg-white">
-                        <input type="file" name="banner_image" accept="image/*" aria-label="Banner image for slot {{ ad.slot_number }}" class="file-input">
-                        <label class="check-row font-ui text-[0.7rem] font-semibold">
-                            <input type="checkbox" name="is_active" {% if ad.is_active %}checked{% endif %} class="w-5 h-5 md:w-4 md:h-4 accent-[#8d5b3e]"> Enable Ad Slot
-                        </label>
-                        <button type="submit" class="btn-save sm:!max-w-none !text-[0.65rem]">UPDATE SLOT</button>
-                    </form>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-    </main>
-
-    <script>
-        function searchTable(tableId, query) {
-            const table = document.getElementById(tableId);
-            const rows = table.getElementsByTagName("tr");
-            const filter = query.toLowerCase();
-            for (let i = 1; i < rows.length; i++) {
-                const text = rows[i].innerText.toLowerCase();
-                rows[i].style.display = text.includes(filter) ? "" : "none";
-            }
+        if (cart.length === 0) {
+            container.innerHTML = '<p class="text-center text-[#78716c] font-serif italic text-sm mt-10">Your cart is empty.</p>';
+            return;
         }
 
-        function copyKioskLink(slug, btn) {
-            const fullUrl = window.location.origin + '/' + slug;
-            navigator.clipboard.writeText(fullUrl).then(() => {
-                const orig = btn.innerText;
-                btn.innerText = 'COPIED! ✅';
-                setTimeout(() => { btn.innerText = orig; }, 2000);
-            }).catch(() => { prompt('Copy link:', fullUrl); });
+        container.innerHTML = cart.map(item => `
+            <div class="flex gap-3 bg-[#fdfcfb] p-3 rounded-xl border border-[#e7e5e4]">
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-ui text-xs font-bold text-[#2d1e14] break-words m-0">${escapeHtml(item.name)}</h4>
+                    <p class="font-serif text-[11px] text-[#78716c] m-0">${escapeHtml(item.storeName)}</p>
+                    <p class="font-ui text-sm font-black text-[#8d5b3e] mt-1 mb-0">₦${(item.price * item.qty).toLocaleString()}</p>
+                </div>
+                <div class="flex flex-col items-end justify-between gap-1 shrink-0">
+                    <button onclick="removeFromCart(${item.id})" class="text-[#b33a3a] text-xs font-bold hover:underline min-h-[44px] md:min-h-0 px-2 md:px-0 -mr-2 md:mr-0">&times; Remove</button>
+                    <div class="flex items-center gap-1 md:gap-2 bg-[#f3ece6] rounded-full px-1">
+                        <button onclick="updateQty(${item.id}, -1)" aria-label="Decrease quantity" class="w-11 h-11 md:w-7 md:h-7 flex items-center justify-center text-lg md:text-base text-[#8d5b3e] font-bold">-</button>
+                        <span class="font-ui text-xs font-bold w-5 md:w-4 text-center">${item.qty}</span>
+                        <button onclick="updateQty(${item.id}, 1)" aria-label="Increase quantity" class="w-11 h-11 md:w-7 md:h-7 flex items-center justify-center text-lg md:text-base text-[#8d5b3e] font-bold">+</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function syncOverlayState() {
+        const cartOpen = !document.getElementById('cartDrawer').classList.contains('hidden');
+        const qvOpen = !document.getElementById('quickViewModal').classList.contains('hidden');
+        const anyOpen = cartOpen || qvOpen;
+        document.body.classList.toggle('overlay-open', anyOpen);
+        document.body.style.overflow = anyOpen ? 'hidden' : '';
+    }
+
+    function toggleCart() {
+        const drawer = document.getElementById('cartDrawer');
+        const panel = document.getElementById('cartPanel');
+        if (drawer.classList.contains('hidden')) {
+            drawer.classList.remove('hidden');
+            syncOverlayState();
+            setTimeout(() => panel.classList.remove('translate-x-full'), 10);
+        } else {
+            panel.classList.add('translate-x-full');
+            setTimeout(() => { drawer.classList.add('hidden'); syncOverlayState(); }, 300);
         }
+    }
 
-        /* 🍔 Mobile menu */
-        (function () {
-            const header = document.getElementById('kioskMobileHeader');
-            const btn    = document.getElementById('kioskMenuBtn');
-            const menu   = document.getElementById('kioskMobileMenu');
-            const burger = document.getElementById('kBurger');
-            const close  = document.getElementById('kClose');
-
-            function setOpen(open) {
-                menu.classList.toggle('open', open);
-                menu.setAttribute('aria-hidden', String(!open));
-                btn.setAttribute('aria-expanded', String(open));
-                btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-                burger.classList.toggle('hidden', open);
-                close.classList.toggle('hidden', !open);
-            }
-
-            btn.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
-            // Close after choosing a section (the Copy Link button stays open so you see "COPIED")
-            menu.addEventListener('click', e => { if (e.target.closest('a')) setOpen(false); });
-            document.addEventListener('click', e => {
-                if (menu.classList.contains('open') && !header.contains(e.target)) setOpen(false);
+    async function checkoutCart() {
+        const btn = document.getElementById('checkoutBtn');
+        btn.innerText = 'Processing...';
+        btn.disabled = true;
+        try {
+            const response = await fetch('/central/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: cart })
             });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
-            window.matchMedia('(min-width: 768px)').addEventListener('change', e => { if (e.matches) setOpen(false); });
-        })();
-        function copyProductLink(productId, btn) {
-            const fullUrl = window.location.origin + '/p/' + productId;
-            navigator.clipboard.writeText(fullUrl).then(() => {
-                const orig = btn.innerText;
-                btn.innerText = 'COPIED! ✅';
-                setTimeout(() => { btn.innerText = orig; }, 2000);
-            }).catch(() => { prompt('Copy link:', fullUrl); });
+            const data = await response.json();
+            if (data.status === 'success') {
+                cart = [];
+                saveCart();
+                toggleCart();
+                alert('🎉 Orders placed successfully! Merchants will see them in their dashboards.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+                btn.innerText = 'Proceed to Checkout';
+                btn.disabled = false;
+            }
+        } catch (error) {
+            alert('Network error. Please try again.');
+            btn.innerText = 'Proceed to Checkout';
+            btn.disabled = false;
         }
-    </script>
-</body>
-</html>
+    }
+
+    function openQuickView(card) {
+        const p = readProduct(card);
+        document.getElementById('qvImage').src = p.image;
+        document.getElementById('qvImage').alt = p.name;
+        document.getElementById('qvStore').innerText = p.storeName;
+        document.getElementById('qvName').innerText = p.name;
+        document.getElementById('qvPrice').innerText = '₦' + p.price.toLocaleString();
+        document.getElementById('qvDesc').innerText = p.description || 'No detailed description available for this product.';
+
+        document.getElementById('qvAddBtn').onclick = function() { addToCart(p); closeQuickView(); };
+
+        const shareUrl = window.location.origin + '/p/' + (p.shareToken || p.id);
+        document.getElementById('qvShareBtn').onclick = function() {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const btn = document.getElementById('qvShareBtn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '✅ Link Copied!';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            });
+        };
+
+        document.getElementById('qvScroll').scrollTop = 0;
+        document.getElementById('quickViewModal').classList.remove('hidden');
+        syncOverlayState();
+    }
+
+    function closeQuickView() {
+        document.getElementById('quickViewModal').classList.add('hidden');
+        syncOverlayState();
+    }
+
+    document.getElementById('quickViewModal').addEventListener('click', function(e) { if (e.target === this) closeQuickView(); });
+    document.getElementById('cartDrawer').addEventListener('click', function(e) { if (e.target === this) toggleCart(); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if (!document.getElementById('quickViewModal').classList.contains('hidden')) closeQuickView();
+        else if (!document.getElementById('cartDrawer').classList.contains('hidden')) toggleCart();
+    });
+
+    renderCart();
+</script>
+{% endblock %}
